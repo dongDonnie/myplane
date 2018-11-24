@@ -1,0 +1,119 @@
+{
+  "__type__": "cc.AnimationClip",
+  "_name": "Thunder",
+  "_objFlags": 0,
+  "_rawFiles": null,
+  "_duration": 0.43333333333333335,
+  "sample": 30,
+  "speed": 1,
+  "wrapMode": 1,
+  "curveData": {
+    "comps": {
+      "cc.Sprite": {
+        "spriteFrame": [
+          {
+            "frame": 0,
+            "value": {
+              "__uuid__": "a7fc857f-097c-4a4f-9f29-ee1cb90c4666"
+            }
+          },
+          {
+            "frame": 0.03333333333333333,
+            "value": {
+              "__uuid__": "06a1dcaa-c017-4b21-9cc6-e9b21a9770fb"
+            }
+          },
+          {
+            "frame": 0.06666666666666667,
+            "value": {
+              "__uuid__": "58253833-3595-4ce8-a39d-466436759a27"
+            }
+          },
+          {
+            "frame": 0.1,
+            "value": {
+              "__uuid__": "e28e1d39-e1ee-49e1-85db-f67bdabb5d3f"
+            }
+          },
+          {
+            "frame": 0.13333333333333333,
+            "value": {
+              "__uuid__": "63600868-ed12-4535-83f0-f399957bad90"
+            }
+          },
+          {
+            "frame": 0.16666666666666666,
+            "value": {
+              "__uuid__": "dfdbf69b-391d-4893-bfc4-5529e5983b49"
+            }
+          },
+          {
+            "frame": 0.2,
+            "value": {
+              "__uuid__": "bbe4b15d-e701-4ed4-8bda-d1a687b4b48c"
+            }
+          },
+          {
+            "frame": 0.23333333333333334,
+            "value": {
+              "__uuid__": "402826c3-6589-499f-b2ff-b8404151dcbb"
+            }
+          },
+          {
+            "frame": 0.26666666666666666,
+            "value": {
+              "__uuid__": "61b1e65e-615f-4e93-82ed-ffe38dd2a1ef"
+            }
+          },
+          {
+            "frame": 0.3,
+            "value": {
+              "__uuid__": "13871d56-8e2b-4e56-ab5c-c1e42c7fea17"
+            }
+          },
+          {
+            "frame": 0.3333333333333333,
+            "value": {
+              "__uuid__": "18683708-21cd-4f47-816f-23af66ea7839"
+            }
+          },
+          {
+            "frame": 0.36666666666666664,
+            "value": {
+              "__uuid__": "713ef9be-b32c-4183-8a0e-77cced7127c3"
+            }
+          },
+          {
+            "frame": 0.4,
+            "value": {
+              "__uuid__": "00b60644-8d33-4d7f-9686-aab86bd9840f"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "events": [
+    {
+      "frame": 0,
+      "func": "animePlayCallBack",
+      "params": [
+        "Start"
+      ]
+    },
+    {
+      "frame": 0.16666666666666666,
+      "func": "animePlayCallBack",
+      "params": [
+        "Process"
+      ]
+    },
+    {
+      "frame": 0.43333333333333335,
+      "func": "animePlayCallBack",
+      "params": [
+        "Complete"
+      ]
+    }
+  ]
+}

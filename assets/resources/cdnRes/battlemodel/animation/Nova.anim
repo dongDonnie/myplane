@@ -1,0 +1,173 @@
+{
+  "__type__": "cc.AnimationClip",
+  "_name": "Nova",
+  "_objFlags": 0,
+  "_rawFiles": null,
+  "_duration": 0.36666666666666664,
+  "sample": 60,
+  "speed": 1,
+  "wrapMode": 1,
+  "curveData": {
+    "comps": {
+      "cc.Sprite": {
+        "spriteFrame": [
+          {
+            "frame": 0,
+            "value": {
+              "__uuid__": "a093de86-af85-43cc-be90-a1ca7bbde857"
+            }
+          },
+          {
+            "frame": 0.016666666666666666,
+            "value": {
+              "__uuid__": "3a40fea8-dab5-4305-a08c-509f6d80011b"
+            }
+          },
+          {
+            "frame": 0.03333333333333333,
+            "value": {
+              "__uuid__": "b937c1fc-47ea-4305-856c-be8ea4c38cb6"
+            }
+          },
+          {
+            "frame": 0.05,
+            "value": {
+              "__uuid__": "27b5712d-4671-48e5-a6c4-aa00c7e6dc95"
+            }
+          },
+          {
+            "frame": 0.06666666666666667,
+            "value": {
+              "__uuid__": "30166019-8837-44ef-969d-2ee2bdb34e5e"
+            }
+          },
+          {
+            "frame": 0.08333333333333333,
+            "value": {
+              "__uuid__": "28100f99-8130-46ce-949b-77c805c0720e"
+            }
+          },
+          {
+            "frame": 0.1,
+            "value": {
+              "__uuid__": "262bcdd7-48f9-4fe6-8455-ac2aa2f7c462"
+            }
+          },
+          {
+            "frame": 0.11666666666666667,
+            "value": {
+              "__uuid__": "f4807323-f384-488b-a446-67cb30c02e07"
+            }
+          },
+          {
+            "frame": 0.13333333333333333,
+            "value": {
+              "__uuid__": "e1b26fcd-fcef-4b71-a463-b514aca474bc"
+            }
+          },
+          {
+            "frame": 0.15,
+            "value": {
+              "__uuid__": "8ca0cd72-4f19-4d81-aac7-d842669e5416"
+            }
+          },
+          {
+            "frame": 0.16666666666666666,
+            "value": {
+              "__uuid__": "ef0e39a6-fee1-49ef-b754-49c1f20073b3"
+            }
+          },
+          {
+            "frame": 0.18333333333333332,
+            "value": {
+              "__uuid__": "0679d21f-6249-49df-92a3-51ec18ec8834"
+            }
+          },
+          {
+            "frame": 0.2,
+            "value": {
+              "__uuid__": "3a61673c-df63-4f7e-8bb4-4d15172935cb"
+            }
+          },
+          {
+            "frame": 0.21666666666666667,
+            "value": {
+              "__uuid__": "db8339dd-bb07-4131-8969-c056ddddd17e"
+            }
+          },
+          {
+            "frame": 0.23333333333333334,
+            "value": {
+              "__uuid__": "37d36d89-aae2-4233-a12e-b976c1216253"
+            }
+          },
+          {
+            "frame": 0.25,
+            "value": {
+              "__uuid__": "7a48900c-35af-4065-ab8b-fe6bcd60ad09"
+            }
+          },
+          {
+            "frame": 0.26666666666666666,
+            "value": {
+              "__uuid__": "c1caf627-5cd4-47cf-9831-96bd1332ae6d"
+            }
+          },
+          {
+            "frame": 0.2833333333333333,
+            "value": {
+              "__uuid__": "4d6ffcec-0a38-48aa-8d31-e45c050321c2"
+            }
+          },
+          {
+            "frame": 0.3,
+            "value": {
+              "__uuid__": "fb0be53d-a7ef-4c19-9afd-75d1f9ec277d"
+            }
+          },
+          {
+            "frame": 0.31666666666666665,
+            "value": {
+              "__uuid__": "2f80b011-fabe-4f3b-9e39-ea92fa8a490d"
+            }
+          },
+          {
+            "frame": 0.3333333333333333,
+            "value": {
+              "__uuid__": "45d57522-92ff-4e2f-8c5c-bfccf6ccf02b"
+            }
+          },
+          {
+            "frame": 0.35,
+            "value": {
+              "__uuid__": "bfb1e132-589d-4b62-8cd2-a25e0e6214e9"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "events": [
+    {
+      "frame": 0,
+      "func": "animePlayCallBack",
+      "params": [
+        "Start"
+      ]
+    },
+    {
+      "frame": 0.16666666666666666,
+      "func": "animePlayCallBack",
+      "params": [
+        "Process"
+      ]
+    },
+    {
+      "frame": 0.36666666666666664,
+      "func": "animePlayCallBack",
+      "params": [
+        "Complete"
+      ]
+    }
+  ]
+}
