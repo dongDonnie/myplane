@@ -40,8 +40,8 @@ cc.Class({
             type: [cc.Node],
         },
         spriteEquip: {
-            default: null,
-            type: cc.Sprite
+            default: [],
+            type: [cc.Sprite]
         },
         curOperaType: {
             default: 0,
@@ -70,6 +70,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMALIMPROVEMENT_WND;
         this.animeStartParam(0);
@@ -87,31 +88,128 @@ cc.Class({
 
     update: function (dt) {
         //let time = (Date.now() - this.shaderStartTime) / 1000;
-        //ShaderUtils.setShader(this.spriteEquip, "white", time);
+        //ShaderUtils.setShader(this.spriteEquip[0], "white", time);
     },
 
     registerEvents: function () {
+        this.nodeSlip.on(cc.Node.EventType.TOUCH_START, this.touchStart, this);
+        this.nodeSlip.on(cc.Node.EventType.TOUCH_MOVE, this.touchMove, this);
         this.nodeSlip.on(cc.Node.EventType.TOUCH_END, this.changeEquip, this);
         this.nodeSlip.on(cc.Node.EventType.TOUCH_CANCEL, this.changeEquip, this);
 
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_LEADEREQUIP_LEVELUP, this.onLevelUp, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_LEADEREQUIP_QUALITYUP, this.onQualityUp, this);
-
-        // this.spriteEquip.node.runAction(cc.sequence(cc.scaleTo))
+        GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_BAG_ADDITEM_NTF, this.bagAddItem, this);
 
     },
 
+    touchStart: function () {
+        if (this.clickDouble()) return;
+        this.touchstart = true;
+    },
+
+    touchMove: function (event) {
+        let self = this;
+        if (!this.touchstart) return;
+        let touch = event.touch;
+        let deltaMove = touch.getLocation().sub(touch.getStartLocation());
+        let width = this.nodeSlip.width / 4;
+        let disX = Math.abs(deltaMove.x) > width ? width : Math.abs(deltaMove.x);
+        // cc.log(disX);
+        let scale = (Math.abs(deltaMove.x) / width) / 2;
+        this.spriteEquip[0].node.x = deltaMove.x;
+        this.spriteEquip[0].node.scale = (1 - scale) < 0 ? 0 : (1 - scale);
+        let dir = deltaMove.x < 0 ? 1 : -1;
+        this.setNodeIcon(dir);
+        this.spriteEquip[1].node.x = dir*this.nodeSlip.width / 2 + deltaMove.x;
+        this.spriteEquip[1].node.scale = scale > 1 ? 1 : scale;
+    },
+
     changeEquip: function (event) {
+        var self = this;
+        if (!this.touchstart) return;
+        this.touchstart = false;
         let touch = event.touch;
         let deltaMove = touch.getLocation().sub(touch.getStartLocation());
         let disX = deltaMove.x;
-        let anchorX = disX < 0 ? 0 : 1;
+        // let anchorX = disX < 0 ? 0 : 1;
 
         if (disX > this.nodeSlip.width / 4) {
-            this.selectEquipment(null, this.index - 1)
+            this.selectEquipment(null, this.index - 1);
+            self.spriteEquip[0].node.x = self.spriteEquip[1].node.x;
+            self.spriteEquip[0].node.scale = self.spriteEquip[1].node.scale;
         } else if (disX < -this.nodeSlip.width / 4) {
             this.selectEquipment(null, this.index + 1);
+            self.spriteEquip[0].node.x = self.spriteEquip[1].node.x;
+            self.spriteEquip[0].node.scale = self.spriteEquip[1].node.scale;
         }
+        let nodeY = self.spriteEquip[0].node.y;
+        let spawnIn = cc.spawn(cc.moveTo(0.2, cc.v2(15, nodeY)), cc.scaleTo(0.2, 1));
+        self.spriteEquip[0].node.runAction(spawnIn);
+        self.spriteEquip[1].node.scale = 0;
+        self.spriteEquip[1].node.getComponent(cc.Sprite).spriteFrame = null;
+    },
+
+    setNodeIcon: function (dir) {
+        let self = this;
+        let index = self.index - 1 + dir;
+        index = index == -1 ? 5 : index;
+        index = index == 6 ? 0 : index;
+        let equips = GlobalVar.me().leaderData.getLeaderEquips();
+        let equipData = GlobalVar.tblApi.getDataByMultiKey("TblLeaderEquip", equips[index].Pos, equips[index].Quality);
+        let iconIndex = equipData.wIcon / 10 % 10 + 1;
+        GlobalVar.resManager().loadRes(ResMapping.ResType.SpriteFrame, 'cdnRes/itemiconBig/' + iconIndex + '/' + equipData.wIcon, function (frame) {
+            self.spriteEquip[1].node.getComponent(cc.Sprite).spriteFrame = frame;
+        });
+    },
+
+    clickDouble: function () {
+        let nowTime = (new Date()).getTime();
+        if (this._debugLastClickTime == undefined) {
+            this._debugLastClickTime = nowTime;
+            this._clickDebugCount = 1;
+        } else {
+            if (nowTime - this._debugLastClickTime > 500) {
+                this._debugLastClickTime = nowTime;
+                this._clickDebugCount = 1;
+            } else if (++this._clickDebugCount >= 1) {
+                this._clickDebugCount = 0;
+                return true;
+            }
+            this._debugLastClickTime = nowTime;
+        }
+        return false;
+    },
+
+    playAction: function (event, dir) {
+        var self = this;
+        if (this.clickDouble()) return;
+        dir = parseInt(dir);
+        this.setNodeIcon(dir);
+
+        let nodeY = self.spriteEquip[0].node.y;
+        let spawnOut = cc.spawn(cc.moveTo(0.2, cc.v2(-self.nodeSlip.width / 2 * dir, nodeY)), cc.scaleTo(0.2, 0));
+        let spawnIn = cc.spawn(cc.moveTo(0.2, cc.v2(15, nodeY)), cc.scaleTo(0.2, 1));
+        let func1 = cc.callFunc(function () {
+            self.spriteEquip[0].node.x = 15;
+            self.spriteEquip[0].node.scale = 1;
+            self.selectEquipment(null, self.index + dir);
+        });
+        
+        let seq0 = cc.sequence(spawnOut, func1);
+        self.spriteEquip[0].node.runAction(seq0);
+
+        let func3 = cc.callFunc(function () {
+            self.spriteEquip[1].node.x = self.nodeSlip.width / 2 * dir;
+        })
+        let func4 = cc.callFunc(function () { 
+            self.spriteEquip[1].node.scale = 0;
+            self.spriteEquip[1].node.getComponent(cc.Sprite).spriteFrame = null;
+        })
+        let seq1 = cc.sequence(func3, spawnIn, func4);
+        self.spriteEquip[1].node.runAction(seq1);
+
+
     },
 
     initImprovementView: function () {
@@ -194,7 +292,7 @@ cc.Class({
             this._super("Enter");
             this.registerEvents();
             this.deleteMode = false;
-            this.spriteEquip.node.active = true;
+            this.spriteEquip[0].node.active = true;
             if (WindowManager.getInstance().findViewIndex(WndTypeDefine.WindowType.E_DT_NORMALPLANE_WND) == -1) {
                 BattleManager.getInstance().quitOutSide();
             }
@@ -270,17 +368,25 @@ cc.Class({
         let equips = GlobalVar.me().leaderData.getLeaderEquips();
         let leaderEquipData = GlobalVar.tblApi.getDataByMultiKey("TblLeaderEquip", equips[index].Pos, equips[index].Quality);
 
-        // let maxLevel = GameServerProto.PT_PLAYER_MAX_LEVEL * 2;
-        let maxLevel = GlobalVar.me().level * 2;
-        let levelLimit = GlobalVar.me().level * 2 > maxLevel ? maxLevel : GlobalVar.me().level * 2;
+        let maxLevel = GameServerProto.PT_PLAYER_MAX_LEVEL * 2;
+        let levelLimit = GlobalVar.me().level * 2;
 
         let canUplevel = 5;
         if (equips[index].Level + canUplevel > levelLimit) {
             canUplevel = levelLimit - equips[index].Level;
         }
+
+        if (canUplevel == 0 && equips[index].Level != maxLevel) {
+            var levelUpData = GlobalVar.tblApi.getDataBySingleKey('TblLeaderEquipLevel', equips[index].Level + 1);
+            levelUpNeedGold = levelUpData.oVecGoldCost[equips[index].Pos - 1];
+            labelLevelUpOneNeedGold.string = levelUpNeedGold;
+            labelLevelUpFiveNeedGold.string = levelUpNeedGold;
+        }
+
         canUplevel = canUplevel == 0 ? 1 : canUplevel;
+        
         for (let i = 0; i < canUplevel; i++) {
-            if (equips[index].Level == maxLevel) {
+            if (equips[index].Level == levelLimit) {
                 canUplevel = 1;
                 break;
             }
@@ -315,8 +421,8 @@ cc.Class({
         btnLevelUpFive.getComponent(cc.Button).clickEvents[0].customEventData = canUplevel;
         btnLevelUpFive.getComponent("ButtonObject").setText(i18n.t('label.4000256').replace("%d", canUplevel));
         this.curEquipLevel = equips[this.index - 1].Level;
-        labelLevelNumberBefore.string = equips[index].Level + "/" + maxLevel;
-        labelLevelNumberAfter.string = (equips[index].Level + 1) > maxLevel ? (maxLevel + "/" + maxLevel) : equips[index].Level + 1 + "/" + maxLevel;
+        labelLevelNumberBefore.string = equips[index].Level + "/" + levelLimit;
+        labelLevelNumberAfter.string = (equips[index].Level + 1) > levelLimit ? (levelLimit + "/" + levelLimit) : equips[index].Level + 1 + "/" + levelLimit;
         
         let hasMaxLevelFunc = function (bool) {
             levelUpInterface.getChildByName('labelAttributeAfter').active = !bool;
@@ -327,7 +433,7 @@ cc.Class({
             LevelUpConfirm.active = !bool;
         }
 
-        if (equips[index].Level == (GameServerProto.PT_PLAYER_MAX_LEVEL * 2)) {
+        if (equips[index].Level == maxLevel) {
             hasMaxLevelFunc(true);
         } else {
             hasMaxLevelFunc(false);
@@ -423,8 +529,10 @@ cc.Class({
     },
 
     selectEquipment: function (event, index) {
-        if (index < 1 || index > this.equipment.length) return;
         index = parseInt(index);
+        // if (index < 1 || index > this.equipment.length) return;
+        index = index == 0 ? 6 : index;
+        index = index == 7 ? 1 : index;
         this.index = index;
         for (let i = 0; i < this.equipment.length; i++) {
             if (i != index - 1) {
@@ -459,7 +567,6 @@ cc.Class({
 
     onBtnOperaType: function (event, type) {
         type = parseInt(type);
-        WindowManager.getInstance().lockBtn();
         if (this.curOperaType === type) {
             return;
         } else {
@@ -505,6 +612,8 @@ cc.Class({
     onBtnLevelUp: function (event, count) {
         if (!this.canOperata) return;
         this.canOperata = false;
+        this.unschedule(this.canOperataReset);
+        this.scheduleOnce(this.canOperataReset, 2);
         count = parseInt(count);
         let LevelUpConfirm = this.nodeOperateConfirm[0];
         let labelLevelUpOneNeedGold = this.seekNodeByName(LevelUpConfirm, "labelLevelUpOne").getComponent(cc.Label);
@@ -543,16 +652,18 @@ cc.Class({
     },
 
     onBtnQualityUp: function () {
-        // this.spriteEquip.node.active = false;
+        // this.spriteEquip[0].node.active = false;
         // let self = this;
         // CommonWnd.showEquipQualityUpWnd(8100, 8110, "银鳞胸甲+99", 1, function () {
-        //     self.spriteEquip.node.active = true;
+        //     self.spriteEquip[0].node.active = true;
         // });
         // return;
 
 
         if (!this.canOperata) return;
         this.canOperata = false;
+        this.unschedule(this.canOperataReset);
+        this.scheduleOnce(this.canOperataReset, 2);
         if (!this.canQuilityUp) {
             GlobalVar.comMsg.showMsg(i18n.t('label.4000235'));
             this.canOperata = true;
@@ -566,6 +677,10 @@ cc.Class({
         if (this.canCloseBlackBack) {
             this.node.getChildByName("spriteBlackBack").active = false;
         }
+    },
+
+    canOperataReset: function (dt) {
+        this.canOperata = true;
     },
 
     onLevelUp: function (event) {
@@ -624,7 +739,7 @@ cc.Class({
         let leaderEquipDataBefore = GlobalVar.tblApi.getDataByMultiKey("TblLeaderEquip", event.Equip.Pos, event.Equip.Quality - 1);
         let beforeItemIcon = leaderEquipDataBefore.wIcon;
 
-        GlobalVar.comMsg.showMsg(i18n.t('label.4000238'));
+        // GlobalVar.comMsg.showMsg(i18n.t('label.4000238'));
         // console.log("onQualityUpEvent = ", event)
 
         let leaderEquipData = GlobalVar.tblApi.getDataByMultiKey("TblLeaderEquip", event.Equip.Pos, event.Equip.Quality);
@@ -637,11 +752,11 @@ cc.Class({
         let afterItemIcon = leaderEquipData.wIcon;
 
 
-        this.spriteEquip.node.active = false;
+        this.spriteEquip[0].node.active = false;
         let self = this;
 
-        CommonWnd.showEquipQualityUpWnd(beforeItemIcon, afterItemIcon, leaderEquipData.strName, leaderEquipData.byColor, function () {
-            self.spriteEquip.node.active = true;
+        CommonWnd.showEquipQualityUpWnd(beforeItemIcon, afterItemIcon, leaderEquipDataBefore.strName, leaderEquipData.strName, leaderEquipDataBefore.byColor, leaderEquipData.byColor, function () {
+            self.spriteEquip[0].node.active = true;
         });
 
         this.updateHotPoint();
@@ -649,8 +764,13 @@ cc.Class({
         this.initParam();
     },
 
+    bagAddItem: function (data) {
+        if (this.curOperaType)
+            this.initQualityUp();
+    },
+
     close: function () {
-        this.spriteEquip.node.active = false;
+        this.spriteEquip[0].node.active = false;
         this._super();
     },
 

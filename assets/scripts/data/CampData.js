@@ -22,6 +22,8 @@ var campData = cc.Class({
         self.token = "";
         self.data = {};
         self.gameEndData = {};
+        self.boxArray = [];
+        self.dieCount = 0;
     },
 
     saveData: function (data) {
@@ -32,6 +34,62 @@ var campData = cc.Class({
         self.data[data.Type] = data.CampBag;
         // 在关卡信息界面如果没有数据会发消息，此处发送事件给通知关卡信息界面数据已经加载完毕
         GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_REGET_CHAPTER_DATA);
+        this.getCanClickBox(data.CampBag.Chapter);
+        GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_CAMP_FLAG_CHANGE, this.boxArray);
+    },
+
+    getCanClickBox: function (data) {
+        var self = this;
+        for (let i = 0; i < data.length; i++) {
+            let draw = data[i].RewardDraw;
+            let drawtotal = draw[0] + draw[1] + draw[2];
+            if (drawtotal == 3) {
+                continue;
+            } else {
+                let stars = 0;
+                for (let j = 0; j < data[i].Campaign.length; j++){
+                    stars += data[i].Campaign[j].Star;
+                }
+                let candraw = Math.floor(stars / 10);
+                if (candraw > drawtotal) {
+                    let jointo =  function (chapterid, pos) {
+                        let has = false;
+                        for (let k = 0; k < self.boxArray.length; k++){
+                            if (self.boxArray[k].ChapterID == chapterid && self.boxArray[k].Pos == pos) { 
+                                has = true;
+                            }
+                        }
+                        if (!has) {
+                            self.boxArray.push({ ChapterID: chapterid, Pos: pos });
+                        }
+                    }
+                    if (candraw == 1) {
+                        jointo(data[i].ChapterID, 0);
+                    } else if (candraw == 2) {
+                        if (draw[0] == 0) {
+                            jointo(data[i].ChapterID, 0);
+                        }
+                        if (draw[1] == 0) {
+                            jointo(data[i].ChapterID, 1);
+                        }
+                    } else {
+                        if (draw[0] == 0) {
+                            jointo(data[i].ChapterID, 0);
+                        }
+                        if (draw[1] == 0) {
+                            jointo(data[i].ChapterID, 1);
+                        }
+                        if (draw[2] == 0) {
+                            jointo(data[i].ChapterID, 2);
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    getBoxArrayData: function () {
+        return this.boxArray;
     },
 
     isDataValid: function (campaignType) {
@@ -130,6 +188,10 @@ var campData = cc.Class({
         return starCount;
     },
 
+    getBattleDieCount: function () {
+        return self.dieCount;
+    },
+
     getGameEndData: function (){
         if (self.gameEndData){
             return self.gameEndData;
@@ -176,6 +238,12 @@ var campData = cc.Class({
             chapter.RewardDraw[data.OK.Pos] = 1;
         }
 
+        for (let i = 0; i < this.boxArray.length; i++) {
+            if (this.boxArray[i].ChapterID == data.OK.ChapterID && this.boxArray[i].Pos == data.OK.Pos) {
+                this.boxArray.splice(i, 1);
+            }
+        }
+        GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_CAMP_FLAG_CHANGE, this.boxArray);
         GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_GET_CHAPTER_REWARD, data);
     },
 
@@ -209,6 +277,9 @@ var campData = cc.Class({
     },
 
     setRecvCampBeginData:function(data){
+        if (data.ErrCode == GameServerProto.PTERR_SUCCESS){
+            self.dieCount = 0;
+        }
         GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_CAMP_BEGIN_NTF,data);
     },
 
@@ -220,6 +291,10 @@ var campData = cc.Class({
     },
 
     setRecvCampReviveData: function(data){
+        if (data.ErrCode == GameServerProto.PTERR_SUCCESS){
+            self.dieCount = data.OK.DieCount;
+            GlobalVar.me().setDiamond(data.OK.DiamondCur);
+        }
         GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_CAMP_REVIVE_ACK_RESULT, data);
     },
 

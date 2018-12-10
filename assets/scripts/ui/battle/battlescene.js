@@ -4,6 +4,7 @@ const SceneDefines = require("scenedefines");
 const SceneBase = require("scenebase");
 const ResMapping = require("resmapping");
 const BattleManager = require('BattleManager');
+const weChatAPI = require("weChatAPI");
 
 var BattleScene = cc.Class({
     extends: SceneBase,
@@ -16,9 +17,12 @@ var BattleScene = cc.Class({
     },
 
     onLoad: function () {
+        //cc.game.on(cc.game.EVENT_HIDE, this.hide, this);
+        //cc.game.on(cc.game.EVENT_SHOW, this.show, this);
         this.sceneName = "BattleScene";
         this.battleManager = BattleManager.getInstance();
         this.uiNode = cc.find("Canvas/UINode");
+        this.openScene();
         this.battleManager.start(this.node, cc.find('Canvas/GameNode'));
         if(this.battleManager.getMusic()!=null){
             GlobalVar.soundManager().playBGM("cdnRes/"+this.battleManager.getMusic());
@@ -36,6 +40,7 @@ var BattleScene = cc.Class({
         } else {
             //this.loadPrefab("UIBattle");
         }
+        
     },
 
     onDestroy() {
@@ -56,6 +61,9 @@ var BattleScene = cc.Class({
         }else if(this.battleManager.gameState==BattleDefines.GameResult.CARD){
             this.showDrawRewardWnd();
             this.battleManager.gameState = BattleDefines.GameResult.NONE;
+        }else if(this.battleManager.gameState==BattleDefines.GameResult.WAITREVIVE){
+            this.showReviveWnd();
+            this.battleManager.gameState = BattleDefines.GameResult.PAUSE;
         }
     },
 
@@ -84,4 +92,8 @@ var BattleScene = cc.Class({
     showDrawRewardWnd(){
         this.loadPrefab("UIBattleCard");
     },
+
+    showReviveWnd(){
+        this.loadPrefab("UIBattleRevive");
+    }
 });

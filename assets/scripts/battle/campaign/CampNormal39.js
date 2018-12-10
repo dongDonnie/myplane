@@ -5,13 +5,18 @@ CampNormal39.data = {
         ["shamo","shamo","shamo"],
     ],
     monsterWaves:[
-        {wave:{groups:[162,112,161,31,32,33],wait:0,delay:[2,3,6,8,8,8]},maps:{mapIndex:[0],mapSpeed:[500],mapScale:[1],mapLoop:[1]}},
-        {wave:{groups:[27,120,44,43,45,42],wait:0,delay:[0,1,2,2.5,3,3.5]}},
-        {wave:{groups:[125,126,19,25,27,118],wait:0,delay:[0,1,4,4.5,5,5.5]},maps:{mapIndex:[0],mapSpeed:[800],mapScale:[1],mapLoop:[1]}},
-        {wave:{groups:[165],wait:0,delay:[0]}},
+        {wave:{groups:[1232,51],wait:0,delay:[1,3]},maps:{mapIndex:[0],mapSpeed:[500],mapScale:[1],mapLoop:[1]}},
+        {wave:{groups:[1245,800,882],wait:0,delay:[0,1,2,2.5,3,3.5]}},
+        {wave:{groups:[1239,794,797],wait:0,delay:[0,1,2]}},
+        {wave:{groups:[1241,1242,1243,1244],wait:0,delay:[0,2,2,2]}},
+        {wave:{groups:[1238,836],wait:0,delay:[0,2]}},
+        {wave:{groups:[1057],wait:0,delay:[0]}},
+        {wave:{groups:[1246,838],wait:0,delay:[0,0]}},
+        {wave:{groups:[1247,842],wait:0,delay:[0,0]}},
+        {wave:{groups:[1241,1242,1243,1244],wait:0,delay:[0,2,2,2]}},
     ],
 
-    monsterExtra:[311,312,313,314,315,316,317],
+    monsterExtra:[311,312,313,314,315,316,317,14,17,19,20,22,25,27,28,30,35,36,39,40,42,45,47,48,50,51,52,573,830,831,832,833,834,836,839,1066,1067,1069,1070,1072,1073,1074,1075,1077,1078],
 
     totalHint:[
         {
@@ -27,20 +32,20 @@ CampNormal39.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:3}},
+                {wave:{index:0,step:6}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:2.8}},
             ],
         },
         {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:4}},
+                {wave:{index:8,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-2}},
             ],
         },
     ],

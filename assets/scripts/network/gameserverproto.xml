@@ -306,6 +306,7 @@
         <define name="PTERR_FULI_MILLION_ALREADY_GET" value="682" />
         <define name="PTERR_FULI_CZ_INVITE_TICKET_ERR" value="683" />
         <define name="PTERR_FULI_CZ_INVITE_LACK" value="684" />
+        <define name="PTERR_FULI_SHARE_ALREADY_GET" value="685" />
 
         <define name="PTERR_MAIL_NO_ATTACHMENT" value="931" />
         <define name="PTERR_MAIL_ATTACHMENT_ALREADYGOT" value="932" />
@@ -745,7 +746,7 @@
         <define name="PTPARAM_TREASURE_GOLD_FREE_MAX" value="303" />
         <define name="PTPARAM_SP_FREE_GET_MAX" value="304" />
         <define name="PTPARAM_RCG_FREE_DIAMOND" value="305" />
-        <define name="PTPARAM_SHARE_REWARD_PACKAGE" value="306" />
+        <define name="PTPARAM_FULI_SHARE_DAILY_PACKAGE" value="306" />
         <define name="PTPARAM_ENDLESS_GOLD_DAYMAX" value="307" />
 
         <!-- param info -->
@@ -812,10 +813,7 @@
         <define name="PT_DBPLAYER_REQTYPE_DIANZAN" value="4" />
 
         <define name="PT_SYSTEM_MEMBER" value="1" />
-        <define name="PT_SYSTEM_PET" value="2" />
-        <define name="PT_SYSTEM_LEADEREQUIP" value="4" />
         <define name="PT_SYSTEM_BAG" value="5" />
-        <define name="PT_SYSTEM_CORE" value="7" />
         <define name="PT_SYSTEM_STORE" value="8" />
         <define name="PT_SYSTEM_TREASURE" value="9" />
         <define name="PT_SYSTEM_DAILY" value="10" />
@@ -852,7 +850,6 @@
         <define name="PT_SYSTEM_FUND" value="52" />
         <define name="PT_SYSTEM_NUCLEAR_STORE" value="53" />
         <define name="PT_SYSTEM_TOWER_FLOOR_STORE" value="54" />
-        <define name="PT_SYSTEM_PET_TREASURE" value="55" />
         <define name="PT_SYSTEM_GUILD_BOSS" value="56" />
         <define name="PT_SYSTEM_DARK" value="57" />
         <define name="PT_SYSTEM_MYSTERY" value="58" />
@@ -1238,10 +1235,6 @@
         <define name="PT_DAILY_TASK_HIGH_MONTHCARD" value="11" />
         <define name="PT_DAILY_TASK_MONTHCARD" value="12" />
         <define name="PT_DAILY_TASK_TREASURE_GOLD" value="13" />
-        <define name="PT_DAILY_TASK_CAMPAIGN15" value="14" />
-        <define name="PT_DAILY_TASK_ENDLESS5" value="15" />
-        <define name="PT_DAILY_TASK_LEADEREQUIP5" value="16" />
-        <define name="PT_DAILY_TASK_GUAZAI5" value="17" />
 
         <!--成就-->
         <define name="PT_ACHIEVE_MAX" value="999" />
@@ -2326,6 +2319,9 @@
         <type name="GMDT_SHARE_BAG">
             <item name="FreeDiamondCount" type="INT32" />
             <item name="FreeGoldCount" type="INT32" />
+            <item name="FuliDaily" type="UINT8" />
+            <item name="FuliRecommend" type="UINT8"/>
+            <item name="FuliMemberTestPlay" type="UINT8"/>
         </type>
         
         <type name="GMDT_PLAYER">
@@ -3535,6 +3531,7 @@
 
         <type name="GMPKG_ENDLESS_BUYSTATUS_REQ">
             <item name="StatusID" type="UINT8"/>
+            <item name="Free" type="UINT8"/>
         </type>
 
         <type name="GMDT_ENDLESS_BUYSTATUS_OK">
@@ -5020,15 +5017,36 @@
             <item name="StatFlag" type="UINT8"/>
         </type>
 
-        <type name="GMPKG_FULI_SHARE_REQ">
+        <type name="GMPKG_FULI_SHARE_DAILY_REQ">
             <item name="Reserved" type="UINT8"/>
         </type>
 
-        <type name="GMPKG_FULI_SHARE_ACK">
+        <type name="GMPKG_FULI_SHARE_DAILY_ACK">
             <item name="ErrCode" type="INT32"/>
+            <item name="FuliShareDaily" type="UINT8"/>
             <item name="Item" type="vector" member_type="GMDT_ITEM_COUNT" max_count="PT_BAG_MAX_SIZE"/>
         </type>
 
+        <type name="GMPKG_FULI_SHARE_RECOMMAND_REQ">
+            <item name="Reserved" type="UINT8"/>
+        </type>
+
+        <type name="GMPKG_FULI_SHARE_RECOMMAND_ACK">
+            <item name="ErrCode" type="INT32"/>
+            <item name="FuliShareRecommand" type="UINT8"/>
+        </type>
+
+        <type name="GMPKG_FULI_SHARE_MEMBER_TESTPLAY_REQ">
+            <item name="MemberID" type="UINT16"/>
+        </type>
+
+        <type name="GMPKG_FULI_SHARE_MEMBER_TESTPLAY_ACK">
+            <item name="ErrCode" type="INT32"/>
+            <item name="MemberID" type="UINT16"/>
+            <item name="FuliShareMemberTestPlay" type="UINT8"/>
+            <item name="Item" type="vector" member_type="GMDT_ITEM_COUNT" max_count="PT_BAG_MAX_SIZE"/>
+        </type>
+        
         <!-- Arena -->
         <type name="GMPKG_ARENA_OPEN_REQ">
             <item name="Reserved" type="UINT8"/>
@@ -8281,6 +8299,12 @@
             <item name="VIPGot" type="vector" member_type="UINT16" max_count="PT_FULI_MILLION_MAX" />
         </type>
 
+        <type name="DBDT_FULI_SHARE">
+            <item name="Daily" type="UINT8" />
+            <item name="Recommend" type="UINT8"/>
+            <item name="MemberTestPlay" type="UINT8"/>
+        </type>
+
         <type name="DBDT_FULI_BAG">
             <item name="GiftBag" type="DBDT_FULI_GIFT_BAG" />
             <item name="SevenBag" type="DBDT_FULI_SEVEN_BAG" />
@@ -8288,7 +8312,7 @@
             <item name="FeedBack" type="DBDT_FULI_FEEDBACK" />
             <item name="VipBonus" type="DBDT_FULI_VIPBONUS" />
             <item name="Million" type="DBDT_FULI_MILLION" />
-            <item name="ShareRewardCount" type="INT32" />
+            <item name="Share" type="DBDT_FULI_SHARE" />
         </type>
 
         <type name="DBDT_ARENA_HIS_MSG">
@@ -10041,6 +10065,7 @@
             <item name="rolename" type="string" max_count="PT_MAX_ROLENAME_LEN"/>
             <item name="orderid" type="string" max_count="PT_MAX_SDK_ID_LEN"/>
             <item name="amount" type="INT32"/>
+            <item name="platform" type="string" max_count="PT_MAX_SDK_ID_LEN"/>
         </type>
 
         <!--YunWei Protocol-->
@@ -10958,8 +10983,12 @@
         <message name="GMID_FULI_VIPBONUS_VIP_ACK" id="1235" type="GMPKG_FULI_VIPBONUS_VIP_ACK" />
         <message name="GMID_FULI_VIPBONUS_NTF" id="1236" type="GMPKG_FULI_VIPBONUS_NTF" />
 
-        <message name="GMID_FULI_SHARE_REQ" id="1240" type="GMPKG_FULI_SHARE_REQ" />
-        <message name="GMID_FULI_SHARE_ACK" id="1241" type="GMPKG_FULI_SHARE_ACK" />
+        <message name="GMID_FULI_SHARE_DAILY_REQ" id="1240" type="GMPKG_FULI_SHARE_DAILY_REQ" />
+        <message name="GMID_FULI_SHARE_DAILY_ACK" id="1241" type="GMPKG_FULI_SHARE_DAILY_ACK" />
+        <message name="GMID_FULI_SHARE_RECOMMAND_REQ" id="1242" type="GMPKG_FULI_SHARE_RECOMMAND_REQ" />
+        <message name="GMID_FULI_SHARE_RECOMMAND_ACK" id="1243" type="GMPKG_FULI_SHARE_RECOMMAND_ACK" />
+        <message name="GMID_FULI_SHARE_MEMBER_TESTPLAY_REQ" id="1244" type="GMPKG_FULI_SHARE_MEMBER_TESTPLAY_REQ" />
+        <message name="GMID_FULI_SHARE_MEMBER_TESTPLAY_ACK" id="1245" type="GMPKG_FULI_SHARE_MEMBER_TESTPLAY_ACK" />
 
         <message name="GMID_ARENA_OPEN_REQ" id="1251" type="GMPKG_ARENA_OPEN_REQ" />
         <message name="GMID_ARENA_OPEN_ACK" id="1252" type="GMPKG_ARENA_OPEN_ACK" />

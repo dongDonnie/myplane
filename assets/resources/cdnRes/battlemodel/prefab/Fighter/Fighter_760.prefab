@@ -8,7 +8,8 @@
       "__id__": 1
     },
     "optimizationPolicy": 0,
-    "asyncLoadAssets": false
+    "asyncLoadAssets": false,
+    "readonly": false
   },
   {
     "__type__": "cc.Node",
@@ -24,17 +25,17 @@
     "_level": 1,
     "_components": [
       {
+        "__id__": 5
+      },
+      {
         "__id__": 6
       },
       {
         "__id__": 7
-      },
-      {
-        "__id__": 8
       }
     ],
     "_prefab": {
-      "__id__": 9
+      "__id__": 8
     },
     "_opacity": 255,
     "_color": {
@@ -66,8 +67,6 @@
       "y": 1,
       "z": 1
     },
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -78,7 +77,10 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
+    "_is3DNode": false,
     "groupIndex": 0,
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_id": ""
   },
   {
@@ -94,13 +96,10 @@
     "_components": [
       {
         "__id__": 3
-      },
-      {
-        "__id__": 4
       }
     ],
     "_prefab": {
-      "__id__": 5
+      "__id__": 4
     },
     "_opacity": 255,
     "_color": {
@@ -132,8 +131,6 @@
       "y": 1,
       "z": 1
     },
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -144,7 +141,10 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
+    "_is3DNode": false,
     "groupIndex": 0,
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_id": ""
   },
   {
@@ -176,27 +176,6 @@
     "_id": ""
   },
   {
-    "__type__": "cc.BoxCollider",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 2
-    },
-    "_enabled": true,
-    "tag": 0,
-    "_offset": {
-      "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0
-    },
-    "_size": {
-      "__type__": "cc.Size",
-      "width": 100,
-      "height": 100
-    },
-    "_id": ""
-  },
-  {
     "__type__": "cc.PrefabInfo",
     "root": {
       "__id__": 1
@@ -206,29 +185,6 @@
     },
     "fileId": "c5k0aDbw1Mdolx+VUjYTjx",
     "sync": false
-  },
-  {
-    "__type__": "sp.Skeleton",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
-    "_srcBlendFactor": 770,
-    "_dstBlendFactor": 772,
-    "paused": false,
-    "defaultSkin": "",
-    "defaultAnimation": "daiji",
-    "loop": true,
-    "premultipliedAlpha": false,
-    "timeScale": 1,
-    "_N$skeletonData": {
-      "__uuid__": "24c1ddff-735a-4a4e-b5fe-4349743da0a1"
-    },
-    "_N$debugSlots": false,
-    "_N$debugBones": false,
-    "_id": ""
   },
   {
     "__type__": "cc.BoxCollider",
@@ -259,11 +215,14 @@
       "__id__": 1
     },
     "_enabled": true,
-    "spine": {
-      "__id__": 6
-    },
-    "collider": {
+    "spine": null,
+    "dragonBone": {
       "__id__": 7
+    },
+    "dbArmature": null,
+    "dbArmatureCallback": null,
+    "collider": {
+      "__id__": 5
     },
     "_hasStop": false,
     "mixTime": 0.2,
@@ -272,6 +231,31 @@
     "defaultAction": null,
     "_displayLoop": false,
     "ready": null,
+    "_id": ""
+  },
+  {
+    "__type__": "dragonBones.ArmatureDisplay",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "_srcBlendFactor": 770,
+    "_dstBlendFactor": 771,
+    "_armatureName": "armatureName",
+    "_animationName": "daiji",
+    "playTimes": 0,
+    "_N$dragonAsset": {
+      "__uuid__": "08cdb476-f505-420a-8efe-945c82243afb"
+    },
+    "_N$dragonAtlasAsset": {
+      "__uuid__": "5f6e7b41-a97a-481a-9ab2-3a5ef8ef7ef8"
+    },
+    "_N$_defaultArmatureIndex": 0,
+    "_N$_animationIndex": 5,
+    "_N$timeScale": 1,
+    "_N$debugBones": false,
     "_id": ""
   },
   {

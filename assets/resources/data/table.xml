@@ -473,6 +473,7 @@
         <col name="RebirthCostDiamond" type="INT32"/>
         <col name="RelationID" type="UINT16" vector="true"/>
         <col name="Scale" type="double"/>
+        <col name="ShareDropPackage" type="UINT16"/>
         <col name="Description" type="string"/>
     </table>
 
@@ -604,6 +605,8 @@
         <col name="AnchorsPos" type="double" vector="true"/>
         <col name="DeathMode" type="UINT8"/>
         <col name="BoxCollider" type="string"/>
+        <col name="Extra" type="UINT32" vector="true"/>
+        <col name="MultiBlood" type="UINT8"/>
     </table>
     
     <table name="TblBattleLevelMonster" file="data/battlelevelmonster.tbl" multikey="ID,Level">
@@ -727,6 +730,7 @@
         <col name="Buff" type="UINT8" vector="true"/>
         <col name="DropDuation" type="UINT8" vector="true"/>
         <col name="Warning" type="UINT16"/>
+        <col name="IsBOSS" type="UINT16"/>
         <col name="Description" type="string"/>
     </table>
     

@@ -21,22 +21,23 @@ cc.Class({
             default: null,
             type: cc.Node,
         },
+        labelInviteCount: {
+            default: null,
+            type: cc.Label,
+        },
+        nodeInvitedPeople: {
+            default: null,
+            type: cc.Node,
+        }
     },
 
     onLoad: function () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_FEEDBACK_WND;
 
         this.content = this.feedbackScroll.content;
         this.animeStartParam(0, 0);
 
-        if (cc.sys.platform === cc.sys.WECHAT_GAME){
-            // weChatAPI.getInviteUserList("invite", function(data){
-            //     for (let i = 0; i< data.total; i++){
-            //         let userData = data.list[i];
-            //     }
-            // });
-            // weChatAPI.getAlreadyShareTimes();
-        }
         this.isFirstIn = true;
     },
 
@@ -54,6 +55,29 @@ cc.Class({
             this._super("Enter");
             this.registerEvent();
             this.node.getChildByName("nodeSCReward").active = true;
+
+            let self = this;
+            if (cc.sys.platform === cc.sys.WECHAT_GAME){
+                weChatAPI.getInviteUserList("invite", function(data){
+                    self.curInviteCount = data.total;
+                    self.inviteTicket = data.ticket;
+                    self.maxInviteCount = GlobalVar.tblApi.getDataBySingleKey('TblParam', GameServerProto.PTPARAM_FULI_CZ_INVITE_USER).dValue;
+                    self.labelInviteCount.string = "（%d/%d）".replace("%d", data.total).replace("%d", self.maxInviteCount);
+                    for (let i = 0; i< data.total; i++){
+                        let url = data.list[i].avatar + "?a=a.png";
+                        let index = i;
+                        if (!self.nodeInvitedPeople.children[index]) return;
+                        cc.loader.load(url, function (err, tex) {
+                            if (err) {
+                                cc.error("LoadURLSpriteFrame err." + url);
+                                return;
+                            }
+                            let spriteFrame = new cc.SpriteFrame(tex);
+                            self.nodeInvitedPeople.children[index].getComponent(cc.Sprite).spriteFrame = spriteFrame;
+                        })
+                    }
+                });
+            }
         }
     },
 
@@ -143,7 +167,14 @@ cc.Class({
     },
 
     onRecvSCFuliBtnClick: function(event) {
-        GlobalVar.handlerManager().feedbackHandler.sendGetFuliSCReq();
+        let isFree = 0, ticket = ""
+        // if (this.curInviteCount >= this.maxInviteCount){
+        //     isFree = 1;
+        //     ticket = this.inviteTicket;
+        // }
+        // console.log("isFree:", isFree);
+        // console.log("ticket:", ticket);
+        GlobalVar.handlerManager().feedbackHandler.sendGetFuliSCReq(isFree, ticket);
     },
 
     saveFeedbackResult: function (event) {
@@ -192,9 +223,10 @@ cc.Class({
 
     getFeedbackBuyResult: function (event) {
         if (event.ErrCode && event.ErrCode !== GameServerProto.PTERR_SUCCESS) {
-            GlobalVar.comMsg.errorWarning(event.ErrCode);
             if (event.ErrCode == GameServerProto.PTERR_FULI_NOT_COND){
                 CommonWnd.showRechargeWnd();
+            }else{
+                GlobalVar.comMsg.errorWarning(event.ErrCode);
             }
             return;
         }
@@ -217,21 +249,22 @@ cc.Class({
             GlobalVar.comMsg.errorWarning(event.ErrCode);
             return;
         }
-        CommonWnd.showTreasuerExploit(event.GetItem);
+        CommonWnd.showTreasureExploit(event.GetItem);
     },
 
     getFuliSCResult: function(event) {
         if (event.ErrCode && event.ErrCode !== GameServerProto.PTERR_SUCCESS) {
-            GlobalVar.comMsg.errorWarning(event.ErrCode);
             if (event.ErrCode == GameServerProto.PTERR_FULI_NOT_CZ){
                 CommonWnd.showRechargeWnd();
+            }else{
+                GlobalVar.comMsg.errorWarning(event.ErrCode);
             }
             return;
         }
 
         this.node.getChildByName("btnRecv").active = false;
         this.node.getChildByName("spriteAlreadedGet").active = true;     
-        CommonWnd.showTreasuerExploit(event.Item);
+        CommonWnd.showTreasureExploit(event.Item);
     },
 
 
@@ -241,13 +274,7 @@ cc.Class({
             param.fromServerID = GlobalVar.me().loginData.getLoginReqDataServerID();
             param.fromOpenID = GlobalVar.me().loginData.getLoginReqDataAccount();
             param.fromBtn = "invite";
-            if (GlobalVar.materials){
-                let materials = GlobalVar.materials[1];
-                let ranNum = Math.floor(Math.random()*materials.length);
-                weChatAPI.shareInvite(materials[ranNum], param);
-            }else{
-                // console.log("no materials data");
-            }
+            weChatAPI.shareInvite(1, param);
         }
     },
 

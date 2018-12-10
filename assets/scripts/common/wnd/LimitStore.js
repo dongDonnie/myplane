@@ -86,6 +86,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.nodeSVContent.removeAllChildren();
     },
 
@@ -145,7 +146,7 @@ cc.Class({
         }else{
             node.children[0].getComponent("ItemObject").updateItem(itemId);
             node.children[0].getComponent("ItemObject").setClick(true, 2)
-            if (num){
+            if (num > 1){
                 node.children[0].getComponent("ItemObject").setLabelNumberData(num);
             }
         }
@@ -242,10 +243,11 @@ cc.Class({
             firstreward.active = false;
             return;
         }
-        for (let i = 0; i < item.oVecDiscount.length - 1; i++) {
-            if (bought.Num > item.oVecDiscount[i].byNum) {
-                let discount = item.oVecDiscount[i+1].nCost / 10 + '折';
+        for (let i = item.oVecDiscount.length - 1; i >= 0; i--) {
+            if (bought.Num+1 >= item.oVecDiscount[i].byNum) {
+                let discount = item.oVecDiscount[i].nCost / 10 + '折';
                 firstreward.getChildByName('label').getComponent(cc.Label).string = discount;
+                break;
             }
         }
     },
@@ -328,7 +330,7 @@ cc.Class({
         }
 
 
-        CommonWnd.showTreasuerExploit(event.Item);
+        CommonWnd.showTreasureExploit(event.Item);
 
         for (let j = 0; j < this.itemArray.length; j++)
         {

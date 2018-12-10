@@ -56,13 +56,13 @@ cc.Class({
     chaseFighter: function (dt,endMode) {
         let chasePos = this.heroManager.planeEntity.getPosition();
         if (this.side == -1 && this.pos==0) {
-            chasePos = chasePos.add(cc.v2(-85, -40));
+            chasePos = chasePos.add(cc.v3(-85, -40));
         } else if (this.side == 1 && this.pos==0) {
-            chasePos = chasePos.add(cc.v2(85, -40));
+            chasePos = chasePos.add(cc.v3(85, -40));
         }else if (this.side == -1 && this.pos==1) {
-            chasePos = chasePos.add(cc.v2(-110, 60));
+            chasePos = chasePos.add(cc.v3(-110, 60));
         } else if (this.side == 1 && this.pos==1) {
-            chasePos = chasePos.add(cc.v2(110, 60));
+            chasePos = chasePos.add(cc.v3(110, 60));
         }
         let pos=this.getPosition();
         let distance=pos.sub(chasePos).mag();

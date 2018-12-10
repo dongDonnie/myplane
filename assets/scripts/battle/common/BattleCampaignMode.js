@@ -13,7 +13,9 @@ let campaignStep = cc.Enum({
     GROUPEND: 7,
     WAVEEND: 8,
     GAMEEND: 9,
-    NONE: 10,
+    ANIMETIME:10,
+    MAPEND: 11,
+    NONE: 12,
 });
 const Mode = cc.Class({
 
@@ -60,7 +62,7 @@ const Mode = cc.Class({
             case campaignStep.WARNING:
                 this.mapUpdate(dt);
                 if (this.showAnime()) {
-                    this.step = campaignStep.NONE;
+                    this.step = campaignStep.ANIMETIME;
                 } else {
                     this.step = campaignStep.GROUPSTART;
                 }
@@ -82,6 +84,13 @@ const Mode = cc.Class({
                 if (this.waveIndex >= this.waveControlList.length) {
                     this.step = campaignStep.GAMEEND;
                 } else {
+                    if (this.inBossRoom == 1) {
+                        if (this.battleManager.getMusic() != null) {
+                            GlobalVar.soundManager().stopBGM();
+                            GlobalVar.soundManager().playBGM("cdnRes/" + this.battleManager.getMusic());
+                        }
+                        this.inBossRoom = 0;
+                    }
                     if (this.mapChange()) {
                         this.step = campaignStep.CREATEMAP;
                     } else {
@@ -92,15 +101,23 @@ const Mode = cc.Class({
             case campaignStep.GAMEEND:
                 this.mapUpdate(dt);
                 this.endGame();
-                this.step = campaignStep.NONE;
+                this.setMapEnd();
+                this.step = campaignStep.MAPEND;
+                break;
+            case campaignStep.ANIMETIME:
+                this.mapUpdate(dt);
+                break;
+            case campaignStep.MAPEND:
+                this.mapEnd(dt);
                 break;
             case campaignStep.NONE:
-                this.mapUpdate(dt);
                 break;
         }
 
-        this.createExtra(dt);
-        this.checkHint(dt);
+        if(this.step!=campaignStep.MAPEND && this.step!=campaignStep.NONE){
+            this.createExtra(dt);
+            this.checkHint(dt);
+        }
     },
 
     init: function (mapName) {
@@ -122,6 +139,8 @@ const Mode = cc.Class({
         this.defaultLv = 1;
 
         this.animeIndex = 0;
+
+        this.inBossRoom = 0;
 
         this.step = campaignStep.GAMESTART;
 
@@ -164,6 +183,7 @@ const Mode = cc.Class({
                 waveControl.groupwait = single.wave.wait;
                 waveControl.groupdelay = single.wave.delay;
                 waveControl.groupanime = typeof single.wave.anime !== 'undefined' ? single.wave.anime : 0;
+                waveControl.groupIsBoss = typeof single.wave.isBOSS !== 'undefined' ? single.wave.isBOSS : 0;
                 waveControl.monsterInterval = [];
                 waveControl.monstersList = [];
                 waveControl.monsterKillList = [];
@@ -273,13 +293,13 @@ const Mode = cc.Class({
                     nodeBkg.x = cc.winSize.width / 2;
                     if (control.mapList.length > 0) {
                         let last = control.mapList[control.mapList.length - 1];
-                        nodeBkg.y = (last.y + 0.5 * last.getContentSize().height * last.getScale() + 0.5 * nodeBkg.getContentSize().height * nodeBkg.getScale());
+                        nodeBkg.y = (last.y + 0.5 * last.getContentSize().height * last.scale + 0.5 * nodeBkg.getContentSize().height * nodeBkg.scale);
                     } else {
                         if (control.mapTransList.length > 0) {
                             let top = control.mapTransList[control.mapTransList.length - 1];
-                            nodeBkg.y = (top.y + 0.5 * top.getContentSize().height * top.getScale() + 0.5 * nodeBkg.getContentSize().height * nodeBkg.getScale());
+                            nodeBkg.y = (top.y + 0.5 * top.getContentSize().height * top.scale + 0.5 * nodeBkg.getContentSize().height * nodeBkg.scale);
                         } else {
-                            nodeBkg.y = (0.5 * nodeBkg.getContentSize().height * nodeBkg.getScale());
+                            nodeBkg.y = (0.5 * nodeBkg.getContentSize().height * nodeBkg.scale);
                         }
                     }
                     this.battleManager.displayContainer.addChild(nodeBkg, controlIndex - 999);
@@ -290,6 +310,67 @@ const Mode = cc.Class({
         }
         return false;
     },
+    setMapEnd: function () {
+        let highest = null;
+        for (let controlIndex = this.mapControlList.length-1; controlIndex >=0; controlIndex--) {
+            let control = this.mapControlList[controlIndex];
+            if (control.mapList.length == 0) {
+                continue;
+            }
+            if (highest == null) {
+                highest = control;
+            }
+            if (control.loop) {
+                control.mapSpeed = highest.mapSpeed;
+            }
+        }
+    },
+    mapEnd: function (dt) {
+        let highest=null;
+        for (let controlIndex = this.mapControlList.length - 1; controlIndex >= 0; controlIndex--) {
+            let control = this.mapControlList[controlIndex];
+            if (control.mapList.length == 0) {
+                continue;
+            }
+            if(highest==null){
+                highest=control;
+            }
+            if(highest!=null){
+                if(!highest.loop){
+                    this.step = campaignStep.NONE;
+                    break;
+                }
+            }
+            for (let i = 0; i < control.mapList.length; i++) {
+                let posY = control.mapList[i].y;
+                if (posY + 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].scale <= 0) {
+                    let highest = 0;
+                    let index = 0;
+                    for (let j = 0; j < control.mapList.length; j++) {
+                        if (control.mapList[j].y >= highest) {
+                            highest = control.mapList[j].y;
+                            index = j;
+                        }
+                    }
+                    posY = control.mapList[index].y +
+                        0.5 * control.mapList[index].getContentSize().height * control.mapList[index].scale +
+                        0.5 * control.mapList[i].getContentSize().height * control.mapList[i].scale;
+                    control.mapList[i].y = posY;
+                }
+            }
+            if (control.loop) {
+                for (let i = 0; i < control.mapList.length; i++) {
+                    control.mapList[i].y = (control.mapList[i].y - control.mapSpeed * dt);
+                }
+                if (control.mapSpeed >= 10) {
+                    control.mapSpeed -= 10;
+                } else {
+                    control.loop = false;
+                }
+            }
+        }
+    },
+
     mapUpdate: function (dt) {
         //     for (let controlIndex = 0; controlIndex < this.mapControlList.length; controlIndex++){
         //         let control = this.mapControlList[controlIndex];
@@ -299,7 +380,8 @@ const Mode = cc.Class({
         // }
         //     return;
 
-        for (let controlIndex = 0; controlIndex < this.mapControlList.length; controlIndex++) {
+        let highestControl=null;
+        for (let controlIndex = this.mapControlList.length-1; controlIndex >=0 ; controlIndex--) {
             let control = this.mapControlList[controlIndex];
 
             if (control.mapList.length == 0) {
@@ -309,7 +391,7 @@ const Mode = cc.Class({
             if (control.loop) {
                 for (let i = 0; i < control.mapList.length; i++) {
                     let posY = control.mapList[i].y;
-                    if (posY + 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].getScale() <= 0) {
+                    if (posY + 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].scale <= 0) {
                         let highest = 0;
                         let index = 0;
                         for (let j = 0; j < control.mapList.length; j++) {
@@ -319,16 +401,16 @@ const Mode = cc.Class({
                             }
                         }
                         posY = control.mapList[index].y +
-                            0.5 * control.mapList[index].getContentSize().height * control.mapList[index].getScale() +
-                            0.5 * control.mapList[i].getContentSize().height * control.mapList[i].getScale();
+                            0.5 * control.mapList[index].getContentSize().height * control.mapList[index].scale +
+                            0.5 * control.mapList[i].getContentSize().height * control.mapList[i].scale;
                         control.mapList[i].y = (posY);
                     }
                 }
                 for (let i = 0; i < control.mapList.length; i++) {
                     control.mapList[i].y = (control.mapList[i].y - control.mapSpeed * dt);
                     // let posY = control.mapList[i].y;
-                    // if (posY + 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].getScale() <= 0 ||
-                    //     posY - 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].getScale() > cc.winSize.height) {
+                    // if (posY + 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].scale <= 0 ||
+                    //     posY - 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].scale > cc.winSize.height) {
                     //     if (control.mapList[i].active) {
                     //         control.mapList[i].active = false;
                     //     }
@@ -348,21 +430,29 @@ const Mode = cc.Class({
                         }
                     }
                 }
+                if(highestControl==null){
+                    highestControl=control;
+                }
+                if(!!highestControl){
+                    if(!!highestControl.stop){
+                        break;
+                    }
+                }
                 let highest = control.mapList[control.mapList.length - 1];
-                // if (highest.y + 0.5 * highest.getContentSize().height * highest.getScale() < cc.winSize.height) {
+                // if (highest.y + 0.5 * highest.getContentSize().height * highest.scale < cc.winSize.height) {
                 //     let posY = cc.winSize.height;
                 //     for (let l = control.mapList.length - 1; l >= 0; l--) {
-                //         posY -= 0.5 * control.mapList[l].getContentSize().height * control.mapList[l].getScale();
+                //         posY -= 0.5 * control.mapList[l].getContentSize().height * control.mapList[l].scale;
                 //         control.mapList[l].y = (posY);
-                //         posY -= 0.5 * control.mapList[l].getContentSize().height * control.mapList[l].getScale();
+                //         posY -= 0.5 * control.mapList[l].getContentSize().height * control.mapList[l].scale;
                 //     }
                 // } else 
-                if (highest.y + 0.5 * highest.getContentSize().height * highest.getScale() > cc.winSize.height) {
+                if (highest.y + 0.5 * highest.getContentSize().height * highest.scale > cc.winSize.height) {
                     for (let i = 0; i < control.mapList.length; i++) {
                         control.mapList[i].y = (control.mapList[i].y - control.mapSpeed * dt);
                         // let posY = control.mapList[i].y;
-                        // if (posY + 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].getScale() <= 0 ||
-                        //     posY - 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].getScale() > cc.winSize.height) {
+                        // if (posY + 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].scale <= 0 ||
+                        //     posY - 0.5 * control.mapList[i].getContentSize().height * control.mapList[i].scale > cc.winSize.height) {
                         //     if (control.mapList[i].active) {
                         //         control.mapList[i].active = false;
                         //     }
@@ -372,9 +462,11 @@ const Mode = cc.Class({
                         //     }
                         // }
                     }
-                    if (control.mapSpeed >= 250) {
-                        control.mapSpeed--;
-                    }
+                    // if (control.mapSpeed >= 300) {
+                    //     control.mapSpeed-=1;
+                    // }
+                }else{
+                    control.stop=true;
                 }
             }
         }
@@ -386,7 +478,7 @@ const Mode = cc.Class({
             let index = -1;
             for (let i = control.mapTransList.length - 1; i >= 0; i--) {
                 control.mapTransList[i].y = (control.mapTransList[i].y - control.mapSpeed * dt);
-                if (control.mapTransList[i].y + 0.5 * control.mapTransList[i].getContentSize().height * control.mapTransList[i].getScale() <= 0) {
+                if (control.mapTransList[i].y + 0.5 * control.mapTransList[i].getContentSize().height * control.mapTransList[i].scale <= 0) {
                     index = i;
                 }
             }
@@ -446,10 +538,10 @@ const Mode = cc.Class({
                 }
             }
 
-            if (control.mapList[0].y + 0.5 * control.mapList[0].getContentSize().height * control.mapList[0].getScale() <= 0) {
+            if (control.mapList[0].y + 0.5 * control.mapList[0].getContentSize().height * control.mapList[0].scale <= 0) {
                 let newPosY = control.mapList[control.mapList.length - 1].y +
-                    0.5 * control.mapList[control.mapList.length - 1].getContentSize().height * control.mapList[control.mapList.length - 1].getScale() +
-                    0.5 * control.mapList[0].getContentSize().height * control.mapList[0].getScale();
+                    0.5 * control.mapList[control.mapList.length - 1].getContentSize().height * control.mapList[control.mapList.length - 1].scale +
+                    0.5 * control.mapList[0].getContentSize().height * control.mapList[0].scale;
                 control.mapList[0].y = (newPosY);
                 let top = control.mapList.shift();
                 control.mapList.push(top);
@@ -479,14 +571,14 @@ const Mode = cc.Class({
                     control.mapList[i].setScale(control.mapScale);
                 }
                 let posY = control.mapList[0].y - control.mapSpeed * dt;
-                if (posY - 0.5 * control.mapList[0].getContentSize().height * control.mapList[0].getScale() > 0) {
-                    posY = 0.5 * control.mapList[0].getContentSize().height * control.mapList[0].getScale()
+                if (posY - 0.5 * control.mapList[0].getContentSize().height * control.mapList[0].scale > 0) {
+                    posY = 0.5 * control.mapList[0].getContentSize().height * control.mapList[0].scale
                 }
                 control.mapList[0].y = (posY);
-                posY += 0.5 * control.mapList[0].getContentSize().height * control.mapList[0].getScale();
+                posY += 0.5 * control.mapList[0].getContentSize().height * control.mapList[0].scale;
                 for (let index = 1; index < control.mapList.length; index++) {
-                    control.mapList[index].y = (posY + 0.5 * control.mapList[index].getContentSize().height * control.mapList[index].getScale());
-                    posY = control.mapList[index].y + 0.5 * control.mapList[index].getContentSize().height * control.mapList[index].getScale();
+                    control.mapList[index].y = (posY + 0.5 * control.mapList[index].getContentSize().height * control.mapList[index].scale);
+                    posY = control.mapList[index].y + 0.5 * control.mapList[index].getContentSize().height * control.mapList[index].scale;
                 }
             } else if (control.speedAccTime > 0) {
                 control.mapSpeed += control.speedAcc * dt;
@@ -508,11 +600,24 @@ const Mode = cc.Class({
         return !sum;
     },
 
-    recordExtra: function (extra) {
+    recordExtra: function (extra, delay) {
         this.extra.open = typeof extra !== 'undefined' ? extra : -2;
+        delay = typeof delay !== 'undefined' ? delay : 0;
+        if (this.extra.open == -1) {
+            for (let key in this.data.monsterExtra) {
+                this.extra.groupdelay[key] = delay;
+            }
+            this.extra.curTime = delay;
+        } else {
+            for (let key in this.data.monsterExtra) {
+                this.extra.groupdelay[key] = 0;
+            }
+            this.extra.curTime = 0;
+        }
     },
     selectExtra: function (choose) {
         if (this.extra.completeGroups.length == this.data.monsterExtra.length) {
+            this.extra.completeGroups.splice(0, this.extra.completeGroups.length);
             return;
         }
         let randArray = [];
@@ -559,6 +664,7 @@ const Mode = cc.Class({
                 this.extra.monsterInterval[this.extra.groupIndex] = 0;
                 this.extra.groupCount++;
                 this.extra.groupIndex = -1;
+                this.extra.curTime = 0;
             }
         }
     },
@@ -630,7 +736,7 @@ const Mode = cc.Class({
     },
     createGroupMonster(monsterId, pos) {
         let p = pos.split(',');
-        let v = cc.v2(Number(p[0]), Number(p[1]));
+        let v = cc.v3(Number(p[0]), Number(p[1]));
         const monsterMapping = require('MonsterMapping');
         let tblMonster = GlobalVar.tblApi.getDataBySingleKey('TblBattleMonster', monsterId);
         if (!tblMonster) {
@@ -741,12 +847,21 @@ const Mode = cc.Class({
         let waveControl = this.waveControlList[this.waveIndex];
         if (waveControl.wave != null) {
             if (typeof waveControl.wave.anime !== 'undefined') {
+                if (typeof waveControl.wave.isBOSS !== 'undefined') {
+                    this.inBossRoom = waveControl.wave.isBOSS;
+                    if (this.inBossRoom == 1) {
+                        GlobalVar.soundManager().stopBGM();
+                    }
+                }
                 this.animeIndex = waveControl.wave.anime;
                 var self = this;
                 if (this.animeIndex == 1) {
                     this.battleManager.warning(function () {
                         self.animeIndex = -1;
                         self.step = campaignStep.GROUPSTART;
+                        if (self.inBossRoom == 1) {
+                            GlobalVar.soundManager().playBGM("cdnRes/audio/battle/music/Boss_Room");
+                        }
                     });
                     return true;
                 }
@@ -843,9 +958,9 @@ const Mode = cc.Class({
         for (let effect of hint.effect) {
             if (typeof effect.extra !== 'undefined') {
                 //this.selectExtra(effect.extra);
-                this.recordExtra(effect.extra);
+                this.recordExtra(effect.extra.open, effect.extra.delay);
             } else if (typeof effect.drop !== 'undefined') {
-                let pos = cc.v2(cc.winSize.width * Math.random(), cc.winSize.height - 20);
+                let pos = cc.v3(cc.winSize.width * Math.random(), cc.winSize.height - 20);
                 this.solution.solution_buff(effect.drop, pos);
             } else if (typeof effect.result !== 'undefined') {
                 this.step = campaignStep.GAMEEND;

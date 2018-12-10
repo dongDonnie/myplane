@@ -14,12 +14,12 @@ CampNormal3.data = {
         {wave:{groups:[668,302],wait:0,delay:[0,4]}},
         {wave:{groups:[669],wait:0,delay:[0,3]}},
     ],
-    monsterExtra:[311,312,314,315,316,317],
+    monsterExtra:[23,24,25,1313,1314,1315,1316,1317],
     totalHint:[
         {
             checkTime:-1,
             condition:[
-                {interval:18},
+                {interval:12},
             ],
             effect:[
                 {drop:10000},
@@ -27,22 +27,22 @@ CampNormal3.data = {
         },
         {
             eventKey:0,
-            checkTime:-1,
+            checkTime:1,
             condition:[
                 {wave:{index:1,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:1.2}},
             ],
         },
         {
             eventKey:0,
-            checkTime:-1,
+            checkTime:1,
             condition:[
-                {wave:{index:2,step:5}},
+                {wave:{index:2,step:6}},
             ],
             effect:[
-                {extra:-2},
+                {extra:{open:-2}},
             ],
         },
     ],

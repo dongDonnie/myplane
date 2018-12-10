@@ -10,6 +10,7 @@ const GameServerProto = require("GameServerProto");
 const weChatAPI = require("weChatAPI");
 const WindowManager = require("windowmgr");
 
+const BUTTON_TYPE_PURCHASE_ONLY = 0;
 const BUTTON_TYPE_SHARE_ONLY = 1;
 const BUTTON_TYPE_SHARE_PURCHASE = 2;
 
@@ -44,13 +45,10 @@ cc.Class({
             default: null,
             type: ButtonObject,
         },
-        nodeBlock: {
-            default: null,
-            type: cc.BlockInputEvents,
-        }
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_FREE_GET_WND;
         this.animeStartParam(0, 0);
@@ -64,10 +62,6 @@ cc.Class({
     animeStartParam(paramScale, paramOpacity) {
         this.node.setScale(paramScale, paramScale);
         this.node.opacity = paramOpacity;
-
-        if (paramOpacity == 0 || paramOpacity == 255) {
-            this.nodeBlock.enabled = true;
-        }
     },
 
 
@@ -85,7 +79,6 @@ cc.Class({
             GlobalVar.eventManager().removeListenerWithTarget(this);
             WindowManager.getInstance().popView(false, function () {
                 if (purchaseMode){
-                    WindowManager.getInstance().unLockBtn();
                     if (shareType == SHARE_TYPE_GOLD) {
                         // CommonWnd.showRichTreasureWnd();   //淘金界面打开需要有数据，故仍然用UImain的监听来打开淘金界面
                         GlobalVar.handlerManager().drawHandler.sendTreasureData();
@@ -96,7 +89,6 @@ cc.Class({
             }, false, false);
         } else if (name == "Enter") {
             this._super("Enter");
-            this.nodeBlock.enabled = false;
             GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_GET_FREE_GOLD, this.getFreeGold, this);
             GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_GET_FREE_DIAMOND, this.getFreeDiamond, this);
         }
@@ -113,15 +105,32 @@ cc.Class({
         this.setBtnEvent(shareCallBack, purchaseCallBack, closeCallBack);
         this.setShareText(shareName);
         this.setPurchaseText(purchaseName);
+
+        // if (!GlobalVar.getShareSwitch()){
+        //     this.labelLeftTime.node.active = false;
+        //     this.btnShare.node.active = false;
+        //     this.btnPurchase.node.x = 0;
+        // }else{
+        //     this.labelLeftTime.node.active = true;
+        //     this.btnShare.node.active = true;
+        //     this.btnShare.node.x = -140;
+        //     this.labelLeftTime.node.x = -140;
+        //     if (!GlobalVar.srcSwitch()){
+        //         this.btnPurchase.node.x = 0;
+        //         this.btnPurchase.node.active = true;
+        //         this.btnShare.node.x = 0;
+        //         this.labelLeftTime.node.x = 0;
+        //     }
+        // }
     },
 
     initFreeGetWnd: function (errCode, shareCallBack, purchaseCallBack, closeCallBack) {
         let btnType = BUTTON_TYPE_SHARE_PURCHASE;
         let title = i18n.t("label.4000216");
         let text = "";
-        let leftTimeStr = i18n.t("label.4000305");
-        let shareName = i18n.t("label.4000303");
-        let purchaseName = i18n.t("label.4000304");
+        let leftTimeStr = i18n.t("label.4000306");
+        let shareName = i18n.t("label.4000304");
+        let purchaseName = i18n.t("label.4000305");
         let curTime = 0;
         let maxTime = 0;
         let leftShareTime = 0;
@@ -129,17 +138,26 @@ cc.Class({
             // 可获得金币
             this._shareType = SHARE_TYPE_GOLD;
             let canGetGold = GlobalFunc.getShareCanGetGold(GlobalVar.me().level);
-            text = i18n.t("label.4000301").replace("%d", canGetGold);
+            text = i18n.t("label.4000301");
+            if (GlobalVar.getShareSwitch()){
+                text = text + i18n.t("label.4000302").replace("%d", canGetGold);
+            }
 
             // 剩余次数状态
             curTime = GlobalVar.me().shareData.getFreeGoldCount();
             maxTime = GlobalVar.tblApi.getDataBySingleKey('TblParam', GameServerProto.PTPARAM_TREASURE_GOLD_FREE_MAX).dValue;
             leftTimeStr = leftTimeStr.replace("%left", maxTime - curTime).replace("%max", maxTime);
+            if (GlobalVar.getShareSwitch()){
+                btnType = BUTTON_TYPE_SHARE_PURCHASE;
+            }else{
+                btnType = BUTTON_TYPE_PURCHASE_ONLY;
+            }
+
         } else if (errCode == GameServerProto.PTERR_DIAMOND_LACK) {
             // 可获得钻石
             this._shareType = SHARE_TYPE_DIAMOND;
             let canGetDiamond = GlobalVar.tblApi.getDataBySingleKey('TblParam', GameServerProto.PTPARAM_RCG_FREE_DIAMOND).dValue;
-            text = i18n.t("label.4000302").replace("%d", canGetDiamond);
+            text = i18n.t("label.4000303").replace("%d", canGetDiamond);
 
             // 剩余次数状态
             curTime = GlobalVar.me().shareData.getFreeDiamondCount();
@@ -147,10 +165,17 @@ cc.Class({
             leftTimeStr = leftTimeStr.replace("%left", maxTime - curTime).replace("%max", maxTime);
 
             // 隐藏购买按钮
-            if (GlobalVar.srcSwitch()) {
+            if (GlobalVar.srcSwitch() && GlobalVar.getShareSwitch()) {
                 btnType = BUTTON_TYPE_SHARE_ONLY;
+            }else if (!GlobalVar.srcSwitch()){
+                if (GlobalVar.getShareSwitch()){
+                    btnType = BUTTON_TYPE_PURCHASE_ONLY;
+                }else{
+                    btnType = BUTTON_TYPE_PURCHASE_ONLY;
+                }
             }
         }
+
         leftShareTime = maxTime - curTime;
         this.initWndByData(btnType, title, text, leftTimeStr, leftShareTime, shareCallBack, purchaseCallBack, closeCallBack, shareName, purchaseName);
     },
@@ -163,18 +188,22 @@ cc.Class({
             this.close();
             return;
         }
+
+        let materialID = 0;
+        if (this._shareType == SHARE_TYPE_GOLD) {
+            materialID = 114
+        } else if (this._shareType == SHARE_TYPE_DIAMOND) {
+            materialID = 115
+        }
+
         let self = this;
-        let shareSuccessCallback = function () {
+        weChatAPI.shareNormal(materialID, function () {
             if (self._shareType == SHARE_TYPE_GOLD) {
                 GlobalVar.handlerManager().shareHandler.sendGetFreeGoldReq();
             } else if (self._shareType == SHARE_TYPE_DIAMOND) {
                 GlobalVar.handlerManager().shareHandler.sendGetFreeDiamondReq();
             }
-        };
-
-        let materials = GlobalVar.materials[1];
-        let ranNum = Math.floor(Math.random()*materials.length);
-        weChatAPI.shareNormal(materials[ranNum], shareSuccessCallback);
+        });
     },
 
     onBtnPurchaseClick: function (event) {
@@ -193,7 +222,6 @@ cc.Class({
     },
 
     getFreeGold: function (event) {
-        GlobalVar.comMsg.showMsg("分享成功");
         if (!!this.shareCallBack){
             this.shareCallBack();
         }
@@ -201,7 +229,6 @@ cc.Class({
     },
 
     getFreeDiamond: function (event) {
-        GlobalVar.comMsg.showMsg("分享成功");
         if (!!this.shareCallBack){
             this.shareCallBack();
         }
@@ -269,13 +296,22 @@ cc.Class({
     setBtnMode: function (mode) {
         if (mode == BUTTON_TYPE_SHARE_PURCHASE) {
             this.btnShare.node.x = -140;
+            this.btnShare.node.active = true;
             this.labelLeftTime.node.x = -140;
+            this.labelLeftTime.node.active = true;
             this.btnPurchase.node.x = 140;
             this.btnPurchase.node.active = true;
         } else if (mode == BUTTON_TYPE_SHARE_ONLY) {
+            this.btnShare.node.active = true;
+            this.labelLeftTime.node.active = true;
             this.btnShare.node.x = 0;
             this.labelLeftTime.node.x = 0;
             this.btnPurchase.node.active = false;
+        } else if (mode == BUTTON_TYPE_PURCHASE_ONLY){
+            this.btnPurchase.node.active = true;
+            this.btnPurchase.node.x = 0;
+            this.labelLeftTime.node.active = false;
+            this.btnShare.node.active = false;
         }
     },
 

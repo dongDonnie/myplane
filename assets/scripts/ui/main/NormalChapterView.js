@@ -27,6 +27,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_CHAPTER_VIEW;
         if (GlobalFunc.isAllScreen() && !this.fixViewComplete) {
@@ -72,6 +73,7 @@ cc.Class({
     initChapterViewWithType: function (chapterType, curMapIndex) {
         let self = this;
 
+        this.boxarr = GlobalVar.me().campData.getBoxArrayData();
         this.chapterType = chapterType;
         let chapterDataList = GlobalVar.tblApi.getDataBySingleKey('TblChapter', this.chapterType);
         let startIndex = curMapIndex + 1<6?0:(Math.floor(curMapIndex / 3) - 1)*3
@@ -126,6 +128,7 @@ cc.Class({
             chapter.getChildByName("labelStarCount").color = cc.color(65, 72, 119);
             // chapter.color = cc.Color.WHITE;
         }
+        
         chapter.getChildByName("labelChapterTitle").getComponent(cc.Label).string = i18n.t('label.4000234').replace('%d', data.byChapterID);
         chapter.getChildByName("labelChapterName").getComponent(cc.Label).string = data.strChapterName;
         let curStarsCount = GlobalVar.me().campData.getChapterStarCount(this.chapterType, data.byChapterID);
@@ -135,11 +138,20 @@ cc.Class({
             chapter.getChildByName("spriteChapterBg").getComponent("RemoteSprite").spriteFrame = frame;
         });
         // chapter.runAction(cc.sequence(cc.scaleTo(0.1, 1.1), cc.scaleTo(0.05, 1)));
+
+        chapter.getChildByName('spriteHot').active = false;
+        for (let j = 0; j < this.boxarr.length; j++) {
+            if (this.boxarr[j].ChapterID == data.byChapterID) {
+                chapter.getChildByName('spriteHot').active = true;
+            }
+        }
     },
 
     onChapterBtnClick: function (event) {
-        if (event.target.data.byChapterID > this.lastChapterID){
-            GlobalVar.comMsg.showMsg("需要先通关前置章节");
+        if (event.target.data.wOpenLv > GlobalVar.me().level){
+            GlobalVar.comMsg.showMsg(i18n.t('label.4000263').replace("%d", event.target.data.wOpenLv));
+        }else if (event.target.data.byChapterID > this.lastChapterID){
+            GlobalVar.comMsg.showMsg(i18n.t('label.4000262'));
         }else{
             GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_CHAPTER_SELECT, event.target.data.byChapterID - 1);
             this.close();

@@ -3,10 +3,13 @@
     "__type__": "cc.Prefab",
     "_name": "",
     "_objFlags": 0,
-    "_rawFiles": null,
+    "_native": "",
     "data": {
       "__id__": 1
-    }
+    },
+    "optimizationPolicy": 0,
+    "asyncLoadAssets": false,
+    "readonly": false
   },
   {
     "__type__": "cc.Node",
@@ -14,23 +17,22 @@
     "_objFlags": 0,
     "_parent": null,
     "_children": [],
-    "_tag": -1,
     "_active": true,
+    "_level": 1,
     "_components": [
       {
         "__id__": 2
       },
       {
-        "__id__": 3
+        "__id__": 4
       },
       {
-        "__id__": 4
+        "__id__": 3
       }
     ],
     "_prefab": {
       "__id__": 5
     },
-    "_id": "",
     "_opacity": 255,
     "_color": {
       "__type__": "cc.Color",
@@ -39,52 +41,43 @@
       "b": 255,
       "a": 255
     },
-    "_cascadeOpacityEnabled": true,
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 96,
+      "height": 68.52
+    },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
       "x": 0.5,
       "y": 0.5
     },
-    "_contentSize": {
-      "__type__": "cc.Size",
-      "width": 0,
-      "height": 0
-    },
-    "_rotationX": 0,
-    "_rotationY": 0,
-    "_scaleX": 1,
-    "_scaleY": 1,
     "_position": {
-      "__type__": "cc.Vec2",
+      "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0
+      "y": 0,
+      "z": 0
+    },
+    "_scale": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_quat": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
     },
     "_skewX": 0,
     "_skewY": 0,
-    "_localZOrder": 0,
-    "_globalZOrder": 0,
-    "_opacityModifyRGB": false,
-    "groupIndex": 0
-  },
-  {
-    "__type__": "sp.Skeleton",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
-    "_paused": false,
-    "defaultSkin": "",
-    "defaultAnimation": "xiaohuo",
-    "loop": true,
-    "_premultipliedAlpha": true,
-    "_N$skeletonData": {
-      "__uuid__": "3b6e7245-bdc1-4379-82e5-630dfaf68dff"
-    },
-    "_N$timeScale": 1,
-    "_N$debugSlots": false,
-    "_N$debugBones": false
+    "_zIndex": 0,
+    "_is3DNode": false,
+    "groupIndex": 0,
+    "_rotationX": 0,
+    "_rotationY": 0,
+    "_id": ""
   },
   {
     "__type__": "83aadIEe0ZPXazQKpJHw5l5",
@@ -94,9 +87,12 @@
       "__id__": 1
     },
     "_enabled": true,
-    "spine": {
-      "__id__": 2
+    "spine": null,
+    "dragonBone": {
+      "__id__": 3
     },
+    "dbArmature": null,
+    "dbArmatureCallback": null,
     "collider": {
       "__id__": 4
     },
@@ -105,7 +101,33 @@
     "objectType": 0,
     "entity": null,
     "defaultAction": null,
-    "_displayLoop": false
+    "_displayLoop": false,
+    "_id": ""
+  },
+  {
+    "__type__": "dragonBones.ArmatureDisplay",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "_srcBlendFactor": 770,
+    "_dstBlendFactor": 771,
+    "_armatureName": "armatureName",
+    "_animationName": "xiaohuo",
+    "playTimes": 0,
+    "_N$dragonAsset": {
+      "__uuid__": "0a41342a-85d0-46d6-aa0c-d8f96cd24dcd"
+    },
+    "_N$dragonAtlasAsset": {
+      "__uuid__": "07152a30-4e18-40ea-81af-dea47d721210"
+    },
+    "_N$_defaultArmatureIndex": 0,
+    "_N$_animationIndex": 4,
+    "_N$timeScale": 1,
+    "_N$debugBones": false,
+    "_id": ""
   },
   {
     "__type__": "cc.BoxCollider",
@@ -125,7 +147,8 @@
       "__type__": "cc.Size",
       "width": 10,
       "height": 10
-    }
+    },
+    "_id": ""
   },
   {
     "__type__": "cc.PrefabInfo",

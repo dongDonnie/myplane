@@ -55,7 +55,9 @@ WndTypeDefine.WindowType = {
     E_DT_NORMAL_GET_NEW_ITEM_WND:"NormalGetNewItemWnd",
     E_DT_NORMAL_EXDIAMOND_WND: "NormalExDiamondWnd",
     E_DT_NORMAL_EQUIP_QUALITY_UP_WND:"NormalEquipQualityUpWnd",
+    E_DT_NORMAL_PLANE_QUALITY_UP_WND:"NormalPlaneQualityUpWnd",
     E_DT_NORMAL_FREE_GET_WND: "NormalFreeGetWnd",
+    E_DT_NORMAL_BUY_SP_WND: "NormalBuySpWnd",
 };
 
 WndTypeDefine.WindowTypeID = {
@@ -79,4 +81,5 @@ WndTypeDefine.WindowSystemID = {
     E_DT_ENDLESS_CHALLENGE_VIEW: 24,
     E_DT_NORMALDRAW_VIEW: 79,
     E_DT_NORMAL_QUESTLIST_VIEW: 22,
+    E_DT_LIMIT_STORE_WND: 21
 };

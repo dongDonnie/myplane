@@ -19,11 +19,22 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_GET_NEW_ITEM_WND;
         
 
         this.animeStartParam(0, 0);
+
+        if (GlobalFunc.isAllScreen() && !this.fixViewComplete) {
+            this.fixViewComplete = true;
+            this.fixView();
+        }
+    },
+    fixView: function () {
+        let nodeNewRareItem = this.node.getChildByName("nodeNewRareItem");
+        nodeNewRareItem.getChildByName('nodetop').y += 80;
+        nodeNewRareItem.getChildByName('spriteNode').y += 40;
     },
 
     animeStartParam(paramScale, paramOpacity) {
@@ -31,21 +42,25 @@ cc.Class({
         this.node.opacity = paramOpacity;
     },
 
-    initNewRareItemWnd: function (item, mode, showType, callback) {
+    initNewRareItemWnd: function (itemID, mode, showType, callback) {
         this.RecvCallback = callback == null ? this.shareFunction : callback;
         this.spriteNode.removeAllChildren();
         let nodeNewRareItem = this.node.getChildByName("nodeNewRareItem");
-        let btnClose = nodeNewRareItem.getChildByName("btnClose");
-        btnClose.opacity = 0;
-        btnClose.runAction(cc.sequence(cc.delayTime(2), cc.fadeIn(0)));
+        // let btnClose = nodeNewRareItem.getChildByName('nodetop').getChildByName("btnClose");
+        // btnClose.opacity = 0;
+        // btnClose.runAction(cc.sequence(cc.delayTime(2), cc.fadeIn(0)));
         let NEW_MEMBER = 0, NEW_GUAZAI = 1;
         if (mode == NEW_MEMBER) {
-            nodeNewRareItem.getChildByName("spriteNewMember").active = true;
-            nodeNewRareItem.getChildByName("spriteNewGuazai").active = false;
-            this.addPlane(710, showType);
+            nodeNewRareItem.getChildByName('nodetop').getChildByName("spriteNewMember").active = true;
+            nodeNewRareItem.getChildByName('nodetop').getChildByName("spriteNewGuazai").active = false;
+            if (require('config').NEED_GUIDE) {
+                this.addPlane(710, showType);
+            } else {
+                this.addPlane(itemID, showType);
+            }
         } else if (mode == NEW_GUAZAI) {
-            nodeNewRareItem.getChildByName("spriteNewMmber").active = false;
-            nodeNewRareItem.getChildByName("spriteNewGuazai").active = true;
+            nodeNewRareItem.getChildByName('nodetop').getChildByName("spriteNewMember").active = false;
+            nodeNewRareItem.getChildByName('nodetop').getChildByName("spriteNewGuazai").active = true;
         }
     },
 

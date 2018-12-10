@@ -3,6 +3,7 @@ const SceneBase = require("scenebase");
 const GlobalVar = require("globalvar")
 const EventMsgID = require("eventmsgid")
 const weChatAPI = require("weChatAPI");
+const GameServerProto = require("GameServerProto");
 
 var LoginScene = cc.Class({
     extends: SceneBase,
@@ -23,9 +24,12 @@ var LoginScene = cc.Class({
     },
 
     onLoad: function () {
+        GlobalVar.netWaiting().init();
+
         this.sceneName="LoginScene";
         this.uiNode = cc.find("Canvas/UINode");
         this.registerEvent();
+        this.openScene();
         
         GlobalVar.soundManager().playBGM("cdnRes/audio/main/music/logon");
 
@@ -40,10 +44,18 @@ var LoginScene = cc.Class({
 
     registerEvent() {
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_ENTER_GAME, this.replaceSceneToMain, this);
+        GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_LOGIN_DATA_NTF, this.onLoginDataEvent, this);
     },
 
     onDestroy() {
+        this.releaseScene();
         GlobalVar.eventManager().removeListenerWithTarget(this);
+    },
+
+    onLoginDataEvent: function (event) {
+        if (event.data.ErrCode !== GameServerProto.PTERR_SUCCESS){
+            GlobalVar.comMsg.errorWarning(event.data.ErrCode);
+        }
     },
 
     replaceSceneToMain(evt) {
@@ -53,10 +65,15 @@ var LoginScene = cc.Class({
         
         if (cc.sys.platform === cc.sys.WECHAT_GAME) {
             weChatAPI.requestIosRechageLockState(GlobalVar.me().level, GlobalVar.me().combatPoint, GlobalVar.me().creatTime, function (state) {
-                GlobalVar.IosRechargeLock = state;
+                GlobalVar.IosRechargeLock = !!state;
             });
+            weChatAPI.requestShareOpenState(GlobalVar.tblApi.getData('TblVersion')[1].strVersion, function (state) {
+                GlobalVar.shareOpen = !!parseInt(state);
+                console.log("get shareOpen:", state, GlobalVar.shareOpen);
+            })
         }
         GlobalVar.handlerManager().noticeHandler.sendGetNoticeReq();
+        GlobalVar.handlerManager().drawHandler.sendTreasureData();
         GlobalVar.sceneManager().gotoScene(SceneDefines.MAIN_STATE);
     },
 

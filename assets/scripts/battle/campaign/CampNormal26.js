@@ -6,11 +6,13 @@ CampNormal26.data = {
         ["cx-c","cx-c","cx-c"],
     ],
     monsterWaves:[
-        {wave:{groups:[22,16,43,42,192,27],wait:0,delay:[2,2,3,3,5,6]},maps:{mapIndex:[0],mapSpeed:[1000],mapScale:[1],mapLoop:[0]}},
-        {wave:{groups:[233,234,28,31,193,16,22],wait:0,delay:[0,0,2,2,6,7,7]},maps:{mapIndex:[1],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
-        {wave:{groups:[227,228],wait:0,delay:[0,0]}},
-        {wave:{groups:[237,238,36,37],wait:0,delay:[0,0,4,4]}},
-        {wave:{groups:[272],wait:0,delay:[0]}},
+        {wave:{groups:[1008,16,43,42,27],wait:0,delay:[1,2,2,3,4]},maps:{mapIndex:[0],mapSpeed:[600],mapScale:[1],mapLoop:[0]}},
+        {wave:{groups:[1009,724,725,720],wait:0,delay:[0,2,4,6]}},
+        {wave:{groups:[1404],wait:0,delay:[0]}},
+        {wave:{groups:[1010,1011,836,837],wait:0,delay:[0.3,2,4,6]},maps:{mapIndex:[1],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
+        {wave:{groups:[1403,720,726,724],wait:0,delay:[0,2,4,6]}},
+        {wave:{groups:[1012,552,553],wait:0,delay:[0,2,4]}},
+        {wave:{groups:[1013,546],wait:0,delay:[0,2]}},
     ],
     monsterExtra:[311,312,313,314,315,316,317],
 
@@ -28,20 +30,20 @@ CampNormal26.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:1,step:3}},
+                {wave:{index:2,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:1.5}},
             ],
         },
         {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:1,step:4}},
+                {wave:{index:3,step:4}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-2}},
             ],
         },
     ],

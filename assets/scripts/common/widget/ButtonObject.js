@@ -34,12 +34,16 @@ let colorType = cc.Enum({
 const GlobalVar = require("globalvar");
 const Guide = require("Guide");
 const config = require("config");
-cc.Class({
+var ButtonObject = cc.Class({
     extends: cc.Component,
+
+    statics: {
+        isPress: null,
+    },
 
     properties: {
         audioType: {
-            default: audio.confirm,
+            default: audio.switch,
             type: audio,
         },
         fontColor: {
@@ -76,11 +80,11 @@ cc.Class({
             },
             animatable: true,
         },
-        btnState:{
-            default:true,
-            visible:false,
+        btnState: {
+            default: true,
+            visible: false,
         },
-        btnPress:{
+        btnPress: {
             default: false,
             visible: false,
         },
@@ -90,24 +94,33 @@ cc.Class({
         this.btnPress = false;
         this.node.on('touchstart', this.onTouchStart, this);
         this.node.on('touchend', this.onTouchEnd, this);
+        this.node.on('touchcancel', this.onTouchCancel, this);
         //this.setLable();
         //this.changeFontSize();
         //this.setColor();
-        
+
         //this.showFontShadow();
     },
 
     onTouchStart: function (event) {
-        if (GlobalVar.windowManager().btnLock1) return;
-        this.playAudio();
-
-        // this.btnPress = true;
-        if (this.node.getComponent(cc.Button).interactable){
-            let windowMgr = GlobalVar.windowManager();
-            windowMgr.unLockBtn();
+        if (!ButtonObject.isPress) {
+            this.playAudio();
+            ButtonObject.isPress = event.target;
         }
     },
     onTouchEnd: function (event) {
+        if(!!ButtonObject.isPress){
+            if(ButtonObject.isPress.uuid!=event.target.uuid){
+                event.target.getComponent(cc.Button)._pressed=false;
+            }else{
+                ButtonObject.isPress = null;
+            }
+        }else{
+            event.target.getComponent(cc.Button)._pressed=false;
+        }
+
+        ButtonObject.isPress = null;
+        
         if (config.NEED_GUIDE) {
             if (this.btnPress) {
                 setTimeout(() => {
@@ -119,14 +132,16 @@ cc.Class({
             Guide.getInstance().clickBtn(event.currentTarget.name);
         }
     },
+    onTouchCancel:function(event){
+        ButtonObject.isPress=null;
+    },
 
     setEventState: function (open) {
         this.btnState = typeof open !== 'undefine' ? open : true;
     },
 
-
     playAudio: function (event) {
-        if(!this.btnState){
+        if (!this.btnState) {
             return;
         }
         let name = audioNames[this.audioType];

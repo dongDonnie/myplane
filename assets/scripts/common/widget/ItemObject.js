@@ -100,25 +100,19 @@ var ItemObject = cc.Class({
             default: -1,
             visible: false,
         },
-        itemPress: {
-            default: false,
-            visible: false,
-        }
     },
 
     onLoad: function () {
         i18n.init('zh');
-        this.itemPress = false;
-        this.node.on("touchstart", this.onTouchStart, this);
-        this.node.on("touchend", this.onTouchEnd, this);
+        //this.node.on("touchstart", this.onTouchStart, this);
+        //this.node.on("touchend", this.onTouchEnd, this);
     },
 
     onTouchStart: function(){
-        this.itemPress = true;
-        // WindowManager.getInstance().unLockItem();
+
     },
     onTouchEnd: function(){
-        this.itemPress = false;
+
     },
 
     updateItem: function (id, num, level, hotpoint) {
@@ -172,50 +166,35 @@ var ItemObject = cc.Class({
 
     clickItem: function () {
         var self = this;
-        if(WindowManager.getInstance().checkBtnLock()){
-            return;
-        }
+        cc.log('itemID: ',this.itemID);
         // cc.log(this.btnCallBackType);
         if (this.btnCallBackType == 0) {
             WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALITEMINFO, function (wnd, name, type) {
                 wnd.getComponent(type).updateInfo(self.itemID, self.itemData.wQuality, self.itemLevel, self.getLabelNumberData(), self.getSlot());
                 wnd.getComponent(type).setTitle("道具详情");
-                // WindowManager.getInstance().lockItem();
-                WindowManager.getInstance().lockBtn();
             });
         } else if (this.btnCallBackType == 1) {
             let itemCount = GlobalVar.me().bagData.getItemCountById(this.itemID);
             WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALITEMGETWAY, function (wnd, name, type) {
                 // wnd.getComponent(type).updateInfo(self.itemID, self.getLabelNumberData(), 0, self.getSlot());
                 wnd.getComponent(type).updateInfo(self.itemID, itemCount, self.itemLevel, self.getSlot());
-                // WindowManager.getInstance().lockItem();
-                WindowManager.getInstance().lockBtn();
             });
         } else if (this.btnCallBackType == 2) {
             WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALITEMINFO, function (wnd, name, type) {
                 wnd.getComponent(type).updateInfo(self.itemID, self.itemData.wQuality, self.itemLevel, self.getLabelNumberData(), self.getSlot(), true);
                 wnd.getComponent(type).setTitle("道具详情");
-                // WindowManager.getInstance().lockItem();
-                WindowManager.getInstance().lockBtn();
             })
         } else if (this.btnCallBackType == 10) {
             this.setSpriteChoosingState();
-            // WindowManager.getInstance().lockItem();
-            WindowManager.getInstance().lockBtn();
         } else if (this.btnCallBackType == this.itemData.byType + 100) {
             if (!!this.btnCallBackFun) {
                 this.btnCallBackFun(this.slot);
-                // WindowManager.getInstance().lockItem();
-                WindowManager.getInstance().lockBtn();
             }
             if (!!this.closeTarget) {
                 this.closeTarget();
-                // WindowManager.getInstance().lockItem();
-                WindowManager.getInstance().lockBtn();
             }
         }else{
-            // WindowManager.getInstance().lockItem();
-                WindowManager.getInstance().lockBtn();
+
         }
     },
 

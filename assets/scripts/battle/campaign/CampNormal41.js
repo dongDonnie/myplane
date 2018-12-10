@@ -5,13 +5,17 @@ CampNormal41.data = {
         ["tkz","tkz","tkz"],
     ],
     monsterWaves:[
-        {wave:{groups:[28,29,30,227,230],wait:0,delay:[2,2,2,5,6]},maps:{mapIndex:[0],mapSpeed:[1000],mapScale:[1],mapLoop:[1]}},
-        {wave:{groups:[27,222,226,229],wait:0,delay:[0,3,3,7]}},
-        {wave:{groups:[280,283],wait:0,delay:[0,1]},maps:{mapIndex:[0],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
-        {wave:{groups:[191,230,36,225,221,27,45],wait:0,delay:[0,1,2,6,6,6.5,7]}},
-        {wave:{groups:[273],wait:0,delay:[0]}},
+        {wave:{groups:[993,994,882,995,996],wait:0,delay:[1,2,4,5.5,5.5]},maps:{mapIndex:[0],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
+        {wave:{groups:[1262,836,837],wait:0,delay:[0,1.5,3]}},
+        {wave:{groups:[1263],wait:0,delay:[0,1]}},
+        {wave:{groups:[1264,26,32],wait:0,delay:[0,1,2]}},
+        {wave:{groups:[1265,1262,20],wait:0,delay:[0,1,2]}},
+        {wave:{groups:[1265,1262,1266],wait:0,delay:[0,1.2,2.4]}},
+        {wave:{groups:[1267,556,557],wait:0,delay:[0,1,2.5]}},
+        {wave:{groups:[1273,1269,1270,1271,1272],wait:0,delay:[0,2,2,2,2]}},
+
     ],
-    monsterExtra:[311,312,313,314,315,316,317],
+    monsterExtra:[311,312,313,314,315,316,317,14,17,19,20,22,25,27,28,30,35,36,39,40,42,45,47,48,50,51,52,573,830,831,832,833,834,836,839,1066,1067,1069,1070,1072,1073,1074,1075,1077,1078],
 
     totalHint:[
         {
@@ -27,20 +31,20 @@ CampNormal41.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:3}},
+                {wave:{index:1,step:4}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:2.8}},
             ],
         },
         {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:4}},
+                {wave:{index:7,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-2}},
             ],
         },
     ],

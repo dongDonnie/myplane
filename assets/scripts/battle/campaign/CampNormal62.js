@@ -1,56 +1,50 @@
 var CampNormal62 = module.exports;
 
 CampNormal62.data = {
-    mapLoop: [
-        {
-            imageData:["tk-a"],
-            groups:[
-                {imageIndex:[0,0],loopCount:4,speed:5,zorder:-999},
-            ],
-        },
-        {
-            imageData:["tk-b1","tk-b","tk-c","tk-d-ditu","tk-e-ditu"],
-            groups:[
-                {imageIndex:[0,1],loopCount:0,speed:10,zorder:-998},
-                {imageIndex:[2,1,2],loopCount:0,speed:10,zorder:-998},
-                {imageIndex:[2,1,2],loopCount:0,speed:10,zorder:-998},
-                {imageIndex:[3,4],loopCount:0,speed:10,zorder:-998},
-                {imageIndex:[4,4],loopCount:-1,speed:10,zorder:-998},
-            ],
-        },
+    maps:[
+        ["bfc-a","bfc-a","bfc-a"],
+        ["bfc-b-01hebing","bfc-b-01hebing","bfc-b-01hebing"],
     ],
-
-    //refreshMode:{choose(挑选规则):0.顺序1.随机, wait(是否等待上一波死亡):0.否1.是, interval(刷新间隔):秒}
     monsterWaves:[
-        {groups:[19,27,30,39],refreshMap:{loopIndex:1,groupIndex:0,delay:2},refreshMode:{choose:0,wait:0,interval:0.5}},
-        {groups:[42,45,27],refreshMap:{loopIndex:1,groupIndex:1,delay:1.5},refreshMode:{choose:0,wait:0,interval:0}},
-        {groups:[53,78,72],refreshMap:{loopIndex:1,groupIndex:2,delay:1},refreshMode:{choose:0,wait:0,interval:1}},
-        {groups:[26,28,42],refreshMap:{loopIndex:1,groupIndex:3,delay:0},refreshMode:{choose:0,wait:0,interval:1}},
-        {groups:[80,59],refreshMap:{loopIndex:1,groupIndex:4,delay:3.5},refreshMode:{choose:0,wait:0,interval:0}},
-        {groups:[43,24,27,32,25],refreshMap:{loopIndex:1,groupIndex:4,delay:7.5},refreshMode:{choose:0,wait:0,interval:0.5}},
+        {wave:{groups:[594,19,25],wait:0,delay:[0.2,1.3,1.7]},maps:{mapIndex:[0,1],mapSpeed:[300,600],mapScale:[1,1],mapLoop:[1,1]}},
+        {wave:{groups:[595,34,596,37],wait:0,delay:[0.1,0.5,2.5,3]},maps:{mapIndex:[0,1],mapSpeed:[300,600],mapScale:[1,1.2],mapLoop:[1,1]}},
+        {wave:{groups:[597,50],wait:0,delay:[0,0.8]}},
+        {wave:{groups:[598,599,25,19],wait:0,delay:[0.1,0.8,1.8,3]}},
+        {wave:{groups:[600,420,601,414,602],wait:0,delay:[0.1,0.5,2,2.4,3.2]}},
+        {wave:{groups:[603,44,45],wait:0,delay:[0,1.5,1.5]}},
+        {wave:{groups:[604,587,590,582],wait:0,delay:[0.1,0.7,1.3,1.9]}},
     ],
-
-    monsterExtra:[],
+    monsterExtra:[23,24,25,1313,1314,1315,1316,1317,23,24,25,1313,1314,1315,1316,1317],
 
     totalHint:[
         {
-            checkTime:1,
-            condition:[
-                {wave:{index:5,complete:3}},
-            ],
-            effect:[
-                {result:1},
-            ]
-        },
-        {
             checkTime:-1,
-            relation:'&&',
             condition:[
                 {interval:18},
             ],
             effect:[
                 {drop:10000},
             ]
+        },
+        {
+            eventKey:0,
+            checkTime:1,
+            condition:[
+                {wave:{index:0,step:8}},
+            ],
+            effect:[
+                {extra:{open:-1,delay:1}},
+            ],
+        },
+        {
+            eventKey:0,
+            checkTime:1,
+            condition:[
+                {wave:{index:1,step:6}},
+            ],
+            effect:[
+                {extra:{open:-2}},
+            ],
         },
     ],
 }

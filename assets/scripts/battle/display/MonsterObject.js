@@ -1,119 +1,154 @@
-const BaseObject = require('BaseObject')
+const CoreObject = require('CoreObject')
 
 cc.Class({
-    extends: BaseObject,
+    extends: CoreObject,
 
     properties: {
-
+        tbl: {
+            default: null,
+            visible: false
+        }
     },
 
     onLoad() {
-        var spine = this.spine = this.node.getComponent('sp.Skeleton');
-        // this._setMix('daiji', 'bianxing_1');
-        // this._setMix('bianxing_1', 'putong');
-        // this._setMix('putong', 'BaoZou_Start');
-        // this._setMix('BaoZou_Start', 'BaoZou');
-        // this._setMix('BaoZou', 'BaoZou_End');
-        // this._setMix('putong', 'BaoZou_Start');
-
-        // var self=this;
-        // spine.setStartListener(trackEntry => {
-        //     var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-        //     //cc.log("[track %s][animation %s] start.", trackEntry.trackIndex, animationName);
-        // });
-        // spine.setInterruptListener(trackEntry => {
-        //     var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-        //     //cc.log("[track %s][animation %s] interrupt.", trackEntry.trackIndex, animationName);
-        // });
-        // spine.setEndListener(trackEntry => {
-        //     var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-        //     //cc.log("[track %s][animation %s] end.", trackEntry.trackIndex, animationName);
-        // });
-        // spine.setDisposeListener(trackEntry => {
-        //     var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-        //     //cc.log("[track %s][animation %s] will be disposed.", trackEntry.trackIndex, animationName);
-        // });
-        // spine.setCompleteListener((trackEntry, loopCount) => {
-        //     var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-        //     if (self._displayLoop) {
-        //         if (animationName === 'daiji') {
-        //             self.transform();
-        //         } else if (animationName === 'putong') {
-        //             self.crazyStart();
-        //         } else if (animationName === 'BaoZou') {
-        //             self.crazyEnd();
-        //         }
-        //     }
-        //     //cc.log("[track %s][animation %s] complete: %s", trackEntry.trackIndex, animationName, loopCount);
-        // });
-        // spine.setEventListener((trackEntry, event) => {
-        //     var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-        //     //cc.log("[track %s][animation %s] event: %s, %s, %s, %s", trackEntry.trackIndex, animationName, event.data.name, event.intValue, event.floatValue, event.stringValue);
-        // });
-
+        this._super();
+        if (this.spine != null) {
+            //this.spine.setStartListener(this._spineStartCallBack.bind(this));
+            //this.spine.setCompleteListener(this._spineCompleteCallBack.bind(this));
+        }
+        if (this.dragonBone != null) {
+            this.dragonBone.addEventListener(dragonBones.EventObject.COMPLETE, this._animationEventHandler, this);
+        }
         this._hasStop = false;
     },
 
+    setTBL(tbl) {
+        this.tbl = typeof tbl !== 'undefined' ? tbl : null;
+
+        if (!!this.tbl) {
+            if (this.tbl.strBoxCollider != "") {
+                this.actionCollider = {};
+                let actionArray = this.tbl.strBoxCollider.split(";");
+                for (let action of actionArray) {
+                    let colliderArray = action.split("|");
+                    this.actionCollider[colliderArray[0]] = {};
+                    let p1 = colliderArray[1].split(",");
+                    this.actionCollider[colliderArray[0]].cOffset = cc.v2(Number(p1[0]), Number(p1[1]));
+                    let p2 = colliderArray[2].split(",");
+                    this.actionCollider[colliderArray[0]].cSize = cc.size(Number(p2[0]), Number(p2[1]));
+                }
+            }
+        }
+    },
+
     stop() {
-        this.spine.clearTrack(0);
-        this._hasStop = true;
+        if (this.spine != null) {
+            this.spine.clearTrack(0);
+            this._hasStop = true;
+            return true;
+        }
+        if (this.dragonBone != null && this.dbArmature != null) {
+            this.dbArmature.animation.stop();
+            return true;
+        }
+        return false;
+    },
+
+    reset() {
+        if (this.dragonBone != null && this.dbArmature != null) {
+            this.dbArmature.animation.reset();
+            this.dbArmature.animation.play(this.dragonBone.animationName, 0);
+        }
     },
 
     playAction(actName, loop, callback) {
-        if (this.spine == null) {
-            return false;
-        }
+        if (this.spine != null) {
+            if (this.findAction(actName) != null) {
+                loop = typeof loop !== 'undefined' ? loop : 1;
 
-        loop = typeof loop !== 'undefined' ? loop : false;
-        if (this.findAction(actName) != null) {
+                spine.setStartListener(trackEntry => {
+                    var animationName = trackEntry.animation ? trackEntry.animation.name : "";
+                    cc.log("[track %s][animation %s] start.", trackEntry.trackIndex, animationName);
+                });
 
-            this.spine.setCompleteListener((trackEntry, loopCount) => {
-                var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-                if (!!callback) {
-                    callback(animationName);
+                this.spine.setCompleteListener((trackEntry, loopCount) => {
+                    if (!!callback) {
+                        var animationName = trackEntry.animation ? trackEntry.animation.name : "";
+                        callback(animationName);
+                    }
+                });
+
+                this.stop();
+                if (loop > 1) {
+                    for (let i = 0; i < loop; i++) {
+                        this.spine.addAnimation(0, actName, !loop);
+                    }
+                } else {
+                    this.spine.setAnimation(0, actName, !loop);
                 }
-                //cc.log("[track %s][animation %s] complete: %s", trackEntry.trackIndex, animationName, loopCount);
-            });
 
-            this.spine.setAnimation(0, actName, loop);
-            if(this.defaultAction!=null){
-                this.spine.addAnimation(0, this.defaultAction, true, 0);
+                if (loop) {
+                    if (this.defaultAction != null) {
+                        this.spine.addAnimation(0, this.defaultAction, true, 0);
+                    }
+                }
+                this._hasStop = false;
+                return true;
             }
-            this._hasStop = false;
+        }
+        if (this.dragonBone != null && this.dbArmature != null) {
+            if (this.findAction(actName) != null) {
+                loop = typeof loop !== 'undefined' ? loop : 1;
 
+                if (!!callback) {
+                    this.dbArmatureCallback = callback;
+                } else {
+                    this.dbArmatureCallback = null;
+                }
+
+                this.dbArmature.animation.play(actName, loop);
+
+                if(typeof this.actionCollider!=='undefined'){
+                    if(typeof this.actionCollider[actName] !=='undefined'){
+                        let box=this.getComponent(cc.BoxCollider);
+                        box.offset.x=this.actionCollider[actName].cOffset.x;
+                        box.offset.y=this.actionCollider[actName].cOffset.y;
+                        box.size.width=this.actionCollider[actName].cSize.width;
+                        box.size.height=this.actionCollider[actName].cSize.height;
+                    }
+                }
+            }
             return true;
         }
         return false;
     },
 
-    addAction(actName, loop, callback) {
-        if (this.spine == null) {
-            return false;
-        }
+    _animationEventHandler(event) {
+        if (event.type === dragonBones.EventObject.COMPLETE) {
+            if (!!this.dbArmatureCallback) {
+                this.dbArmatureCallback(event.animationState.name);
+            }
+            if (this.defaultAction != null) {
+                this.dbArmature.animation.play(this.defaultAction, 0);
 
-        loop = typeof loop !== 'undefined' ? loop : 0;
-        if (this.findAction(actName) != null) {
-
-            this.spine.setCompleteListener((trackEntry, loopCount) => {
-                var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-                if (!!callback) {
-                    callback(animationName);
+                if(typeof this.actionCollider!=='undefined'){
+                    if(typeof this.actionCollider[this.defaultAction] !=='undefined'){
+                        let box=this.getComponent(cc.BoxCollider);
+                        box.offset.x=this.actionCollider[this.defaultAction].cOffset.x;
+                        box.offset.y=this.actionCollider[this.defaultAction].cOffset.y;
+                        box.size.width=this.actionCollider[this.defaultAction].cSize.width;
+                        box.size.height=this.actionCollider[this.defaultAction].cSize.height;
+                    }
                 }
-                //cc.log("[track %s][animation %s] complete: %s", trackEntry.trackIndex, animationName, loopCount);
-            });
-
-            for(let i=0;i<loop;i++){
-                this.spine.addAnimation(0, actName, false);
             }
-            
-            if(this.defaultAction!=null){
-                this.spine.addAnimation(0, this.defaultAction, true, 0);
-            }
-            this._hasStop = false;
-
-            return true;
         }
-        return false;
+    },
+
+    _spineStartCallBack(trackEntry) {
+
+    },
+    _spineCompleteCallBack(trackEntry) {
+
     },
 
     setDefaultAction(actName) {
@@ -122,22 +157,6 @@ cc.Class({
             return true;
         }
         return false;
-    },
-
-    toggleDebugSlots() {
-        this.spine.debugSlots = !this.spine.debugSlots;
-    },
-
-    toggleDebugBones() {
-        this.spine.debugBones = !this.spine.debugBones;
-    },
-
-    toggleTimeScale() {
-        if (this.spine.timeScale === 1.0) {
-            this.spine.timeScale = 0.3;
-        } else {
-            this.spine.timeScale = 1.0;
-        }
     },
 
 });

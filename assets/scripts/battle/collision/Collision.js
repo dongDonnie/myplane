@@ -40,7 +40,8 @@ cc.Class({
             for (let monster of monsterList) {
                 if (monster.objectType != Defines.ObjectType.OBJ_MONSTER ||
                     monster.baseObject == null ||
-                    monster.isDead) {
+                    monster.isDead ||
+                    monster.damageFromExecuteInterval > 0) {
                     continue;
                 }
 
@@ -114,7 +115,11 @@ cc.Class({
             // }
         }
 
-        if (heroManager.planeEntity) {
+        if (!!heroManager.planeEntity && cc.isValid(heroManager.planeEntity)) {
+
+            if(heroManager.planeEntity.hp<=0){
+                return;
+            }
 
             let pCollider = null;
             if (heroManager.planeEntity.barrier != null && cc.isValid(heroManager.planeEntity.barrier) && heroManager.planeEntity.protectTime > 0) {
@@ -421,7 +426,9 @@ cc.Class({
         } else if (buff.objectID == Defines.Assist.PURPERSTONE) {
             GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/gold_bing');
         } else if (buff.objectID == Defines.Assist.GOLD) {
-            GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/gold_bing');
+            this.heroManager.planeEntity.addGold(buff.objectID);
+        } else if (buff.objectID >= Defines.Assist.CHEST1 && buff.objectID <= Defines.Assist.CHEST6) {
+            hero.addChest(buff.objectID);
         }
     },
 
@@ -429,7 +436,8 @@ cc.Class({
         if (sundries.collisionSwitch == false || sundries.isShow == false) {
             return;
         }
-        hero.hitWithDamage(0, true);
+
+        hero.hitWithDamage(hero.maxHp * 0.1);
     },
 
     collisionSundriesWithHeroBullet(sundries, bullet) {
@@ -496,12 +504,12 @@ cc.Class({
             let r = Math.min(size.width / 2, size.height / 2);
             let posH = hero.getPosition();
             let posB = bullet.getPosition();
-            let posBO = bullet.baseObject != null ? bullet.baseObject.getPosition() : cc.v2(0, 0);
+            let posBO = bullet.baseObject != null ? bullet.baseObject.getPosition() : cc.v3(0, 0);
             let v = posBO.add(posB).sub(posH);
             let angle = Math.atan2(v.y, v.x) * 180 / Math.PI;
             let x1 = posH.x + offset.x + r * Math.cos(angle * Math.PI / 180);
             let y1 = posH.y + offset.y + r * Math.sin(angle * Math.PI / 180);
-            bullet.disappearPos = cc.v2(x1, y1);
+            bullet.disappearPos = cc.v3(x1, y1);
         }
 
         return dmgMsg;
@@ -531,16 +539,20 @@ cc.Class({
         dmgMsg.dmg = monster.hitWithDamage(dmgMsg.dmg);
         bullet.isDead = true;
         bullet.disappearAnime = true;
-        let offset = monster.getCollider().offset;
+        let offset = cc.v3(monster.getCollider().offset);
         let size = monster.getCollider().size;
         let r = Math.min(size.width / 2, size.height / 2);
         let posM = monster.getPosition();
+        if(monster.baseObject!=null && cc.isValid(monster.baseObject)){
+            let posBM=monster.baseObject.getPosition();
+            posM=posM.add(posBM).add(offset);
+        } 
         let posB = bullet.getPosition();
         let v = posB.sub(posM);
         let angle = Math.atan2(v.y, v.x) * 180 / Math.PI;
         let x1 = posM.x + r * Math.cos(angle * Math.PI / 180);
         let y1 = posM.y + r * Math.sin(angle * Math.PI / 180);
-        bullet.disappearPos = cc.v2(x1, y1);
+        bullet.disappearPos = cc.v3(x1, y1);
         monster.flyDamageMsg(dmgMsg.dmg, dmgMsg.critical, dmgMsg.pos, false);
 
         return dmgMsg;
@@ -575,8 +587,10 @@ cc.Class({
             dmgMsg = execute.dmgMsg;
         }
         dmgMsg.pos = monster.getPosition();
-        dmgMsg.dmg = monster.hitWithDamage(dmgMsg.dmg);
-        monster.flyDamageMsg(dmgMsg.dmg, dmgMsg.critical, dmgMsg.pos, true, true);
+        dmgMsg.dmg = monster.hitWithDamage(dmgMsg.dmg, true);
+        if (dmgMsg.dmg >= 0) {
+            monster.flyDamageMsg(dmgMsg.dmg, dmgMsg.critical, dmgMsg.pos, true, true);
+        }
         if (monster.isDead) {
             monster.setClearBulletWhenDead(true);
         }

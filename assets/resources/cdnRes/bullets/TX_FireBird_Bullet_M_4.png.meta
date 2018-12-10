@@ -1,10 +1,11 @@
 {
-  "ver": "2.2.0",
+  "ver": "2.3.0",
   "uuid": "22e7c3bc-7fc6-4a63-ab4e-dd9749232776",
   "type": "sprite",
   "wrapMode": "clamp",
   "filterMode": "bilinear",
   "premultiplyAlpha": false,
+  "platformSettings": {},
   "subMetas": {
     "TX_FireBird_Bullet_M_4": {
       "ver": "1.0.3",

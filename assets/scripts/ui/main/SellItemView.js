@@ -56,6 +56,7 @@ cc.Class({
     },
 
     onLoad () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_SELLITEM_WND;
         this.animeStartParam(0, 0);
     },
@@ -83,6 +84,9 @@ cc.Class({
             this._super("Enter");
             this.count = 1;
             this.setLabelCountsNumber(this.count);
+            let item=GlobalVar.me().bagData.getItemBySlot(this.slot);
+            let itemData = GlobalVar.tblApi.getDataBySingleKey('TblItem', item.ItemID);
+            this.setLabelGetNumber(this.count*itemData.nSellPrice);
         }
     },
 
@@ -91,6 +95,7 @@ cc.Class({
         this.count = 0;
         let item=GlobalVar.me().bagData.getItemBySlot(slot);
         let itemData=this.addItem(item.ItemID).getComponent("ItemObject").updateItem(item.ItemID);
+
         this.setName(itemData.strName,itemData.wQuality);
         this.setLabelNumberData(item.Count);
         this.setLabelCountsNumber(0);

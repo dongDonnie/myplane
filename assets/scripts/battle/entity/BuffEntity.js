@@ -12,7 +12,7 @@ cc.Class({
     },
 
     ctor() {
-
+        this.battleManager=BattleManager.getInstance();
     },
 
     reset() {
@@ -51,6 +51,18 @@ cc.Class({
             resName = "cdnRes/battle/stone_03";
         } else if (this.objectID == Defines.Assist.GOLD) {
             resName = "cdnRes/battle/gold";
+        } else if (this.objectID == Defines.Assist.CHEST1) {
+            resName = "cdnRes/battle/treasure_box_1";
+        } else if (this.objectID == Defines.Assist.CHEST2) {
+            resName = "cdnRes/battle/treasure_box_2";
+        } else if (this.objectID == Defines.Assist.CHEST3) {
+            resName = "cdnRes/battle/treasure_box_3";
+        } else if (this.objectID == Defines.Assist.CHEST4) {
+            resName = "cdnRes/battle/treasure_box_4";
+        } else if (this.objectID == Defines.Assist.CHEST5) {
+            resName = "cdnRes/battle/treasure_box_5";
+        } else if (this.objectID == Defines.Assist.CHEST6) {
+            resName = "cdnRes/battle/treasure_box_6";
         } else {
             resName = "cdnRes/battle/battle_buff_4";
         }
@@ -62,7 +74,7 @@ cc.Class({
             let collider = this.baseObject.addComponent(cc.BoxCollider)
             sp.spriteFrame = GlobalVar.resManager().loadRes(ResMapping.ResType.SpriteFrame, resName);
             if (this.objectID <= Defines.Assist.GHOST) {
-                collider.offset = cc.v2(0, 20);
+                collider.offset = cc.v3(0, 20);
                 collider.size = cc.size(90, 90);
             } else {
                 collider.size = this.baseObject.getContentSize();
@@ -72,7 +84,7 @@ cc.Class({
             let collider = this.baseObject.getComponent(cc.BoxCollider)
             sp.spriteFrame = GlobalVar.resManager().loadRes(ResMapping.ResType.SpriteFrame, resName);
             if (this.objectID <= Defines.Assist.GHOST) {
-                collider.offset = cc.v2(0, 20);
+                collider.offset = cc.v3(0, 20);
                 collider.size = cc.size(90, 90);
             } else {
                 collider.size = this.baseObject.getContentSize();
@@ -90,9 +102,9 @@ cc.Class({
 
     checkOut: function (dt) {
         let pos = this.getPosition();
-        let size = BattleManager.getInstance().displayContainer.getContentSize();
+        let size = this.battleManager.displayContainer.getContentSize();
 
-        if (BattleManager.getInstance().allScreen) {
+        if (this.battleManager.allScreen) {
             size.height -= 130;
         } else {
             size.height -= 47;
@@ -117,23 +129,27 @@ cc.Class({
 
     updateScanChase: function (dt) {
         if (this.atrb.scanChase.target != null) {
-            let pos = this.getPosition();
+            
             if (this.atrb.scanChase.status == 0) {
+                let pos = this.getPosition();
                 if (this.atrb.scanChase.target.getPosition().sub(pos).mag() <= this.atrb.scanChase.chaseDistance) {
                     this.setMovementType(-1);
                     this.atrb.scanChase.status = 1;
                 }
+                this.setPosition(pos);
             } else if (this.atrb.scanChase.status == 1) {
+                let pos = this.getPosition();
                 let v=this.atrb.scanChase.target.getPosition().sub(pos).normalize().mul(this.atrb.scanChase.chaseSpeed);
                 pos.x += v.x * dt;
                 pos.y += v.y * dt;
                 if (this.atrb.scanChase.target.getPosition().sub(pos).mag() <= this.atrb.scanChase.chaseDistance * 0.2) {
                     this.atrb.scanChase.status = 2;
-                    this.isDead = true;
-                    GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/gold_bing');
+                    this.battleManager.collision.collisionHeroWithBuff(this);
+                    //GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/gold_bing');
                 }
+                this.setPosition(pos);
             }
-            this.setPosition(pos);
+            
         }
     },
 

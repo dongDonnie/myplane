@@ -30,6 +30,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_LEVEL_UP_WND;
         
@@ -90,6 +91,7 @@ cc.Class({
         let labelLevelCur = spriteTipBg.getChildByName("labelLevelCur").getComponent(cc.Label);
         labelLevelBefore.string = levelUpData.LevelOld;
         labelLevelCur.string = levelUpData.LevelCur;
+        this.levelOld = levelUpData.LevelOld
     },
 
     addItem: function (data, mode) {
@@ -154,9 +156,16 @@ cc.Class({
     animePlayCallBack(name) {
         if (name == "Escape") {
             this._super("Escape");
-            WindowManager.getInstance().popView(false, null, false);
+            var self = this;
+            WindowManager.getInstance().popView(false, function () {
+                let limitLevel = GlobalVar.tblApi.getDataBySingleKey('TblSystem', 24).wOpenLevel;
+                if (GlobalVar.me().getLevel() >= limitLevel && self.levelOld < limitLevel) {
+                    require('Guide').getInstance().guideToEndless();
+                }
+            }, false);
         } else if (name == "Enter") {
             this._super("Enter");
+            GlobalVar.me().setLevelUpFlag();
         }
     },
 

@@ -68,7 +68,7 @@ var UIBattleEditor = cc.Class({
             let info = {};
             info.mId = 19;
             info.lv = 10;
-            info.pos = cc.v2(Number(v[0]), Number(v[1]));
+            info.pos = cc.v3(Number(v[0]), Number(v[1]));
             info.uId = 1;
 
             func(info, info.pos, ss);
@@ -78,6 +78,6 @@ var UIBattleEditor = cc.Class({
     testbuff:function(){
         
         // this.solution = require('BulletSolutions');
-        // this.solution.solution_crystal(5, cc.v2(320,640));
+        // this.solution.solution_crystal(5, cc.v3(320,640));
     }
 });

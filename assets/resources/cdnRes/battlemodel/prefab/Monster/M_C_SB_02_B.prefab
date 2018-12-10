@@ -3,10 +3,13 @@
     "__type__": "cc.Prefab",
     "_name": "",
     "_objFlags": 0,
-    "_rawFiles": null,
+    "_native": "",
     "data": {
       "__id__": 1
-    }
+    },
+    "optimizationPolicy": 0,
+    "asyncLoadAssets": false,
+    "readonly": false
   },
   {
     "__type__": "cc.Node",
@@ -14,8 +17,8 @@
     "_objFlags": 0,
     "_parent": null,
     "_children": [],
-    "_tag": -1,
     "_active": true,
+    "_level": 1,
     "_components": [
       {
         "__id__": 2
@@ -30,7 +33,6 @@
     "_prefab": {
       "__id__": 5
     },
-    "_id": "",
     "_opacity": 255,
     "_color": {
       "__type__": "cc.Color",
@@ -39,52 +41,43 @@
       "b": 255,
       "a": 255
     },
-    "_cascadeOpacityEnabled": true,
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 589.14,
+      "height": 583.95
+    },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
       "x": 0.5,
       "y": 0.5
     },
-    "_contentSize": {
-      "__type__": "cc.Size",
-      "width": 0,
-      "height": 0
-    },
-    "_rotationX": 0,
-    "_rotationY": 0,
-    "_scaleX": 1,
-    "_scaleY": 1,
     "_position": {
-      "__type__": "cc.Vec2",
+      "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0
+      "y": 0,
+      "z": 0
+    },
+    "_scale": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_quat": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
     },
     "_skewX": 0,
     "_skewY": 0,
-    "_localZOrder": 0,
-    "_globalZOrder": 0,
-    "_opacityModifyRGB": false,
-    "groupIndex": 0
-  },
-  {
-    "__type__": "sp.Skeleton",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
-    "_paused": false,
-    "defaultSkin": "",
-    "defaultAnimation": "start",
-    "loop": true,
-    "_premultipliedAlpha": true,
-    "_N$skeletonData": {
-      "__uuid__": "9d4839c8-c416-45c0-98cd-5fdf87950cb2"
-    },
-    "_N$timeScale": 1,
-    "_N$debugSlots": false,
-    "_N$debugBones": false
+    "_zIndex": 0,
+    "_is3DNode": false,
+    "groupIndex": 0,
+    "_rotationX": 0,
+    "_rotationY": 0,
+    "_id": ""
   },
   {
     "__type__": "cc.BoxCollider",
@@ -97,14 +90,15 @@
     "tag": 0,
     "_offset": {
       "__type__": "cc.Vec2",
-      "x": 9,
-      "y": 32
+      "x": 0,
+      "y": 13
     },
     "_size": {
       "__type__": "cc.Size",
-      "width": 418,
-      "height": 351
-    }
+      "width": 183,
+      "height": 197
+    },
+    "_id": ""
   },
   {
     "__type__": "64d23HkdapKrrTNXSIba1Hu",
@@ -114,17 +108,45 @@
       "__id__": 1
     },
     "_enabled": true,
-    "spine": {
-      "__id__": 2
+    "spine": null,
+    "dragonBone": {
+      "__id__": 4
     },
+    "dbArmature": null,
     "collider": {
-      "__id__": 3
+      "__id__": 2
     },
     "_hasStop": false,
     "mixTime": 0.2,
     "objectType": 0,
     "entity": null,
-    "defaultAction": null
+    "defaultAction": null,
+    "_id": ""
+  },
+  {
+    "__type__": "dragonBones.ArmatureDisplay",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "_srcBlendFactor": 770,
+    "_dstBlendFactor": 771,
+    "_armatureName": "armatureName",
+    "_animationName": "start",
+    "playTimes": 0,
+    "_N$dragonAsset": {
+      "__uuid__": "95babe96-9b77-45e8-871e-c13606acd974"
+    },
+    "_N$dragonAtlasAsset": {
+      "__uuid__": "f6b0e279-846d-44fa-b6ae-02416c428912"
+    },
+    "_N$_defaultArmatureIndex": 0,
+    "_N$_animationIndex": 5,
+    "_N$timeScale": 1,
+    "_N$debugBones": false,
+    "_id": ""
   },
   {
     "__type__": "cc.PrefabInfo",

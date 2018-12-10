@@ -17,6 +17,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_SELECTEXPVIEW_WND;
         this.animeStartParam(0, 0);
         // this.updateTabs();
@@ -53,12 +54,16 @@ cc.Class({
     touchmove: function (evt) {
         evt.stopPropagation();
         var content = this.getNodeByName('content');
+        content.width = 780;
         if (Math.abs(content.x) > (content.width / 2 - content.parent.width / 2)) {
             if (content.x > 0)
                 content.x = (content.width / 2 - content.parent.width / 2);
             else
                 content.x = -(content.width / 2 - content.parent.width / 2);
         }
+        // else {
+        //     content.x += evt.getDeltaX();
+        // }
     },
 
     enter: function (isRefresh) {
@@ -83,32 +88,46 @@ cc.Class({
         }
     },
 
-    btnClick:function(event,data){
-        this.close();
-        if(!!this.choosingCallback){
-            this.choosingCallback(data);
+    btnClick: function (event, data) {
+        let count = GlobalVar.me().bagData.getItemCountById(data);
+        if (count) {
+            this.close();
+            if(!!this.choosingCallback){
+                this.choosingCallback(data);
+            }
+        } else {
+            event.target.parent.getChildByName("item").getComponent("ItemObject").clickItem();
         }
     },
 
     setState:function(tabIndex,isActive){
         let name="nodeTab"+tabIndex;
         let tab=this.getNodeByName(name);
-        if(tab!=null){
-            if(!isActive){
-                tab.getComponent("RemoteSprite").setFrame(1);
-                tab.getChildByName("item").getComponent("ItemObject").setShaderState(true);
-                tab.getChildByName("labelName").color=GlobalFunc.getSystemColor(10);
-                tab.getChildByName("labelExp").color=GlobalFunc.getSystemColor(11);
-                tab.getChildByName("labelExpNumber").color=GlobalFunc.getSystemColor(11);
-                tab.getChildByName("btnoSelect").getComponent(cc.Button).interactable=false;
-            }else{
-                tab.getComponent("RemoteSprite").setFrame(0);
-                tab.getChildByName("item").getComponent("ItemObject").setShaderState(false);
-                tab.getChildByName("labelName").color=GlobalFunc.getSystemColor(8);
-                tab.getChildByName("labelExp").color=GlobalFunc.getSystemColor(9);
-                tab.getChildByName("labelExpNumber").color=GlobalFunc.getSystemColor(9);
-                tab.getChildByName("btnoSelect").getComponent(cc.Button).interactable=true;
+        if (tab != null) {
+            tab.getComponent("RemoteSprite").setFrame(0);
+            tab.getChildByName("item").getComponent("ItemObject").setShaderState(false);
+            tab.getChildByName("labelName").color = GlobalFunc.getSystemColor(8);
+            tab.getChildByName("labelExp").color = GlobalFunc.getSystemColor(9);
+            tab.getChildByName("labelExpNumber").color = GlobalFunc.getSystemColor(9);
+            if (!isActive) {
+                tab.getChildByName("btnoSelect").getComponent('ButtonObject').textLabel = '去获取';
             }
+
+            // if(!isActive){
+            //     tab.getComponent("RemoteSprite").setFrame(1);
+            //     tab.getChildByName("item").getComponent("ItemObject").setShaderState(true);
+            //     tab.getChildByName("labelName").color=GlobalFunc.getSystemColor(10);
+            //     tab.getChildByName("labelExp").color=GlobalFunc.getSystemColor(11);
+            //     tab.getChildByName("labelExpNumber").color=GlobalFunc.getSystemColor(11);
+            //     // tab.getChildByName("btnoSelect").getComponent(cc.Button).interactable=false;
+            // }else{
+            //     tab.getComponent("RemoteSprite").setFrame(0);
+            //     tab.getChildByName("item").getComponent("ItemObject").setShaderState(false);
+            //     tab.getChildByName("labelName").color=GlobalFunc.getSystemColor(8);
+            //     tab.getChildByName("labelExp").color=GlobalFunc.getSystemColor(9);
+            //     tab.getChildByName("labelExpNumber").color=GlobalFunc.getSystemColor(9);
+            //     tab.getChildByName("btnoSelect").getComponent(cc.Button).interactable=true;
+            // }
         }
     },
 

@@ -28,6 +28,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_RECHARGE_WND;
 
@@ -195,14 +196,14 @@ cc.Class({
             let productID = recharge.data.wID;
             let productName = recharge.data.strTitle;
             if (GlobalVar.isAndroid){
-                weChatAPI.androidPayment(amount, productID, productName, GlobalVar.me().selServerID, function(data){
+                weChatAPI.androidPayment(amount, productID, productName, GlobalVar.me().loginData.getLoginReqDataServerID(), function(data){
                     // console.log("米大师虚拟支付接口执行完毕!!!", data);
                     // data.bill_no //订单号，有效期是 48 小时
                     // data.balance	//预扣后的余额
                     // data.used_gen_balance //本次扣的赠送币的余额
                 })
             }else if (GlobalVar.isIOS){
-                weChatAPI.iosPayment(amount, productID, productName, GlobalVar.me().selServerID, function(data){
+                weChatAPI.iosPayment(amount, productID, productName, GlobalVar.me().loginData.getLoginReqDataServerID(), function(data){
                     // console.log("米大师虚拟支付接口执行完毕!!!", data);
                     // data.bill_no //订单号，有效期是 48 小时
                     // data.balance	//预扣后的余额

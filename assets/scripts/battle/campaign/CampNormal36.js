@@ -2,17 +2,21 @@ var CampNormal36 = module.exports;
 
 CampNormal36.data = {
     maps:[
-        ["cx-a","cx-a","cx-b"],
         ["cx-c","cx-c","cx-c"],
+
     ],
     monsterWaves:[
-        {wave:{groups:[211],wait:0,delay:[2]},maps:{mapIndex:[0],mapSpeed:[1000],mapScale:[1],mapLoop:[0]}},
-        {wave:{groups:[230,27,38,39,40,41,27,191],wait:0,delay:[0,2,4,4.5,5,5.5,8,9]}},
-        {wave:{groups:[273],wait:0,delay:[0]},maps:{mapIndex:[1],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
-        {wave:{groups:[227,228,36,33,196],wait:0,delay:[0,1,2,2,6]}},
-        {wave:{groups:[280,281],wait:0,delay:[0,0]}},
+        {wave:{groups:[1127,42,43],wait:0,delay:[1,2,3]},maps:{mapIndex:[0],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
+        {wave:{groups:[1128],wait:0,delay:[0,2,4]}},
+        {wave:{groups:[1129],wait:0,delay:[0,2,4]}},
+        {wave:{groups:[1398],wait:0,delay:[0,2,4]}},
+        {wave:{groups:[1399],wait:0,delay:[0,2,4]}},
+        {wave:{groups:[1130],wait:0,delay:[0,2,4]}},
+        {wave:{groups:[1131,1132],wait:0,delay:[0,3.5,4]}},
+        {wave:{groups:[1133,1134],wait:0,delay:[0,4]}},
+    
     ],
-    monsterExtra:[311,312,313,314,315,316,317],
+    monsterExtra:[311,312,313,314,315,316,317,14,17,19,20,22,25,27,28,30,35,36,39,40,42,45,47,48,50,51,52,573,830,831,832,833,834,836,839,1066,1067,1069,1070,1072,1073,1074,1075,1077,1078],
 
     totalHint:[
         {
@@ -28,20 +32,20 @@ CampNormal36.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:3}},
+                {wave:{index:0,step:6}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:2.8}},
             ],
         },
         {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:4}},
+                {wave:{index:7,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-2}},
             ],
         },
     ],

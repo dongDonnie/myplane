@@ -6,6 +6,7 @@ const EventMsgID = require("eventmsgid");
 const GlobalFunc = require('GlobalFunctions');
 const i18n = require('LanguageData');
 const CommonWnd = require("CommonWnd");
+const GameServerProto = require("GameServerProto");
 
 cc.Class({
     extends: RootBase,
@@ -54,6 +55,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_COMMON_WND;
         this.animeStartParam(0, 0);
@@ -64,15 +66,14 @@ cc.Class({
         this.node.setScale(paramScale, paramScale);
         this.node.opacity = paramOpacity;
     },
-    
 
     animePlayCallBack(name) {
         if (name == "Escape") {
             this._super("Escape");
             let confirm = this.node.getChildByName("btnConfirm");
             let cancel = this.node.getChildByName("btnCancel");
-            cancel.getComponent("RemoteSprite").setFrame(0);
-            confirm.getComponent("RemoteSprite").setFrame(0);
+            cancel.getComponent("RemoteSprite").setFrame(1);
+            confirm.getComponent("RemoteSprite").setFrame(1);
             confirm.getComponent(cc.Widget).bottom = 40;
             cancel.getComponent(cc.Widget).bottom = 40;
             confirm.getComponent(cc.Widget).updateAlignment();
@@ -143,7 +144,22 @@ cc.Class({
 
     initCommomView() {
         if (this.itemShowVec!=null){
-            this.setDrawBoxPreviewItem(this.itemShowVec.itemMustIDVec, this.itemShowVec.itemProbIDVec);
+            let itemMustIDVec = [];
+            let itemProbIDVec = [];
+            function compare() {
+                return function (a, b) {
+                    // 按照是否完成排序
+                    let qualityA = GlobalVar.tblApi.getDataBySingleKey("TblItem", a).wQuality;
+                    let qualityB = GlobalVar.tblApi.getDataBySingleKey("TblItem", b).wQuality;
+                    if (qualityA != qualityB){
+                        return -(qualityA - qualityB);
+                    }
+                }
+            }
+    
+            itemMustIDVec = this.itemShowVec.itemMustIDVec.sort(compare());
+            itemProbIDVec = this.itemShowVec.itemProbIDVec.sort(compare());
+            this.setDrawBoxPreviewItem(itemMustIDVec, itemProbIDVec);
         }
     },
 
@@ -177,6 +193,13 @@ cc.Class({
 
     btnCLick: function (event, index) {
         this.clickIndex = typeof index !== 'undefined' ? index : -1;
+        if (this.clickIndex == 2){
+            let nodeDrawBoxView = this.node.getChildByName("nodeContents").getChildByName("nodeDrawBoxView");
+            let itemMustContent = nodeDrawBoxView.getChildByName("scrollviewItemMust").getComponent(cc.ScrollView).content;
+            let itemProbContent = nodeDrawBoxView.getChildByName("scrollviewItemProb").getComponent(cc.ScrollView).content;
+            itemMustContent.removeAllChildren();
+            itemProbContent.removeAllChildren();
+        }
         if (this.clickIndex != -1) {
             this.animePlay(0);
         }
@@ -192,7 +215,7 @@ cc.Class({
         this.setJumpPrefab(prefabName);
         this.setConfirmText(confirmName);
         this.setCancelText(cancelName);
-        this.node.height = 320;
+        this.node.height = 350;
     },
 
     selectContent(contentMode) {
@@ -222,6 +245,11 @@ cc.Class({
         let contentMode = CONTENT_SP_BUY;
         this.selectContent(contentMode);
 
+        cancelCallBack = function () {
+            
+        };
+
+
         confirmCallBack = this.setBuySpTip(confirmCallBack);
         this.setContent(4, name, type, title, "", closeCallBack, confirmCallBack, cancelCallBack, "", confirmName, cancelName);
         this.node.height = 500;
@@ -234,7 +262,7 @@ cc.Class({
 
         this.setResetQuestTip(resetDesc, diamondCost);
         this.setContent(4, name, type, title, "", closeCallBack, confirmCallBack, cancelCallBack, "", confirmName, cancelName);
-        this.node.height = 400;
+        this.node.height = 450;
     },
 
     setItemBoxContent: function (name, type, title, condition, vecItems, closeCallBack, confirmCallBack, cancelCallBack, confirmName, cancelName) {
@@ -256,6 +284,13 @@ cc.Class({
         this.node.height = 820;
     },
 
+    setBigGiftBagContent: function (name, type, closeCallBack, confirmCallBack, cancelCallBack, prefabName) {
+        let contentMode = 6;
+        this.selectContent(contentMode);
+        this.setContent(1, name, type, "", "", closeCallBack, confirmCallBack, cancelCallBack, prefabName, "分享到群", "");
+        this.node.height = 500;
+    },
+
     setDrawTip: function (drawMode, text, ticketsEnough, diamondEnough) {
         let nodeDraw = this.node.getChildByName("nodeContents").getChildByName("nodeDrawInfo");
 
@@ -266,7 +301,7 @@ cc.Class({
         let ticket = nodeDraw.getChildByName("spriteTicket");
         let ticketCost = ticket.getChildByName("labelTicketCost");
         if (ticketsEnough) {
-            ticket.getComponent("RemoteSprite").setFrame(1);
+            // ticket.getComponent("RemoteSprite").setFrame(1);
             diamond.active = false;
         } else {
             if (diamondEnough) {
@@ -300,14 +335,15 @@ cc.Class({
 
         confirmCallBack = function () {
             let userHaveDiamond = GlobalVar.me().getDiamond();
-            if (userHaveDiamond < diamondCost) {
-                // GlobalVar.comMsg.showMsg(i18n.t('label.4000221'))
-                CommonWnd.showNormalFreeGetWnd(GameServerProto.PTERR_DIAMOND_LACK);
-                return;
-            }
 
             if (leftBuyTimes <= 0) {
                 GlobalVar.comMsg.showMsg(i18n.t('label.4000228'))
+                return;
+            }
+
+            if (userHaveDiamond < diamondCost) {
+                // GlobalVar.comMsg.showMsg(i18n.t('label.4000221'))
+                CommonWnd.showNormalFreeGetWnd(GameServerProto.PTERR_DIAMOND_LACK);
                 return;
             }
             GlobalVar.handlerManager().spHandler.sendSpBuyReq();
@@ -388,6 +424,7 @@ cc.Class({
         }
         itemMustContent.getComponent(cc.Layout).updateLayout();
         itemProbContent.getComponent(cc.Layout).updateLayout();
+        itemProbContent.y = 150;
     },
 
     showDiamondNotEnoughMsg() {
@@ -423,10 +460,10 @@ cc.Class({
             cancel.active = false;
         } else if (mode == 4) {
             confirm.active = true;
-            confirm.x = confirm.width;
+            confirm.x = 160;
             confirm.getComponent("RemoteSprite").setFrame(1);
             cancel.active = true;
-            cancel.x = -cancel.width;
+            cancel.x = -160;
             cancel.getComponent("RemoteSprite").setFrame(2);
             confirm.getComponent(cc.Widget).bottom = 80;
             cancel.getComponent(cc.Widget).bottom = 80;
@@ -435,14 +472,14 @@ cc.Class({
 
         } else if (mode == 3) {
             confirm.active = true;
-            confirm.x = confirm.width;
+            confirm.x = 160;
             cancel.active = true;
-            cancel.x = -cancel.width;
+            cancel.x = -160;
         } else if (mode == 2) {
             confirm.active = true;
-            confirm.x = confirm.width;
+            confirm.x = 160;
             cancel.active = true;
-            cancel.x = -cancel.width;
+            cancel.x = -160;
         } else if (mode == 1) {
             confirm.active = true;
             confirm.x = 0;

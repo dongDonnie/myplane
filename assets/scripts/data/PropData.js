@@ -22,7 +22,7 @@ var PropData = cc.Class({
         self = this;
         self.mapProps = {}; //存放各模块的属性数据，比如战机属性，挂载属性map<string,map<prop.ID,prop>>
         self.propData = {};  //propData里存的是角色的各项属性数据
-
+        self.combatPointData = null;
     },
 
     setData: function (data) {     //data的类型是GMDT_PROP_BAG
@@ -300,12 +300,19 @@ var PropData = cc.Class({
     },
 
     setPropDataNtf: function(msg){
-        if (msg.data && msg.data.CombatPoint){
-            GlobalVar.me().setCombatPoint(msg.data.CombatPoint);
+        if (msg.data && msg.data.CombatPoint) {
+            self.combatPointData = msg.data.CombatPoint;
+            if (!(GlobalVar.me().memberData.getShowCombatLate() || GlobalVar.me().leaderData.getShowCombatLate())) { 
+                GlobalVar.me().setCombatPoint(msg.data.CombatPoint);
+            }
         }
         if (msg.data && msg.data.PropBag){
             self.setData(msg.data.PropBag);
         }
+    },
+
+    getShowCombatLate: function () {
+        GlobalVar.me().setCombatPoint(self.combatPointData);
     },
 
 });

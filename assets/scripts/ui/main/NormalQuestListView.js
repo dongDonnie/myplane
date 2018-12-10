@@ -52,10 +52,15 @@ cc.Class({
         chapterType: {
             default: GameServerProto.PT_CAMPTYPE_MAIN,
             visible: false,
+        },
+        chapterHotPoint: {
+            default: null,
+            type: cc.Node
         }
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_QUESTLIST_VIEW;
         this.animeStartParam(0);
@@ -198,6 +203,19 @@ cc.Class({
         this.initQuestView();
     },
 
+    initChapterHotPoint: function (index) {
+        let boxarr = GlobalVar.me().campData.getBoxArrayData();
+        this.chapterHotPoint.active = false;
+        for (let j = 0; j < boxarr.length; j++) {
+            if (boxarr[j].ChapterID != index) {
+                this.chapterHotPoint.active = true;
+                break;
+            }
+        }
+        // if (boxarr.length != 0)
+        //     this.chapterHotPoint.active = true;
+    },
+
     initQuestView: function (index) {
         index = typeof index !== 'undefined' ? index : this.curChapterIndex;
         if (index == -1) {
@@ -213,7 +231,7 @@ cc.Class({
 
     getQuestNodeByIndex: function (index) {
         index = typeof index !== 'undefined' ? index : this.curChapterIndex;
-        if (index == -1) {
+        if (index == -1 || index == 30) {
             // console.log("error, index can not be '-1'")
             return;
         }
@@ -233,8 +251,12 @@ cc.Class({
 
         let playerChapterData = GlobalVar.me().campData.getChapterData(this.chapterType, index + 1);
         if (!playerChapterData) {
-            //章节锁
-            GlobalVar.comMsg.showMsg("需要先通关前置章节");
+            //章节锁wOpenLv data.wOpenLv > GlobalVar.me().level
+            if (chapterDataList[index].wOpenLv > GlobalVar.me().level){
+                GlobalVar.comMsg.showMsg(i18n.t('label.4000263').replace("%d", chapterDataList[index].wOpenLv));
+            }else{
+                GlobalVar.comMsg.showMsg(i18n.t('label.4000262'));;
+            }
 
             return;
         }
@@ -269,12 +291,10 @@ cc.Class({
                 let disY = posCur.y - posLast.y;
                 let disZ = Math.sqrt(Math.pow(disX, 2) + Math.pow(disY, 2));
 
-                let angle = Math.atan2(disX, disY) / Math.PI * 180;//计算两个关卡间的偏转角度
-
-
                 let line = cc.instantiate(this.nodeSpriteLine[campData ? 1 : 0]);
 
-                line.rotation = angle;
+                line.angle=-Math.atan2(disX, disY) / Math.PI * 180;//计算两个关卡间的偏转角度
+                
                 line.height = disZ;
                 line.anchorY = 0;
                 line.active = true;
@@ -368,6 +388,8 @@ cc.Class({
                 nodeBottom.getChildByName("chapterRewardBox" + i).getChildByName("spriteHot").active = false;
             }
         }
+
+        this.initChapterHotPoint(index+1);
     },
 
     changeQuest: function (nextIndex) {
@@ -401,7 +423,7 @@ cc.Class({
         this.curChapterIndex = nextIndex;
 
         let self = this;
-        let interval = 0.4 * curMap.getScale();
+        let interval = 0.4 * curMap.scale;
         curMap.stopAllActions();
         curMap.runAction(cc.spawn(cc.scaleTo(interval, 0), cc.fadeOut(interval)));
         nextMap.stopAllActions();
@@ -461,9 +483,6 @@ cc.Class({
     },
 
     onBtnChapterList: function () {
-        // if(this.checkIsLock()){
-        //     return;
-        // }
         this.clickedChapter = true;
         CommonWnd.showChapterListView(this.chapterType, this.curChapterIndex);
         // this.node.active = false;
@@ -473,20 +492,12 @@ cc.Class({
         if (!this.canClickPlanet){
             return;
         }        
-        // if(this.checkIsLock()){
-        //     return;
-        // }
-
-
 
         let planet = event.target;
         CommonWnd.showQuestInfoWnd(planet.data, planet.planetData);
     },
 
     onBtnChapterRewardBox: function (event, index) {
-        // if(this.checkIsLock()){
-        //     return;
-        // }
         let str = "oVecChest" + index;
         let chapterData = GlobalVar.tblApi.getDataBySingleKey('TblChapter', this.chapterType)[this.curChapterIndex];
 
@@ -528,8 +539,9 @@ cc.Class({
             GlobalVar.comMsg.errorWarning(event.ErrCode);
             return;
         }
+        this.initChapterHotPoint(this.curChapterIndex+1);
 
-        CommonWnd.showTreasuerExploit(event.OK.Item);
+        CommonWnd.showTreasureExploit(event.OK.Item);
         let nodeBottom = this.node.getChildByName("nodeBottom");
         nodeBottom.getChildByName("chapterRewardBox" + (event.OK.Pos + 1)).getComponent("RemoteSprite").setFrame(2)
         

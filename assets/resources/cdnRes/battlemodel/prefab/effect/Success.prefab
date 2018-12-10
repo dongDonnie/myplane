@@ -8,7 +8,8 @@
       "__id__": 1
     },
     "optimizationPolicy": 0,
-    "asyncLoadAssets": false
+    "asyncLoadAssets": false,
+    "readonly": false
   },
   {
     "__type__": "cc.Node",
@@ -56,8 +57,6 @@
       "y": 1,
       "z": 1
     },
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -68,11 +67,14 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
+    "_is3DNode": false,
     "groupIndex": 0,
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_id": ""
   },
   {
-    "__type__": "sp.Skeleton",
+    "__type__": "dragonBones.ArmatureDisplay",
     "_name": "",
     "_objFlags": 0,
     "node": {
@@ -81,16 +83,18 @@
     "_enabled": true,
     "_srcBlendFactor": 770,
     "_dstBlendFactor": 771,
-    "paused": false,
-    "defaultSkin": "",
-    "defaultAnimation": "",
-    "loop": false,
-    "premultipliedAlpha": false,
-    "timeScale": 0.8,
-    "_N$skeletonData": {
-      "__uuid__": "de334657-7b3d-46f2-9644-ca4d2492df6d"
+    "_armatureName": "armatureName",
+    "_animationName": "animation",
+    "playTimes": 1,
+    "_N$dragonAsset": {
+      "__uuid__": "32e544f2-705b-4b00-81cb-a18dfa8c1093"
     },
-    "_N$debugSlots": false,
+    "_N$dragonAtlasAsset": {
+      "__uuid__": "afd62426-532f-466d-ba5c-ca1b0906956f"
+    },
+    "_N$_defaultArmatureIndex": 0,
+    "_N$_animationIndex": 1,
+    "_N$timeScale": 0.8,
     "_N$debugBones": false,
     "_id": ""
   },

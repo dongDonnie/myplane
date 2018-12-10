@@ -37,6 +37,7 @@ const NetworkManager = cc.Class({
         this.m_readBuf = new ByteBuffer();
 
         this.connected = false;
+        this.connectError = false;
         this.needReConnected = true;
         this.connectHostAddress = '';
         this.connectHostPort = 0;
@@ -47,6 +48,9 @@ const NetworkManager = cc.Class({
         this.updateTimeID = -1;
         this.heartBeatTimeID = -1;
         this.connectTimerID = -1;
+
+        this.reconnectCount = 0;
+        this.reconnectMaxCount = 3;
     },
 
     registerEvent() {
@@ -97,69 +101,102 @@ const NetworkManager = cc.Class({
             return;
         }
         let url = (cc.sys.platform === cc.sys.WECHAT_GAME ? ('wss://' + host) : ('ws://' + host + ':' + port));
+
+        //url='wss://weplane-s1.17fengyou.com/10005:443';
+        this.reconnectCount++;
+
         this.socket = new WebSocket(url);
         this.socket.binaryType = 'arraybuffer';
-        this.socket.onopen = function (event) {
-            console.log('socket open: ', event);
-            GameServerProto.Init();
-            self.connected = true;
-            serverTimeService.getInstance(); //实例化服务器时间服务
-            self.init();
-            if (!!self.onConnectCallBack) {
-                self.onConnectCallBack();
+        if (this.socket.readyState != 3) {
+            this.reconnectCount = 0;
+            this.socket.onopen = function (event) {
+                console.log('socket open: ', event);
+                GameServerProto.Init();
+                self.connected = true;
+                self.connectError=false;
+                serverTimeService.getInstance(); //实例化服务器时间服务
+                self.init();
+                if (!!self.onConnectCallBack) {
+                    self.onConnectCallBack();
+                }
+                requestService.getInstance().onLoginedGame();
+            };
+            this.socket.onclose = function (event) {
+                console.log('socket close: ', event);
+                if (self.connect) {
+                    self.reset();
+                }
+                self.connected = false;
+                requestService.getInstance().onDisconnected();
+                if(self.needReConnected){
+                    self.checkConnection();
+                }
+            };
+            this.socket.onerror = function (event) {
+                console.error('socket error: ', event);
+                if (!self.connectError) {
+                    GlobalVar.netWaiting().showWaiting(false);
+                    GlobalVar.netWaiting().showReconnect(true);
+                    self.reset();
+                }
+                self.connectError = true;
+                self.connected = false;
+                requestService.getInstance().onDisconnected();
+            };
+            this.socket.onmessage = function (event) {
+                // console.log('socket message event: ', event);
+                self.m_readBuf.clear();
+                self.m_readBuf.append(event.data);
+                self.m_readBuf.limit = self.m_readBuf.offset;
+                self.m_readBuf.offset = 0;
+                let msg = {};
+                GameServerProto.Decode(self.m_readBuf, msg);
+                if (!!self.hookHandler) {
+                    self.hookHandler(msg.id, msg); //传递到requestService
+                    GlobalVar.messageDispatcher.onNetMessage(msg.id, msg); //传递到分发器
+                }
+                if (msg.id != 1)
+                    console.log('socket message data: ', msg);
+            };
+        } else {
+            if (this.reconnectCount <= this.reconnectMaxCount) {
+                this.checkConnection();
             }
-        };
-        this.socket.onclose = function (event) {
-            console.log('socket close: ', event);
-            self.connected = false;
-            requestService.getInstance().onDisconnected();
-            GlobalVar.netWaiting().showReconnect(false);
-            self.reset();
-            self.connectToServer(self.connectHostAddress, self.connectHostPort);
-        };
-        this.socket.onerror = function (event) {
-            console.error('socket error: ', event);
-            if (self.connected) {
-                GlobalVar.netWaiting().showWaiting(false);
-                GlobalVar.netWaiting().showReconnect(true);
-            }
-            self.connected = false;
-            requestService.getInstance().onDisconnected();
-            self.reset();
-        };
-        this.socket.onmessage = function (event) {
-            // console.log('socket message event: ', event);
-            self.m_readBuf.clear();
-            self.m_readBuf.append(event.data);
-            self.m_readBuf.limit = self.m_readBuf.offset;
-            self.m_readBuf.offset = 0;
-            let msg = {};
-            GameServerProto.Decode(self.m_readBuf, msg);
-            if (!!self.hookHandler) {
-                self.hookHandler(msg.id, msg); //传递到requestService
-                GlobalVar.messageDispatcher.onNetMessage(msg.id, msg); //传递到分发器
-            }
-            if (msg.id != 1)
-                console.log('message:', msg);
-            // console.log('socket message data: ', msg);
-        };
+        }
     },
 
     send(msg) {
+        if (msg.id != 1)
+            console.log('socket send data: ', msg);
         this.m_writeBuf.clear();
         if (GameServerProto.Encode(msg.id, msg.data, this.m_writeBuf) < 0) {
             return false;
         }
         this.m_writeBuf.limit = this.m_writeBuf.offset;
         this.m_writeBuf.offset = 0;
-        if (msg.id != 1)
-            console.log('send:', msg);
+
         if (!!this.socket) {
             this.socket.send(this.m_writeBuf.toArrayBuffer());
             return true;
         }
 
         return false;
+    },
+
+    showSocketState: function () {
+        if (this.socket.readyState == 0) {
+            //CONNECTING
+            cc.log("The connection has not yet been established");
+        } else if (this.socket.readyState == 1) {
+            //OPEN
+            cc.log("The WebSocket connection is established and communication is possible");
+        } else if (this.socket.readyState == 2) {
+            //CLOSING
+            cc.log("The connection is going through the closing handshake");
+        } else if (this.socket.readyState == 3) {
+            //CLOSED
+            cc.log("The connection has been closed or could not be opened");
+        }
     },
 
     connectToServer(host, port, callback) {
@@ -182,47 +219,32 @@ const NetworkManager = cc.Class({
     },
 
     checkConnection() {
-        if (!self.connected) {
+        if (self.connected) {
+            return true;
+        }
+
+        if (!self.connected && self.connectTimerID == -1 && !self.connectError) {
             GlobalVar.netWaiting().showWaiting(true);
             this.connectTimerID = GlobalVar.gameTimer().startTimer(function () {
-                if (!self.connected) {
+                if (!self.connected && !self.connectError) {
                     GlobalVar.gameTimer().delTimer(self.connectTimerID);
                     self.connectTimerID = -1;
                     GlobalVar.netWaiting().showWaiting(false);
                     self.connectToServer(self.connectHostAddress, self.connectHostPort);
-                    //GlobalVar.netWaiting().showReconnect(true);
+                } else if (self.connectError) {
+                    GlobalVar.gameTimer().delTimer(self.connectTimerID);
+                    self.connectTimerID = -1;
+                    GlobalVar.netWaiting().showWaiting(false);
+                    GlobalVar.netWaiting().showReconnect(true);
                 }
-            }, 5);
+            }, 3);
+            return false;
         }
-    },
-
-    _onNetworkLogin(data) {
-        if (data.ret && data.ret != 0) {
-            // console.log("wx session expired, start login wx.");
-            //self.useWxLogin(username1)
-        } else {
-            // console.log("login success, start afterlogin.");
-            self.afterLogin(data);
-            //self.reqCallBack();
-        }
-    },
-
-    afterLogin(data) {
-        if (data.newToken) {
-            GlobalVar.Me.loginData.token = data.newToken;
-        }
-        var date = new Date();
-        self.loginLocalTimeStamp = Math.floor(date.getTime() / 1000);
-
-        requestService.getInstance().onLoginedGame();
-    },
-
-    onLoginedGame() {
-        requestService.getInstance().onLoginedGame();
+        return false;
     },
 
     _onNetworkTimeout() {
-        //GlobalVar.netWaiting().showReconnect(true);
+        GlobalVar.netWaiting().showReconnect(true);
     },
 
     _onNetworkDead() {

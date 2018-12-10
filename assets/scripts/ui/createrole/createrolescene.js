@@ -9,15 +9,12 @@ var CreateRoleScene = cc.Class({
         
     },
 
-    initScene: function () {
-        
-
+    onLoad:function(){
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_ENTER_GAME, this._onEnterGame, this);
     },
 
-    releaseScene: function() {
-        this._super();
-
+    onDestroy:function(){
+        this.releaseScene();
         GlobalVar.eventManager().removeListenerWithTarget(this);
     },
 

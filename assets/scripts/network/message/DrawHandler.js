@@ -29,7 +29,7 @@ cc.Class({
         if (typeof msg != "object") {
             return;
         }
-        GlobalVar.me().drawData.showRichTreasureResult(msg.data);
+        GlobalVar.me().drawData.setTreasureData(msg.data);
     },
 
     _recvDrawAck: function (msgId, msg) {
@@ -61,9 +61,10 @@ cc.Class({
         self.sendMsg(GameServerProto.GMID_TREASURE_DATA_REQ, msg);
     },
 
-    sendSingleDrawReq: function () {
+    sendSingleDrawReq: function (free) {
         let msg = {
-            Type : GameServerProto.PT_TREASURE_WARM,
+            Type: GameServerProto.PT_TREASURE_WARM,
+            Free: free || 0,
         };
         self.sendMsg(GameServerProto.GMID_TREASURE_MINING_REQ, msg);
     },
@@ -75,9 +76,10 @@ cc.Class({
         self.sendMsg(GameServerProto.GMID_TREASURE_MINING_REQ, msg);
     },
 
-    sendTenDrawReq: function () {
+    sendTenDrawReq: function (free) {
         let msg = {
             Type : GameServerProto.PT_TREASURE_HOT,
+            Free: free || 0,
         };
         self.sendMsg(GameServerProto.GMID_TREASURE_MINING_REQ, msg);
     },

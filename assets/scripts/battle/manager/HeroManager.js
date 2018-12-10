@@ -4,8 +4,6 @@ const PlaneEntity = require('PlaneEntity');
 const WingmanEntity = require('WingmanEntity');
 const FriendEntity = require('FriendEntity');
 const BattleManager = require('BattleManager');
-const EntityManager = require('EntityManager');
-const ScenarioManager = require('ScenarioManager');
 
 const HeroManager = cc.Class({
     statics: {
@@ -73,8 +71,14 @@ const HeroManager = cc.Class({
     createPlane(displayNode, mode, id, props, full) {
         this.showType = typeof mode !== 'undefined' ? mode : 0;
         this.full = typeof full !== 'undefined' ? full : false;
-        let member = typeof id !== 'undefined' ? id : GlobalVar.me().memberData.getStandingByFighterID();
-        this.newHero(member, displayNode, props, full);
+        this.member = typeof id !== 'undefined' ? id : GlobalVar.me().memberData.getStandingByFighterID();
+        this.displayNode = displayNode;
+        this.props = props;
+        this.newHero(this.member, this.displayNode, this.props, this.full);
+    },
+
+    revive() {
+        this.createPlane(this.displayNode, this.showType, this.member, this.props, this.full);
     },
 
     update(dt) {
@@ -135,7 +139,8 @@ const HeroManager = cc.Class({
             BattleManager.getInstance().gameState == Defines.GameResult.FLYOUT ||
             BattleManager.getInstance().gameState == Defines.GameResult.COUNT ||
             BattleManager.getInstance().gameState == Defines.GameResult.START ||
-            BattleManager.getInstance().gameState == Defines.GameResult.READY) {
+            BattleManager.getInstance().gameState == Defines.GameResult.READY ||
+            BattleManager.getInstance().gameState == Defines.GameResult.RESTART) {
             for (let i = 0; i < 2; i++) {
                 if (typeof this.assistEntity[i] !== 'undefined') {
                     this.assistEntity[i].chaseFighter(dt);
@@ -246,47 +251,55 @@ const HeroManager = cc.Class({
                 this.planeEntity.setProp(member, props);
             }
         }
-        //this.planeEntity.setPosition(cc.v2(sz.width / 2, 0.2 * sz.height));
+        //this.planeEntity.setPosition(cc.v3(sz.width / 2, 0.2 * sz.height));
 
         if (BattleManager.getInstance().isDemo == false) {
             this.flyIntoScreen();
 
             if (BattleManager.getInstance().isEndlessFlag) {
-                let createFriend=false;
-                if(BattleManager.getInstance().battleMsg.BattleBlessStatusID==3){
-                    createFriend=true;
-                }else{
+                let createFriend = false;
+                if (BattleManager.getInstance().battleMsg.BattleBlessStatusID == 2) {
+                    BattleManager.getInstance().damagePlus = 1.05;
+                }
+                if (BattleManager.getInstance().battleMsg.BattleBlessStatusID == 3) {
+                    createFriend = true;
+                } else {
                     for (let status of BattleManager.getInstance().battleMsg.BattleStatus) {
+                        if (status.StatusID == 2) {
+                            BattleManager.getInstance().damagePlus = 1.05;
+                        }
                         if (status.StatusID == 3) {
                             //this.newFriend(member, displayNode, props, Defines.FRIENDDURATION, 2);
-                            createFriend=true;
-                            break;
+                            createFriend = true;
                         }
                     }
                 }
-                if(createFriend){
+                if (createFriend && this.friendEntity == null) {
                     this.newFriend(member, displayNode, props, Defines.FRIENDDURATION, 2);
                 }
             }
         } else {
             let sz = displayNode.getContentSize();
-            this.planeEntity.setPosition(cc.v2(0.5 * sz.width, 0.29 * sz.height));
+            this.planeEntity.setPosition(cc.v3(0.5 * sz.width, 0.29 * sz.height));
             if (typeof this.assistEntity[0] !== 'undefined') {
-                this.assistEntity[0].setPosition(cc.v2(0.5 * sz.width - 110, 0.34 * sz.height));
+                this.assistEntity[0].setPosition(cc.v3(0.5 * sz.width - 110, 0.34 * sz.height));
             }
             if (typeof this.wingmanEntity[0] !== 'undefined') {
-                this.wingmanEntity[0].setPosition(cc.v2(0.5 * sz.width - 110, 0.19 * sz.height));
+                this.wingmanEntity[0].setPosition(cc.v3(0.5 * sz.width - 110, 0.19 * sz.height));
             }
             if (typeof this.assistEntity[1] !== 'undefined') {
-                this.assistEntity[1].setPosition(cc.v2(0.5 * sz.width + 110, 0.34 * sz.height));
+                this.assistEntity[1].setPosition(cc.v3(0.5 * sz.width + 110, 0.34 * sz.height));
             }
             if (typeof this.wingmanEntity[1] !== 'undefined') {
-                this.wingmanEntity[1].setPosition(cc.v2(0.5 * sz.width + 110, 0.19 * sz.height));
+                this.wingmanEntity[1].setPosition(cc.v3(0.5 * sz.width + 110, 0.19 * sz.height));
             }
         }
     },
 
     newFriend: function (member, displayNode, props, duration, skillLevel) {
+        if (this.friendEntity != null) {
+            return;
+        }
         this.friendEntity = new FriendEntity();
         this.friendEntity.newPart('Fighter/Fighter_' + member, Defines.ObjectType.OBJ_HERO, 'PlaneObject', 0, 0, 0);
 
@@ -338,11 +351,14 @@ const HeroManager = cc.Class({
 
     flyIntoScreen: function () {
         var self = this;
+        self.controllable = false;
         var callback = function () {
             self.controllable = true;
             self.planeEntity.getPart().transform();
             if (BattleManager.getInstance().gameState == Defines.GameResult.START) {
                 BattleManager.getInstance().gameState = Defines.GameResult.READY;
+            } else if (BattleManager.getInstance().gameState == Defines.GameResult.RESTART) {
+                BattleManager.getInstance().gameState = Defines.GameResult.RUNNING;
             }
         }
         this.planeEntity.flyIntoScreen(callback);
@@ -350,6 +366,7 @@ const HeroManager = cc.Class({
 
     flyOutOffScreen: function () {
         var self = this;
+        self.controllable = false;
         var callback = function () {
             BattleManager.getInstance().result = 1;
             BattleManager.getInstance().gameState = Defines.GameResult.END;
@@ -369,14 +386,25 @@ const HeroManager = cc.Class({
     },
 
     selfDestroy: function () {
-        require('AIInterface').eliminateAllHeroBullets(false);
+        require('AIInterface').eliminateBulletByOwner(this.planeEntity, false, false);
+        var self = this;
+        self.controllable = false;
         var callback = function () {
             if (BattleManager.getInstance().isEndlessFlag) {
-                BattleManager.getInstance().result = 2;
+                if (Defines.REVIVECOUNTENDLESS - GlobalVar.me().campData.getBattleDieCount() > 0) {
+                    BattleManager.getInstance().gameState = Defines.GameResult.DEADDELAY;
+                } else {
+                    BattleManager.getInstance().result = 2;
+                    BattleManager.getInstance().gameState = Defines.GameResult.END;
+                }
             } else {
-                BattleManager.getInstance().result = 0;
+                if (Defines.REVIVECOUNTCAMPAIGN - GlobalVar.me().campData.getBattleDieCount() > 0) {
+                    BattleManager.getInstance().gameState = Defines.GameResult.DEADDELAY;
+                } else {
+                    BattleManager.getInstance().result = 0;
+                    BattleManager.getInstance().gameState = Defines.GameResult.END;
+                }
             }
-            BattleManager.getInstance().gameState = Defines.GameResult.END;
         }
         this.planeEntity.selfDestroy(callback);
         for (let i = 0; i < 2; i++) {
@@ -387,6 +415,8 @@ const HeroManager = cc.Class({
                 this.assistEntity[i].selfDestroy();
             }
         }
+        this.wingmanEntity.splice(0, this.wingmanEntity.length);
+        this.assistEntity.splice(0, this.assistEntity.length);
     },
 
     skillLevelUp: function (level) {
@@ -428,6 +458,9 @@ const HeroManager = cc.Class({
                 this.wingmanEntity[i].pauseAction();
             }
         }
+        if (!!this.friendEntity) {
+            this.friendEntity.pauseAction();
+        }
     },
 
     resumeEntity() {
@@ -438,6 +471,9 @@ const HeroManager = cc.Class({
             if (typeof this.wingmanEntity[i] !== 'undefined') {
                 this.wingmanEntity[i].resumeAction();
             }
+        }
+        if (!!this.friendEntity) {
+            this.friendEntity.resumeAction();
         }
     },
 

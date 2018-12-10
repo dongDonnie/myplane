@@ -27,6 +27,9 @@ var spData = cc.Class({
     getData: function(){
         return self.data;
     },
+    getSpFreeCount: function () {
+        return self.data.FreeCount;
+    },
 
     setSpChange: function(data){
         self.setData(data);

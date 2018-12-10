@@ -6,6 +6,9 @@ const GlobalFunc = require('GlobalFunctions');
 const GlobalVar = require("globalvar");
 const config = require('config');
 const Guide = require('Guide');
+const weChatAPI = require("weChatAPI");
+const StoreageData = require("storagedata");
+const i18n = require('LanguageData');
 
 var UIBattle = cc.Class({
     extends: UIBase,
@@ -42,6 +45,7 @@ var UIBattle = cc.Class({
         this.skillBtnShow = false;
         this.assistBtnShow = false;
         this.assistBtnStatus=0;
+        this.assistBtnStatusCount=0;
 
         this.comboKill = 0;
     },
@@ -66,7 +70,11 @@ var UIBattle = cc.Class({
         barAssistCD: {
             default: null,
             type: cc.ProgressBar
-        }
+        },
+        spriteFriendNode:{
+            default: null,
+            type: cc.Node,
+        },
     },
 
     onLoad: function () {
@@ -82,16 +90,19 @@ var UIBattle = cc.Class({
     },
 
     update(dt) {
+        if (config.NEED_GUIDE) {
+            Guide.getInstance().update(dt);
+        }
+        if(this.battleManager.gameState != Defines.GameResult.RUNNING){
+            return;
+        }
         this.updateSkillCD();
         this.updateAssistCD();
         this.updateScore();
         this.updatePlayerHp();
         this.updateBossHpBar();
         this.updateCombo();
-
-        if (config.NEED_GUIDE) {
-            Guide.getInstance().update(dt);
-        }
+        this.updateChestCount();
     },
 
     onDestroy(){
@@ -141,22 +152,34 @@ var UIBattle = cc.Class({
             let hasAssist = false;
             if(BattleManager.getInstance().battleMsg.BagBlessStatusID==4){
                 hasAssist=true;
-                this.assistBtnStatus=4
+                this.assistBtnStatus=4;
+                this.assistBtnStatusCount++;
             }
             for (let status of BattleManager.getInstance().battleMsg.BagStatus) {
                 if (status.StatusID == 4) {
                     hasAssist = true;
                     this.assistBtnStatus=4;
+                    this.assistBtnStatusCount = status.StatusCount;
+                    let numberBg = this.barAssistCD.node.getChildByName('numberBg');
+                    let labelcount = numberBg.getChildByName('labelCount').getComponent(cc.Label);
+                    labelcount.string = this.assistBtnStatusCount;
+                    // labelcount.node.active = !!this.assistBtnStatusCount;
+                    numberBg.active = !!this.assistBtnStatusCount;
+                    // setTimeout(() => {
+                    //     numberBg.width = labelcount.node.width + 3;
+                    // }, 30);
                     break;
                 }
             }
-            if (hasAssist && this.assistBtnStatus>0) {
-                this.barAssistCD.node.active = true;
-                this.assistBtnShow = true;
-            } else {
-                this.barAssistCD.node.active = false;
-                this.assistBtnShow = false;
-            }
+            this.barAssistCD.node.active = true;
+            this.assistBtnShow = true;
+            // if (hasAssist && this.assistBtnStatus>0) {
+            //     this.barAssistCD.node.active = true;
+            //     this.assistBtnShow = true;
+            // } else {
+            //     this.barAssistCD.node.active = false;
+            //     this.assistBtnShow = false;
+            // }
         }
 
         this.showBossHpBar();
@@ -165,15 +188,22 @@ var UIBattle = cc.Class({
     moveSkillBtn: function () {
         if (this.barSkillCD.node.active && this.skillBtnShow) {
             this.skillBtnShow = false;
-            this.barSkillCD.node.runAction(cc.moveBy(0.1, cc.v2(125, 0)));
+            this.barSkillCD.node.runAction(cc.moveBy(0.1, cc.v3(125, 0)));
         }
     },
 
     moveAssistBtn: function () {
         if (this.barAssistCD.node.active && this.assistBtnShow) {
             this.assistBtnShow = false;
-            this.barAssistCD.node.runAction(cc.moveBy(0.1, cc.v2(125, 0)));
+            this.barAssistCD.node.runAction(cc.moveBy(0.1, cc.v3(125, 0)));
         }
+    },
+
+    beyoundFrinedIn: function () {
+        this.spriteFriendNode.runAction(cc.moveBy(0.1, 120, 0));
+    },
+    beyoundFriendOut: function () {
+        this.spriteFriendNode.runAction(cc.moveBy(0.1, -120, 0));
     },
 
     setTopScore: function (num) {
@@ -295,6 +325,10 @@ var UIBattle = cc.Class({
         }
     },
 
+    updateChestCount: function () {
+        this.getNodeByName("labelChestCount").getComponent(cc.Label).string = BattleManager.getInstance().endlessGetChsetCount;
+    },
+
     showBossHpBar: function (show) {
         show = typeof show !== 'undefined' ? show : false;
         this.getNodeByName("spriteBossBarBg").active = show;
@@ -389,7 +423,7 @@ var UIBattle = cc.Class({
 
     onAssistClick() {
         if (this.battleManager.gameState == Defines.GameResult.RUNNING) {
-            if (this.barAssistCD.progress == 0 && this.assistBtnStatus>0) {
+            if (this.barAssistCD.progress == 0 && this.assistBtnStatus>0 && this.assistBtnStatusCount > 0) {
                 GlobalVar.handlerManager().endlessHandler.sendEndlessUseStatusReq(this.assistBtnStatus)
                 
                 // let func = require('BulletMapping').getSolution(100015);
@@ -399,6 +433,24 @@ var UIBattle = cc.Class({
                 //     this.assistTimeCD = 0;
                 //     this.barAssistCD.progress = 0;
                 // }
+            } else if (this.barAssistCD.progress == 0 && this.assistBtnStatusCount <= 0 && GlobalVar.getShareSwitch()){
+                if (StoreageData.getBattleAssitTimes() >= 5){
+                    GlobalVar.comMsg.showMsg(i18n.t('label.4000313'));
+                    return;
+                }
+                this.battleManager.gameState = Defines.GameResult.PAUSE;
+                let self = this;
+                weChatAPI.shareNormal(111, function(){
+                    self.heroManager.callAssist();
+                    self.assistCurrentCD = 5;
+                    self.assistTimeCD = 5;
+                    self.barAssistCD.progress = 1;
+                    self.battleManager.gameState = Defines.GameResult.PREPARE;
+                    StoreageData.setBattleAssitTimes();
+                }, function () {
+                    self.battleManager.gameState = Defines.GameResult.PREPARE;
+                });
+
             }
         }
     },
@@ -406,6 +458,15 @@ var UIBattle = cc.Class({
     _onAssistClick(data){
         if(data.ErrCode==0){
             if(data.OK.BagStatus.StatusID==4){
+                this.assistBtnStatusCount = data.OK.BagStatus.StatusCount;
+                let numberBg = this.barAssistCD.node.getChildByName('numberBg');
+                let labelcount = numberBg.getChildByName('labelCount').getComponent(cc.Label);
+                labelcount.string = this.assistBtnStatusCount;
+                // labelcount.node.active = !!this.assistBtnStatusCount;
+                numberBg.active = !!this.assistBtnStatusCount;
+                // setTimeout(() => {
+                //     numberBg.width = labelcount.node.width + 3;
+                // }, 30);
                 this.heroManager.callAssist();
                 this.assistCurrentCD = 5;
                 this.assistTimeCD = 5;

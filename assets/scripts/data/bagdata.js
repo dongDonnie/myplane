@@ -238,7 +238,11 @@ var BagData = cc.Class({
     setDataByItem: function (item) {   //穿脱挂载
         // this.itemData.Items[item.Slot] = item;
         let index = self.getItemIndexBySlot(item.Slot);
-        self.itemData.Items[index] = item;
+        if (item.ItemID == 0){
+            self.itemData.Items.splice(index, 1);
+        }else{
+            self.itemData.Items[index] = item;
+        }
         
         this.updateHotPoint();
     },

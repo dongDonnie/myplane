@@ -103,7 +103,6 @@ cc.Class({
             GlobalVar.eventManager().removeListenerWithTarget(this);
             WindowManager.getInstance().popToTargetView(WndTypeDefine.WindowType.E_DT_MASKBACK_WND);
         } else if (name == "animeNormalRootOpen" || name == "animeNormalRootOpenAllScreen") {
-            // this.unLockBtn();
             this.registerEvent();
             let type = WindowManager.getInstance().getTopViewType();
             let com = WindowManager.getInstance().getTopView().getComponent(type);
@@ -217,32 +216,26 @@ cc.Class({
     },
 
     onBtnBuySp: function(){
-        // if(this.checkIsLock()){
-        //     return;
-        // }
-        CommonWnd.showBuySpConfirmWnd(null, i18n.t('label.4000230'), null, null, null, i18n.t('label.4000214'), i18n.t('label.4000249'));
+        CommonWnd.showBuySpWnd();
     },
 
     onBtnBuyGold: function(){
-        // if(this.checkIsLock()){
-        //     return;
-        // }
+
     },
 
     onBtnBuyDiamond: function(){
-        // if(this.checkIsLock()){
-        //     return;
-        // }
         CommonWnd.showRechargeWnd();
     },
 
     onBtnReturn: function(){
         let viewNode = WindowManager.getInstance().getTopView();
         if (!viewNode){
+            WindowManager.getInstance().popToRoot();
             return;
         }
         let view = viewNode.getComponent(WindowManager.getInstance().getTopViewType());
         if(!view){
+            WindowManager.getInstance().popToRoot();
             return;
         }
         if(typeof view.onBtnClose == 'function'){
@@ -261,9 +254,6 @@ cc.Class({
     // },
 
     onRichTreasureBtnClick: function (event) {
-        // if (this.checkIsLock()) {
-        //     return;
-        // }
         // CommonWnd.showRichTreasureWnd();
         GlobalVar.handlerManager().drawHandler.sendTreasureData();
     },
@@ -278,7 +268,7 @@ cc.Class({
                 this.setShowPowerHideEnergyChange(true);
             }
         } else {
-            // this.unLockBtn();
+            
         }
     },
 

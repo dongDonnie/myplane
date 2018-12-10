@@ -68,7 +68,7 @@ cc.Class({
 
     updateLabel () {
         if (!this.label) {
-            // cc.error('Failed to update localized label, label component is invalid!');
+            cc.error('Failed to update localized label, label component is invalid!');
             return;
         }
         let localizedString = i18n.t(this.dataID);

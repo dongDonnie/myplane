@@ -8,6 +8,9 @@ const CommonWnd = require("CommonWnd");
 
 const GOLD = 1;
 
+// const GUAZAI_SMELTER = "cdnRes/audio/main/effect/lingquxiaoshi";
+const GUAZAI_REBORN = "cdnRes/audio/main/effect/ronglu-chongsheng";
+
 var self = null;
 
 cc.Class({
@@ -73,6 +76,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.animeStartParam(0, 0);
 
     },
@@ -144,7 +148,7 @@ cc.Class({
         if (this.chkbox == 0) {
             if (!this.isSmeltComplete) {
                 this.updateGuazaiSmelt();
-                this.isSmeltComplete = true;
+                // this.isSmeltComplete = true;
             } else {
                 this.getNodeByName("nodeMelt").active = true;
                 this.getNodeByName("nodeReborn").active = false;
@@ -291,7 +295,7 @@ cc.Class({
     updateGuazaiSmelt: function () {
         this.getNodeByName("nodeMelt").active = true;
         this.getNodeByName("nodeReborn").active = false;
-
+        let self = this;
         for (let i in this.guazaiSmeltPosToSlot) {
             let guazai = GlobalVar.me().bagData.getItemBySlot(this.guazaiSmeltPosToSlot[i]);
             if (guazai){
@@ -321,18 +325,25 @@ cc.Class({
 
         let hechengGetItem = GlobalVar.me().guazaiData.getHechengGetItem();
         if (hechengGetItem[0]){
+            GlobalVar.soundManager().playEffect(GUAZAI_REBORN);
             let nodeGetItem = this.getNodeByName("nodeGetItem");
             let itemGet = nodeGetItem.getChildByName("ItemObject");
             let effect = this.getNodeByName("nodeMelt").getChildByName("nodeEffect");
-            effect.active = true;
-            effect.getComponent(sp.Skeleton).clearTracks();
-            effect.getComponent(sp.Skeleton).setAnimation(0, "animation", false);
-            effect.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
-                var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-                if (animationName == "animation") {
-                    effect.active = false;
-                }
-            });
+            GlobalFunctions.playDragonBonesAnimation(effect, function () { 
+                effect.active = false;
+                CommonWnd.showTreasureExploit(hechengGetItem);
+                self.isSmeltComplete = true;
+            })
+            // effect.active = true;
+            // effect.getComponent(dragonBones.ArmatureDisplay).playAnimation("animation", 1);
+            // effect.getComponent(dragonBones.ArmatureDisplay).addEventListener(dragonBones.EventObject.COMPLETE, event => {
+            //     var animationName = event.animationState ? event.animationState.name : "";
+            //     if (animationName == "animation") {
+            //         effect.active = false;
+            //         CommonWnd.showTreasureExploit(hechengGetItem);
+            //         self.isSmeltComplete = true;
+            //     }
+            // });
             if (!itemGet){
                 itemGet = cc.instantiate(this.itemPrefab);
                 itemGet.getComponent("ItemObject").updateItem(hechengGetItem[0].ItemID);
@@ -357,7 +368,6 @@ cc.Class({
                 }
                 this.seekNodeByName(node, "imgPlus").active = true;
             }
-
         }else{
             let nodeGetItem = this.getNodeByName("nodeGetItem");
             let itemGet = nodeGetItem.getChildByName("ItemObject");
@@ -365,6 +375,7 @@ cc.Class({
                 itemGet.active = false;
             }
             this.seekNodeByName(nodeGetItem, "nodeQuestion").active = true;
+            this.isSmeltComplete = true;
         }
     },
 
@@ -509,7 +520,9 @@ cc.Class({
     onBtnComposeTouchedCallback: function () {
         if (this.guazaiSmeltSlot.length != 4) {
             GlobalVar.comMsg.showMsg("挂载数量不足");
-
+            return;
+        }
+        if (!this.isSmeltComplete){
             return;
         }
         let msg = { BagSlot: this.guazaiSmeltSlot };
@@ -517,6 +530,9 @@ cc.Class({
     },
 
     onQuickSmeltBtnTouchedCallback: function () {
+        if (!this.isSmeltComplete){
+            return;
+        }
         this.guazaiSmeltSlot = [];
         this.guazaiSmeltPosToSlot = {};
         let canSmelter = false;
@@ -576,22 +592,32 @@ cc.Class({
                 effect.active = true;
                 let index = i;
                 let self = this;
-                effect.getComponent(sp.Skeleton).clearTracks();
-                effect.getComponent(sp.Skeleton).setAnimation(0, "animation", false);
-                effect.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
-                    var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-                    if (animationName == "animation") {
-                        effect.active = false;
-                        if (index == 0){
-                            self.dirty = true;
-                            self.isSmeltComplete = false;
-                            self.isRebornComplete = false;
-                            
-                            self.rebirthLock = false;
-                            CommonWnd.showTreasuerExploit(data.GetItems);
-                        }
+                GlobalFunctions.playDragonBonesAnimation(effect, function () {
+                    effect.active = false;
+                    if (index == 0) {
+                        self.dirty = true;
+                        self.isSmeltComplete = false;
+                        self.isRebornComplete = false;
+
+                        self.rebirthLock = false;
+                        CommonWnd.showTreasureExploit(data.GetItems);
                     }
-                });
+                })
+                // effect.getComponent(dragonBones.ArmatureDisplay).playAnimation("animation", 1);
+                // effect.getComponent(dragonBones.ArmatureDisplay).addEventListener(dragonBones.EventObject.COMPLETE, event => {
+                //     var animationName = event.animationState ? event.animationState.name : "";
+                //     if (animationName == "animation") {
+                //         effect.active = false;
+                //         if (index == 0){
+                //             self.dirty = true;
+                //             self.isSmeltComplete = false;
+                //             self.isRebornComplete = false;
+                            
+                //             self.rebirthLock = false;
+                //             CommonWnd.showTreasureExploit(data.GetItems);
+                //         }
+                //     }
+                // });
             }
         }else if (data.IsShow == 1){
             this.updateGuazaiRebirthGetItemPanel(data.GetItems);

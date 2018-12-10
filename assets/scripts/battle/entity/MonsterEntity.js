@@ -19,23 +19,31 @@ cc.Class({
         invincibleTime: 0,
         collisionSwitch: true,
         dropCrystal: true,
+        dropCount: true,
         deathShock: true,
         dropBuff: true,
         closeDeathBomb: false,
         canDrop: false,
-        immediatelyKill: false,
+        immediatelyKill: 0,
         clearBulletWhenDead: false,
-        isKill:true,
+        isKill: true,
 
         monsterHpBar: null,
 
         deathType: 0,
-        deathModeCallBack: null,
 
         flyCurTime: 0,
         flyMsgTime1: 0,
         flyMsgTime2: 0,
         flyMsgTime3: 0,
+
+        damageFromExecuteInterval: 0,
+        damageFromExecuteIntervalSet: 0,
+
+        inspector: [],
+        watchCondition: null,
+        watchEffect: null,
+        selfEffect: null,
     },
 
     ctor() {
@@ -46,47 +54,45 @@ cc.Class({
 
     initEntity() {
         this._super();
-
-        this.monsterID = 0;
-        this.lv = 0;
-        this.tbl = null;
-
-        this.automaticSkill = false;
-        this.curSkillAciton = 0;
-        this.curSkillCD = -1;
-        this.autoCurTime = 0;
-
-        this.invincibleTime = 0;
-        this.collisionSwitch = true;
-
-        this.resetHover();
-        this.setMonsterHpBar();
     },
 
     reset: function () {
         this._super();
+        this.monsterID = 0;
+        this.lv = 0;
+        this.tbl = null;
+        this.curSkillAciton = 0;
+        this.curSkillCD = -1;
+        this.autoCurTime = 0;
         this.invincibleTime = 0;
         this.collisionSwitch = true;
         this.automaticSkill = false;
         this.dropCrystal = true;
+        this.dropCount = true;
         this.deathShock = true;
         this.closeDeathBomb = false;
         this.dropBuff = true;
         this.canDrop = false;
-        this.immediatelyKill = false;
+        this.immediatelyKill = 0;
         this.clearBulletWhenDead = false;
-        this.isKill=true;
+        this.isKill = true;
         this.deathType = 0;
-        this.deathModeCallBack = null;
         this.flyCurTime = 0;
         this.flyMsgTime1 = 0;
         this.flyMsgTime2 = 0;
         this.flyMsgTime3 = 0;
+        this.damageFromExecuteInterval = 0;
+        this.damageFromExecuteIntervalSet = 0;
+        this.inspector.splice(0, this.inspector.length);
+        this.watchCondition = null;
+        this.watchEffect = null;
+        this.selfEffect = null;
+        this.resetHover();
     },
 
     resetHover() {
         this.atrb.hover = {};
-        this.atrb.hover.position = cc.v2(0, 0);
+        this.atrb.hover.position = cc.v3(0, 0);
         this.atrb.hover.status = 0;
         this.atrb.hover.duration = 0;
         this.atrb.hover.range = 0;
@@ -97,11 +103,20 @@ cc.Class({
         this._super(dt);
         this.updateHover(dt);
         this.autoUseSkill(dt);
+        this.updateMonsterHpBar();
+        this.watch();
 
         if (this.invincibleTime > 0) {
             this.invincibleTime -= dt;
             if (this.invincibleTime < 0) {
                 this.invincibleTime = 0;
+            }
+        }
+
+        if (this.damageFromExecuteInterval > 0) {
+            this.damageFromExecuteInterval -= dt;
+            if (this.damageFromExecuteInterval < 0) {
+                this.damageFromExecuteInterval = 0;
             }
         }
 
@@ -112,16 +127,16 @@ cc.Class({
         if (this.atrb.hover.status == 1 && this.atrb.hover.ttl-- <= 0) {
             let v = 8 * this.atrb.hover.range / this.atrb.hover.duration;
 
-            this.setSpeed(cc.v2(0, v));
-            this.setSpeedAcc(cc.v2(0, -4 * v / this.atrb.hover.duration));
+            this.setSpeed(cc.v3(0, v));
+            this.setSpeedAcc(cc.v3(0, -4 * v / this.atrb.hover.duration));
             this.atrb.hover.ttl = Math.floor(this.atrb.hover.duration / 2 * Defines.BATTLE_FPS + 0.5);
             this.atrb.hover.status = 2;
 
         } else if (this.atrb.hover.status == 2 && this.atrb.hover.ttl-- <= 0) {
             let v = 8 * this.atrb.hover.range / this.atrb.hover.duration;
 
-            this.setSpeed(cc.v2(0, -v));
-            this.setSpeedAcc(cc.v2(0, 4 * v / this.atrb.hover.duration));
+            this.setSpeed(cc.v3(0, -v));
+            this.setSpeedAcc(cc.v3(0, 4 * v / this.atrb.hover.duration));
             this.atrb.hover.ttl = Math.ceil(this.atrb.hover.duration / 2 * Defines.BATTLE_FPS - 0.5);
             this.atrb.hover.status = 1;
         }
@@ -138,8 +153,8 @@ cc.Class({
         this.atrb.hover.duration = duration;
 
         let v = 8 * range / duration;
-        this.setSpeed(cc.v2(0, -v));
-        this.setSpeedAcc(cc.v2(0, 4 * v / duration));
+        this.setSpeed(cc.v3(0, -v));
+        this.setSpeedAcc(cc.v3(0, 4 * v / duration));
         this.atrb.hover.ttl = Math.floor(duration / 2 * Defines.BATTLE_FPS + 0.5);
     },
 
@@ -192,21 +207,28 @@ cc.Class({
         }
     },
 
-    hitWithDamage: function (dmg,noSub) {
-        noSub=typeof noSub!=='undefined'?noSub:true;
+    hitWithDamage: function (dmg, isExecute, noSub) {
+        noSub = typeof noSub !== 'undefined' ? noSub : true;
         if (this.invincibleTime <= 0) {
-            if(!noSub){
+            if (!noSub) {
                 if (this.tbl.dwType >= 4 && dmg > this.maxHp * 0.01) {
                     dmg = this.maxHp * 0.01;
-                }else if(this.tbl.dwType == 3 && dmg > this.maxHp * 0.02){
+                } else if (this.tbl.dwType == 3 && dmg > this.maxHp * 0.02) {
                     dmg = this.maxHp * 0.02;
-                }else if(this.tbl.dwType == 2 && dmg > this.maxHp * 0.03){
+                } else if (this.tbl.dwType == 2 && dmg > this.maxHp * 0.03) {
                     dmg = this.maxHp * 0.03;
                 }
             }
+            if (isExecute) {
+                if (this.damageFromExecuteInterval == 0) {
+                    this.damageFromExecuteInterval = this.damageFromExecuteIntervalSet;
+                } else {
+                    return -1;
+                }
+            }
             this._super(dmg);
-            if (this.tbl.dwType == 2 || this.tbl.dwType == 3) {
-                if (this.hp < this.maxHp && this.monsterHpBar != null) {
+            if (this.tbl.dwType == 2 || this.tbl.dwType == 3 || this.tbl.dwType == 6) {
+                if (this.hp < this.maxHp && this.monsterHpBar != null && cc.isValid(this.monsterHpBar)) {
                     this.monsterHpBar.active = true;
                     let percent = this.hp / this.maxHp;
                     this.monsterHpBar.getComponent(cc.ProgressBar).progress = percent;
@@ -216,12 +238,14 @@ cc.Class({
                 ScenarioManager.getInstance().tryDropItem(1, this);
             }
             if (this.hp <= 0) {
-                if (this.heroManager.planeEntity.state == 2) {
+                if (this.heroManager.planeEntity.state == 2 || this.tbl.dwType == 4 || this.tbl.dwType == 5) {
                     this.clearBulletWhenDead = true;
                 }
-                this.canDrop = true;
+                if (this.dropCount) {
+                    this.canDrop = true;
+                }
             }
-        }else{
+        } else {
             return 0;
         }
         return dmg;
@@ -285,6 +309,8 @@ cc.Class({
         }
 
         this.setDeathType(this.tbl.byDeathMode);
+
+        this.setScale(this.tbl.dScale, this.scaleY < 0 ? -this.tbl.dScale : this.tbl.dScale);
     },
 
     newObject() {
@@ -300,31 +326,17 @@ cc.Class({
         } else {
             return -1;
         }
+        if (this.objectType == Defines.ObjectType.OBJ_MONSTER) {
+            this.baseObject.getComponent('MonsterObject').reset();
+        }
         if (this.tbl.oVecAnchorsPos.length == 2) {
             this.setAnchor(this.tbl.oVecAnchorsPos[0], this.tbl.oVecAnchorsPos[1]);
-            //this.baseObject.setPosition(this.tbl.oVecAnchorsPos[0],this.tbl.oVecAnchorsPos[1]);
         }
         //this.setScale(this.tbl.dScale, this.scaleY < 0 ? -this.tbl.dScale : this.tbl.dScale);
-        this.baseObject.setScale(this.tbl.dScale,this.baseObject.scaleY<0?-this.tbl.dScale : this.tbl.dScale);
-        if (this.tbl.dwType == 2 || this.tbl.dwType == 3) {
-            if (this.baseObject != null && this.monsterHpBar != null) {
-                let size = this.getCollider().size;
-                let offset = this.getCollider().offset;
-                //let bar = this.monsterHpBar.getChildByName("bar");
-                // if (size.width * 0.94 < bar.getContentSize().width) {
-                //     bar.setContentSize(size.width * 0.94, bar.getContentSize().height);
-                //     this.monsterHpBar.setContentSize(size.width, this.monsterHpBar.getContentSize().height);
-                // }
-                //bar.x = (-0.5 * bar.getContentSize().width);
-                this.monsterHpBar.setPosition(0, this.baseObject.getPosition().y-0.5 * size.height);
-                this.monsterHpBar.getComponent(cc.ProgressBar).progress = 1;
-                //this.monsterHpBar.active=true;
-            }
-        } else {
-            if (this.monsterHpBar != null) {
-                this.monsterHpBar.active = false;
-            }
+        if (this.tbl.dwType == 2 || this.tbl.dwType == 3 || this.tbl.dwType == 6) {
+            this.setMonsterHpBar();
         }
+        this.baseObject.getComponent('MonsterObject').setTBL(this.tbl);
         let z = this._super();
         return z;
     },
@@ -332,32 +344,50 @@ cc.Class({
     deleteObject: function () {
         //this.automaticSkill = false;
         let size = this.getCollider().size;
+
         this._super();
         if (this.tbl.strDieEffect != '' && !this.closeDeathBomb) {
             let prefab = GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, 'cdnRes/battlemodel/prefab/effect/' + this.tbl.strDieEffect);
             if (prefab != null) {
                 let Bomb = cc.instantiate(prefab);
-                let s = Math.max(Math.max(size.width / Bomb.width, size.height / Bomb.height), 1.5);
+                let bZ = Defines.Z.KILL;
+                let max = 1.5;
+                if (this.tbl.dwType >= 4 && this.tbl.dwType <= 5) {
+                    max = 3;
+                    bZ = Defines.Z.MONSTERBULLETCLEAR;
+                }
+                let s = Math.max(Math.max(size.width, size.height) / Math.min(Bomb.width, Bomb.height), max);
                 Bomb.setScale(s);
-                BattleManager.getInstance().displayContainer.addChild(Bomb, Defines.Z.KILL);
+                BattleManager.getInstance().displayContainer.addChild(Bomb, bZ);
                 Bomb.runAction(cc.sequence(cc.delayTime(0.4), cc.removeSelf(true)));
                 Bomb.setPosition(this.getPosition());
 
-                if (this.tbl.dwType >= 2 && this.tbl.dwType <= 6) {
+                if (this.tbl.dwType >= 4 && this.tbl.dwType <= 6) {
                     GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/explode_boss');
-                } else if(this.tbl.dwType == 1){
+                } else if (this.tbl.dwType == 3) {
+                    GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/explode_captain');
+                } else if (this.tbl.dwType == 2) {
+                    GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/explode_elite');
+                } else if (this.tbl.dwType == 1) {
                     GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/explode_small');
                 }
             }
         }
 
-        if (this.tbl.dwType >= 2 && this.tbl.dwType <= 5 && this.dropCrystal && this.canDrop) {
+        if (this.tbl.dwType >= 2 && this.tbl.dwType <= 6 && this.dropCrystal && this.canDrop) {
             this.solution.solution_crystal(this.tbl.dwType, this.getPosition());
         }
         if (this.tbl.dwType >= 2 && this.tbl.dwType <= 6 && this.deathShock) {
             BattleManager.getInstance().screenShake(1);
             weChatAPI.deviceShock();
         }
+
+        this.inspector.splice(0, this.inspector.length);
+        this.watchCondition = null;
+        this.watchEffect = null;
+        this.selfEffect = null;
+
+        this.zIndex = 0;
     },
 
     flyDamageMsg(dmg, critical, pos, big, immediately) {
@@ -440,7 +470,7 @@ cc.Class({
         let scaleBack = cc.scaleTo(0.08 * exScale, exScale);
         let seq = cc.sequence(scaleLarge, scaleSmall, scaleBack);
 
-        let move = cc.moveTo(0.6, oldPos.add(cc.v2(20, 50)));
+        let move = cc.moveTo(0.6, oldPos.add(cc.v3(20, 50)));
         let fadeOut = cc.fadeOut(0.6);
         let spawn = cc.spawn(move, fadeOut);
 
@@ -455,8 +485,11 @@ cc.Class({
 
 
     deathMode: function (callback) {
-        if (this.monsterHpBar != null) {
-            this.monsterHpBar.active = false;
+        this.watch();
+        this.pauseAction();
+        if (this.monsterHpBar != null && cc.isValid(this.monsterHpBar)) {
+            this.monsterHpBar.zIndex = 0;
+            this.monsterHpBar.destroy();
         }
         this.collisionSwitch = false;
         switch (this.deathType) {
@@ -466,10 +499,7 @@ cc.Class({
                 }
                 break;
             case 1:
-                if (!!callback) {
-                    this.deathModeCallBack = callback;
-                }
-                this.createBombAnime(this.getPosition());
+                this.createBombAnime(this.getPosition(), callback);
                 break;
             case 2:
                 if (!!callback) {
@@ -479,35 +509,27 @@ cc.Class({
         }
     },
 
-    createBombAnime: function (pos) {
+    createBombAnime: function (pos, callback) {
         BattleManager.getInstance().endGameAnimeCount = 0;
         let size = BattleManager.getInstance().displayContainer.getContentSize();
-        pos = typeof pos !== 'undefined' ? pos : cc.v2(0.5 * size.width, 0.5 * size.height);
+        pos = typeof pos !== 'undefined' ? pos : cc.v3(0.5 * size.width, 0.5 * size.height);
         var self = this;
         GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, 'cdnRes/battlemodel/prefab/effect/lBomb', function (prefab) {
             let bomb = cc.instantiate(prefab);
-            BattleManager.getInstance().displayContainer.addChild(bomb, 20, '555');
+            BattleManager.getInstance().displayContainer.addChild(bomb, Defines.Z.MONSTERBULLETCLEAR);
             bomb.setPosition(pos);
-            self.endCount = 7;
-            self.playBombAnime();
-        });
-    },
-    playBombAnime: function () {
-        let bomb = BattleManager.getInstance().displayContainer.getChildByName('555');
-        bomb.setPosition(this.getPosition().add(cc.v2((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)));
-        bomb.getComponent(cc.Animation).play();
-        GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/explode_boss');
-
-        this.endCount--;
-        if (this.endCount >= 0) {
-            setTimeout(this.playBombAnime.bind(this), 350);
-        } else {
-            bomb.destroy();
-            if (!!this.deathModeCallBack) {
-                this.deathModeCallBack(this);
+            bomb.runAction(cc.sequence(cc.delayTime(0.4), cc.removeSelf(true)));
+            let array = [];
+            for (let i = 0; i < Math.ceil(Math.random() * 5) + 8; i++) {
+                array.push(pos.add(cc.v3((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)));
             }
-            BattleManager.getInstance().endGameAnimeCount--;
-        }
+            BattleManager.getInstance().screenBomb(0, array, 1.5, function () {
+                if (!!callback) {
+                    callback(self);
+                }
+                BattleManager.getInstance().endGameAnimeCount--;
+            })
+        });
     },
     createRotatoScaleAnime: function (callback) {
         var action = cc.spawn(cc.scaleTo(1, 0.8), cc.rotateBy(1, 720));
@@ -518,15 +540,25 @@ cc.Class({
     },
 
     setMonsterHpBar: function () {
-        if (this.monsterHpBar == null) {
-            var self=this;
-            GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, 'cdnRes/battlemodel/prefab/effect/MonsterHp',function(prefab){
+        if (this.monsterHpBar == null || !cc.isValid(this.monsterHpBar)) {
+            var self = this;
+            GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, 'cdnRes/battlemodel/prefab/effect/MonsterHp', function (prefab) {
                 if (prefab != null) {
                     self.monsterHpBar = cc.instantiate(prefab);
-                    self.addChild(self.monsterHpBar, 5);
+                    BattleManager.getInstance().displayContainer.addChild(self.monsterHpBar, Defines.Z.MONSTERHP);
                     self.monsterHpBar.active = false;
+                    self.updateMonsterHpBar();
                 }
             });
+        }
+    },
+
+    updateMonsterHpBar: function () {
+        if (this.monsterHpBar != null && cc.isValid(this.monsterHpBar) && this.getCollider() != null) {
+            let offset = this.getCollider().offset;
+            let size = this.getCollider().size;
+            let pos = this.getPosition().add(cc.v3(0, this.baseObject.getPosition().y - 0.6 * size.height));
+            this.monsterHpBar.setPosition(pos);
         }
     },
 
@@ -547,7 +579,7 @@ cc.Class({
                 if (!this.hold) {
                     this.isDead = true;
                     this.deathShock = false;
-                    this.closeDeathBomb=true;
+                    this.closeDeathBomb = true;
                 } else {
                     this.isShow = false;
                 }
@@ -564,9 +596,40 @@ cc.Class({
                     this.isShow = true;
                     this.isDead = true;
                     this.deathShock = false;
-                    this.closeDeathBomb=true;
+                    this.closeDeathBomb = true;
                 }
             }
+        }
+    },
+
+    watch: function () {
+        if (!!this.watchCondition) {
+            let result = this.watchCondition(this);
+            let cancel = 0;
+            if (!!result) {
+                for (let entity of this.inspector) {
+                    if (!!entity.watchEffect) {
+                        entity.watchEffect(result, entity);
+                    }
+                    if (!!this.selfEffect) {
+                        cancel = this.selfEffect(result, this);
+                    }
+                }
+            }
+            if (cancel) {
+                this.watchCondition = null;
+            }
+        }
+    },
+
+    setWatch: function (condition, selfEffect) {
+        this.watchCondition = typeof condition !== 'undefined' ? condition : null;
+        this.selfEffect = typeof selfEffect !== 'undefined' ? selfEffect : null;
+    },
+    setInspector: function (entity, entityEffect) {
+        if (typeof entity !== 'undefined') {
+            this.inspector.push(entity);
+            entity.watchEffect = typeof entityEffect !== 'undefined' ? entityEffect : null;
         }
     },
 
@@ -578,8 +641,18 @@ cc.Class({
         return this.collisionSwitch;
     },
 
+    setShow: function (show) {
+        this.isShow = typeof show !== 'undefined' ? show : true;
+    },
     getShow: function () {
         return this.isShow;
+    },
+
+    getMonsterSkills: function () {
+        if (!!this.tbl) {
+            return this.tbl.oVecSkillIDs;
+        }
+        return null;
     },
 
     addInvincibleTime: function (second) {
@@ -599,6 +672,13 @@ cc.Class({
     },
     getDropCrystal: function () {
         return this.dropCrystal;
+    },
+
+    setDropCount: function (drop) {
+        this.dropCount = typeof drop !== 'undefined' ? drop : true;
+    },
+    getDropCount: function () {
+        return this.dropCount;
     },
 
     setDeathShock: function (shock) {
@@ -622,10 +702,10 @@ cc.Class({
         return this.closeDeathBomb;
     },
 
-    setKill: function (kill) {
-        this.immediatelyKill = typeof kill !== 'undefined' ? kill : false;
+    setImmediatelyKill: function (kill) {
+        this.immediatelyKill = typeof kill !== 'undefined' ? kill : 0;
     },
-    getKill: function () {
+    getImmediatelyKill: function () {
         return this.immediatelyKill;
     },
 
@@ -643,7 +723,16 @@ cc.Class({
         return this.deathType;
     },
 
-    setIsKill:function(not){
-        this.isKill=typeof not !=='undefined'?not:true;
+    setIsKill: function (not) {
+        this.isKill = typeof not !== 'undefined' ? not : true;
+    },
+
+    setDamageFromExecuteIntervalSet: function (interval) {
+        if (this.damageFromExecuteIntervalSet == 0) {
+            this.damageFromExecuteIntervalSet = typeof interval !== 'undefined' ? interval : 1;
+        }
+    },
+    setDamageFromExecuteInterval: function (interval) {
+        this.damageFromExecuteInterval = typeof interval !== 'undefined' ? interval : 0;
     },
 });

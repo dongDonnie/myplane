@@ -32,8 +32,8 @@
   "design-resolution-width": 640,
   "excluded-modules": [
     "TiledMap",
-    "DragonBones",
-    "Physics"
+    "Physics",
+    "3D"
   ],
   "fit-height": true,
   "fit-width": true,

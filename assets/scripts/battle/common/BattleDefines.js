@@ -103,6 +103,8 @@ BattleDefines.SKILLCD = 5;
 BattleDefines.CRAZYCOUNT = 5;
 BattleDefines.DEMOCOUNT = 3;
 BattleDefines.FRIENDDURATION = 30.0;
+BattleDefines.REVIVECOUNTCAMPAIGN = 3;
+BattleDefines.REVIVECOUNTENDLESS = 2;
 
 BattleDefines.GameResult = cc.Enum({
     NONE: 0,
@@ -118,7 +120,11 @@ BattleDefines.GameResult = cc.Enum({
     FAILED: 10,
     FLYOUT: 11,
     CARD: 12,
-    COUNT: 13,
+    DEADDELAY:13,
+    REVIVE:14,
+    WAITREVIVE:15,
+    RESTART:16,
+    COUNT: 17,
 });
 
 BattleDefines.GroupStatus = cc.Enum({
@@ -139,27 +145,29 @@ BattleDefines.Z = cc.Enum({
     RAY: 4,
     KILL: 5,
     MONSTER: 6,
-    FIGHTERBULLET: 7,
-    FIGHTER: 8,
-    BARRIER: 9,
-    ASSISTBULLET: 10,
-    ASSIST: 11,
-    WINGMANBULLET: 12,
-    WINGMAN: 13,
-    MISSILE: 14,
-    BUFF: 15,
-    CHEST: 16,
-    CRTSTAL: 17,
-    MONSTERBULLET: 18,
-    MONSTERBULLETCLEAR:19,
-    MONSTERBULLETHIT:20,
-    HEROBULLETHIT:21,
-    FLYDAMAGEMSG: 22,
-    INVICIBLE: 23,
-    EXECUTESHADOW: 24,
-    EXECUTE: 25,
-    BOMBER:26,
-    WARNING: 27,
+    MONSTERHP:7,
+    FIGHTERBULLET: 8,
+    FIGHTER: 9,
+    BARRIER: 10,
+    ASSISTBULLET: 11,
+    ASSIST: 12,
+    WINGMANBULLET: 13,
+    WINGMAN: 14,
+    MISSILE: 15,
+    BUFF: 16,
+    CHEST: 17,
+    CRTSTAL: 18,
+    MONSTERBULLET: 19,
+    MONSTERBULLETCLEAR:20,
+    MONSTERBULLETHIT:21,
+    HEROBULLETHIT:22,
+    FLYDAMAGEMSG: 23,
+    INVICIBLE: 24,
+    EXECUTESHADOW: 25,
+    EXECUTE: 26,
+    BOMBER:27,
+    UNDEFEAT:28,
+    WARNING: 29,
 });
 
 BattleDefines.Assist = {
@@ -173,6 +181,12 @@ BattleDefines.Assist = {
     BLUESTONE: 20001,
     PURPERSTONE: 20002,
     GOLD: 30000,
+    CHEST1:30001,
+    CHEST2:30002,
+    CHEST3:30003,
+    CHEST4:30004,
+    CHEST5:30005,
+    CHEST6:30006,
     STONYSMALL: 40000,
     STONYMIDDLE: 40001,
     STONYBIG: 40002,

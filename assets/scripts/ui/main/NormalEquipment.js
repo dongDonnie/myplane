@@ -13,6 +13,7 @@ const BattleManager = require('BattleManager');
 
 const AUDIO_USE_EXP_ITEM = 'cdnRes/audio/main/effect/shengji';
 const AUDIO_LEVEL_UP = 'cdnRes/audio/main/effect/shengjie';
+const AUDIO_QUALITY_UP = 'cdnRes/audio/main/effect/wujinchongfeng';
 
 cc.Class({
     extends: RootBase,
@@ -57,6 +58,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMALEQUIPMENT_WND;
         this.animeStartParam(0);
@@ -404,7 +406,7 @@ cc.Class({
         this.updatePlanePropValue(isPowerUp);
         if (isLevelUp) {
             // 播放音效
-            // GlobalVar.soundManager().playEffect(AUDIO_LEVEL_UP);
+            GlobalVar.soundManager().playEffect(AUDIO_LEVEL_UP);
             GlobalVar.comMsg.showMsg("战机等级提升");
         }
         this.canUseExpItem = true;
@@ -465,22 +467,8 @@ cc.Class({
         let member = GlobalVar.me().memberData.getMemberByID(memberID);
         lvTab.getChildByName("labelLevelNumber").getComponent(cc.Label).string = member.Level;
         lvTab.getChildByName("labelOwn").getComponent(cc.Label).string = member.Exp;
-        let levelData = GlobalVar.tblApi.getDataBySingleKey('TblMemberLevel', member.MemberID);
-        let index = 0;
-        if (member.Level > levelData[index].wLevelMax) {
-            index = 1;
-        }
-        let levelUpNeedExp = parseInt(Math.pow(member.Level, levelData[index].dUpNeedExpVar1)) + member.Level * levelData[index].wUpNeedExpVar2 + levelData[index].wUpNeedExpVar3;
 
-        let str = levelUpNeedExp + "";
-        let cut = str.length - 2;
-        if (cut < 1) {
-            cut = 1;
-        }
-        if (cut > 4) {
-            cut = 4;
-        }
-        levelUpNeedExp = (parseInt(levelUpNeedExp / Math.pow(10, cut)) + 1) * Math.pow(10, cut);
+        let levelUpNeedExp = GlobalVar.me().memberData.getMemberLevelUpNeedExpByMemberID(memberID);
 
         lvTab.getChildByName("labelNeed").getComponent(cc.Label).string = levelUpNeedExp;
         if (!this.progressAction) {
@@ -490,24 +478,26 @@ cc.Class({
             this.progressAction = false;
         }
 
-        let color = null;
-        if (member.Exp < levelUpNeedExp) {
-            color = GlobalFunc.getSystemColor(5);
-        } else {
-            color = GlobalFunc.getSystemColor(1);
-        }
-        lvTab.getChildByName("labelOwn").color = color;
+        // let color = null;
+        // if (member.Exp < levelUpNeedExp) {
+        //     color = GlobalFunc.getSystemColor(5);
+        // } else {
+        //     color = GlobalFunc.getSystemColor(1);
+        // }
+        // lvTab.getChildByName("labelOwn").color = color;
+        lvTab.getChildByName("btnoLevelUp").getChildByName("spriteHot").active = !!GlobalVar.me().memberData.levelUpHotFlag[memberID];
+
 
         if (member.Level == 200) {
-            lvTab.getChildByName("labelCenter").getComponent(cc.Label).string = '已达最大等级';
-            lvTab.getChildByName("labelCenter").color = GlobalFunc.getSystemColor(1);
+            lvTab.getChildByName("labelFullLevel").active = true;
+            lvTab.getChildByName("labelCenter").getComponent(cc.Label).string = '';
             lvTab.getChildByName("labelOwn").getComponent(cc.Label).string = '';
             lvTab.getChildByName("labelNeed").getComponent(cc.Label).string = '';
             lvTab.getChildByName("barExpPercent").getComponent(cc.ProgressBar).progress = 1;
             this.levelUpAction(this.curLevelUpInterval, beforeExpPercent, 1, null, member.Level - beforeLevel);
         } else {
             lvTab.getChildByName("labelCenter").getComponent(cc.Label).string = '/';
-            lvTab.getChildByName("labelCenter").color = new cc.color(155, 184, 224);
+            lvTab.getChildByName("labelFullLevel").active = false;
         }
 
         // if (member.Level > beforeLevel) {
@@ -566,10 +556,14 @@ cc.Class({
         QuTab.getChildByName("btnoAdvance").getChildByName("spriteHot").active = !!GlobalVar.me().memberData.qualityUpHotFlag[memberID];
 
         if (qualityData.wQuality == 520) {
-            QuTab.getChildByName("labelOwn").getComponent(cc.Label).string = "已满阶";
-            QuTab.getChildByName("labelOwn").color = GlobalFunc.getSystemColor(1);
+            QuTab.getChildByName("labelFullLevel").active = true;
+            QuTab.getChildByName("labelOwn").getComponent(cc.Label).string = "";
             QuTab.getChildByName("barPiecePercent").getComponent(cc.ProgressBar).progress = 1;
             QuTab.getChildByName("labelNeed").getComponent(cc.Label).string = '';
+            // QuTab.getChildByName("labelCenter").getComponent(cc.Label).string = '';
+        } else {
+            // QuTab.getChildByName("labelCenter").getComponent(cc.Label).string = '/';
+            QuTab.getChildByName("labelFullLevel").active = false;
         }
     },
 
@@ -601,8 +595,6 @@ cc.Class({
 
         let count = GlobalVar.me().bagData.getItemCountById(this.useExpItemID);
         if (count == 0) {
-            let windowMgr = GlobalVar.windowManager();
-            windowMgr.unLockBtn();
             let item = this.getNodeByName("spriteLevelUp").getChildByName("nodeItem").getChildByName("ItemObject").getComponent("ItemObject");
             CommonWnd.showItemGetWay(item.itemID, item.getLabelNumberData(), item.getSlot());
             return;
@@ -654,8 +646,6 @@ cc.Class({
             this.endLevelUp();
             let item = this.getNodeByName("spriteLevelUp").getChildByName("nodeItem").getChildByName("ItemObject").getComponent("ItemObject");
             CommonWnd.showItemGetWay(item.itemID, item.getLabelNumberData(), item.getSlot());
-            let windowMgr = GlobalVar.windowManager();
-            windowMgr.unLockBtn();
         }
     },
 
@@ -664,18 +654,16 @@ cc.Class({
     },
 
     onLevelUp: function (msg) {
-        WindowManager.getInstance().lockBtn();
         this.canUseExpItem = true;
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        if (msg.data.ErrCode == GameServerProto.PTERR_MEMBERLEVEL_PLAYER_LIMIT) {
+        if (msg.data.ErrCode !== GameServerProto.PTERR_SUCCESS) {
             this.endLevelUp();
-            GlobalVar.comMsg.errorWarning(msg.data.ErrCode);
-            return
-        } else if (msg.data.ErrCode !== GameServerProto.PTERR_SUCCESS) {
-            this.endLevelUp();
-            GlobalVar.comMsg.errorWarning(msg.data.ErrCode);
-            let item = this.getNodeByName("spriteLevelUp").getChildByName("nodeItem").getChildByName("ItemObject").getComponent("ItemObject");
-            CommonWnd.showItemGetWay(item.itemID, item.getLabelNumberData(), item.getSlot());
+            if (msg.data.ErrCode == GameServerProto.PTERR_ITEM_LACK){
+                let item = this.getNodeByName("spriteLevelUp").getChildByName("nodeItem").getChildByName("ItemObject").getComponent("ItemObject");
+                CommonWnd.showItemGetWay(item.itemID, item.getLabelNumberData(), item.getSlot());
+            }else{
+                GlobalVar.comMsg.errorWarning(msg.data.ErrCode);
+            }
             return;
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -688,19 +676,27 @@ cc.Class({
 
         let effect = this.node.getChildByName("nodeCenter").getChildByName("nodeEffect");
         effect.active = true;
+        // effect.getComponent(dragonBones.ArmatureDisplay).playAnimation("animation", 1);
+        // let self = this;
+        // effect.getComponent(dragonBones.ArmatureDisplay).addEventListener(dragonBones.EventObject.COMPLETE, event => {
+        //     var animationName = event.animationState ? event.animationState.name : "";
+        //     if (animationName == "animation") {
+        //         effect.active = false;
+        //     }
+        // });
         effect.getComponent(sp.Skeleton).clearTracks();
         effect.getComponent(sp.Skeleton).setAnimation(0, "animation", false);
-        let self = this;
         effect.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
             var animationName = trackEntry.animation ? trackEntry.animation.name : "";
             if (animationName == "animation") {
                 effect.active = false;
             }
-        });
+        })
     },
 
     qualityUp: function () {
         if (this.getCanUpQuality()) {
+            this.qualityDataCur = this.qualityData;
             GlobalVar.handlerManager().memberHandler.sendMemberQualityUpReq(this.memberID);
         }
         else {
@@ -722,36 +718,19 @@ cc.Class({
     },
 
     onQualityUp: function (msg) {
-        WindowManager.getInstance().lockBtn();
-        // if (msg.data.ErrCode == GameServerProto.PTERR_GOLD_LACK) {
-        //     // CommonWnd.showMessage(null, CommonWnd.oneConfirm, i18n.t('label.4000216'), i18n.t('label.4000227'));
-        //     windowManager.getInstance().lockBtn();
-        //     return;
-        // }
-        // else if (msg.data.ErrCode == GameServerProto.PTERR_ITEM_LACK) {
-        //     CommonWnd.showMessage(null, CommonWnd.oneConfirm, i18n.t('label.4000216'), i18n.t('label.4000223'));
-        //     windowManager.getInstance().lockBtn();
-        //     return;
-        // }
         if (msg.data.ErrCode != GameServerProto.PTERR_SUCCESS) {
             GlobalVar.comMsg.errorWarning(msg.data.ErrCode);
             return;
         }
-        GlobalVar.comMsg.showMsg("战机品质提升");
-        GlobalVar.soundManager().playEffect(AUDIO_LEVEL_UP);
+        // GlobalVar.comMsg.showMsg("战机品质提升");
+        GlobalVar.soundManager().playEffect(AUDIO_QUALITY_UP);
         let member = GlobalVar.me().memberData.getMemberByID(this.memberID);
         this.updataFighter(member.MemberID, member.Quality, member.Level);
 
-        let effect = this.node.getChildByName("nodeCenter").getChildByName("nodeEffect");
-        effect.active = true;
-        effect.getComponent(sp.Skeleton).clearTracks();
-        effect.getComponent(sp.Skeleton).setAnimation(0, "animation", false);
-        let self = this;
-        effect.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
-            var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-            if (animationName == "animation") {
-                effect.active = false;
-            }
+        var nodePlanet = this.node.getChildByName("nodeCenter").getChildByName("nodePlanet");
+        nodePlanet.active = false;
+        CommonWnd.showPlaneQualityUpWnd(this.qualityDataCur, this.qualityData, function () {
+            nodePlanet.active = true;
         });
     },
 });

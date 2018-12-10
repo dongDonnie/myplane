@@ -1,5 +1,6 @@
 const Defines = require('BattleDefines')
 const EntityManager = require('EntityManager')
+const BattleManager = require('BattleManager')
 const Factory = require('Factory')
 
 var AIInterface = cc.Class({
@@ -26,8 +27,9 @@ var AIInterface = cc.Class({
 
         createBuff: function (id, pos, elastic,drop) {
             let buff = Factory.getInstance().produceBuff(id, pos, elastic,drop);
-            EntityManager.getInstance().entityNewList.push(buff);
             buff.entityId = EntityManager.getInstance().getEntityId();
+            EntityManager.getInstance().newEntity(buff);
+            //EntityManager.getInstance().entityNewList.push(buff);
             return buff;
         },
 
@@ -126,7 +128,7 @@ var AIInterface = cc.Class({
         addAction:function(entity,actName,loop,callback){
             let obj = entity.getObject();
             if (obj != null) {
-                return obj.addAction(actName, loop, callback);
+                return obj.playAction(actName, loop, callback);
             }
             return null;
         },
@@ -140,6 +142,14 @@ var AIInterface = cc.Class({
                 return null;
             }
             return null;
+        },
+
+        stopAction(entity){
+            let obj = entity.getObject();
+            if (obj != null) {
+                return obj.stop();
+            }
+            return false;
         },
 
         getHero() {
@@ -162,20 +172,20 @@ var AIInterface = cc.Class({
         speedTransfer(speed, angle) {
             speed = typeof speed !== 'undefined' ? speed : 0;
             angle = typeof angle !== 'undefined' ? angle : 0;
-            let v=cc.v2(Math.cos(angle * Math.PI / 180),Math.sin(angle * Math.PI / 180));
+            let v=cc.v3(Math.cos(angle * Math.PI / 180),Math.sin(angle * Math.PI / 180));
             return v.mul(speed);
         },
 
         getAngle(origin, target) {
-            target = typeof target !== 'undefined' ? target : cc.v2(0, 0);
-            origin = typeof origin !== 'undefined' ? origin : cc.v2(0, 0);
+            target = typeof target !== 'undefined' ? target : cc.v3(0, 0);
+            origin = typeof origin !== 'undefined' ? origin : cc.v3(0, 0);
             let v = target.sub(origin);
             return Math.atan2(v.y,v.x) * 180 / Math.PI;
         },
 
         posTransfer(pospercent) {
             let designSize = cc.view.getDesignResolutionSize();
-            let pos = cc.v2(0, 0);
+            let pos = cc.v3(0, 0);
 
             if (pospercent.x >= 0 && pospercent.x <= 1) {
                 pos.x = cc.winSize.width * pospercent.x;
@@ -202,7 +212,7 @@ var AIInterface = cc.Class({
 
         splitStringPos:function(pos){
             let p = pos.split(',');
-            let v = cc.v2(Number(p[0]), Number(p[1]));
+            let v = cc.v3(Number(p[0]), Number(p[1]));
             return this.posTransfer(v);
         },
 

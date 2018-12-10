@@ -143,6 +143,7 @@ cc.Class({
 
         if (this.protectTime <= 0 && this.barrier != null && cc.isValid(this.barrier)) {
             this.barrier.destroy();
+            require('AIInterface').eliminateAllMonsterBullets(false, true);
         } else if (this.protectTime >= 0 && this.protectTime <= Defines.PROTECT_TIME*0.25 && this.barrier != null && cc.isValid(this.barrier) && !this.barrierFade) {
             this.barrier.runAction(cc.sequence(cc.fadeOut(Defines.PROTECT_TIME*0.25*0.4), cc.fadeIn(Defines.PROTECT_TIME*0.25*0.4), cc.fadeOut(Defines.PROTECT_TIME*0.25*0.2)));
             this.barrierFade = true;
@@ -258,6 +259,17 @@ cc.Class({
         }
     },
 
+    addChest(type){
+        this.showGetBuffEffect(type);
+        BattleManager.getInstance().endlessGetChsetCount++;
+        GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/gold_bing');
+    },
+
+    addGold(){
+        BattleManager.getInstance().endlessGoldCount++;
+        //GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/gold_bing');
+    },
+
     hitWithDamage(dmg, immediately) {
         this._super(dmg, immediately);
         if (this.hp <= 0 && this.objectType == Defines.ObjectType.OBJ_HERO) {
@@ -275,7 +287,7 @@ cc.Class({
             if (prefab != null) {
                 let getBuff = cc.instantiate(prefab);
                 this.addChild(getBuff, 20, '8000');
-                let pos = this.partObject.getPosition()
+                let pos = this.partObject.getPosition();
                 getBuff.setPosition(0, -pos.y);
                 //let pos = this.partObject.getPosition().add(this.partObject.getChildByName("point").getPosition())
                 //getBuff.setPosition(pos);
@@ -283,8 +295,6 @@ cc.Class({
             }
         }
         if (this.getChildByName('8000') != null) {
-            let getBuff = this.getChildByName('8000');
-            let spine = getBuff.getComponent(sp.Skeleton);
             let animeName = '';
             if (type == Defines.Assist.WEAPON_UP) {
                 animeName = "Tx_GetBuff_Sj";
@@ -294,11 +304,23 @@ cc.Class({
                 animeName = "Tx_GetBuff_Hd";
             } else if (type == Defines.Assist.HP) {
                 animeName = "Tx_GetBuff_Hf";
+            }else if (type == Defines.Assist.HP) {
+                animeName = "Tx_GetBuff_Hf";
+            }else if (type >= Defines.Assist.CHEST1 && type <=Defines.Assist.CHEST6) {
+                animeName = "Tx_GetBuff_Bx";
             }
-            if (animeName != '') {
-                spine.clearTrack(0);
-                spine.setAnimation(0, animeName, false);
-                spine.timeScale = 2;
+            if(animeName != ''){
+                let getBuff = this.getChildByName('8000');
+                let spine = getBuff.getComponent(sp.Skeleton);
+                if(spine!=null){
+                    spine.clearTrack(0);
+                    spine.setAnimation(0, animeName, false);
+                }
+                let dragonbone = getBuff.getComponent(dragonBones.ArmatureDisplay);
+                if (dragonbone != null) {
+                    let dbArmature = dragonbone.armature();
+                    dbArmature.animation.play(animeName, 1);
+                }
             }
         }
     },
@@ -313,7 +335,17 @@ cc.Class({
             Bomb.setScale(s);
             this.addChild(Bomb, 8);
             Bomb.setPosition(this.partObject.getPosition());
+            GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/explode_boss');
         }
+
+        if(this.skillLevel==3){
+            require('BulletSolutions').solution_buff(Defines.Assist.SUPER, this.getPosition(),Math.floor(Math.random()*360));
+        }else{
+            for(let i=0;i<this.skillLevel;i++){
+                require('BulletSolutions').solution_buff(Defines.Assist.WEAPON_UP, this.getPosition(),Math.floor(Math.random()*360));
+            }
+        }
+
         if (!!callback) {
             this.runAction(
                 cc.sequence(

@@ -124,8 +124,9 @@ var Me = cc.Class({
         self.vipLevel = playerData.VIPLevel;
         self.creatTime = playerData.CreatTime;
         if (playerData.Avatar != ""){
-            self.avatar = playerData.Avatar;
+            self.loginData.setLoginReqDataAvatar(playerData.Avatar);
         }
+        self.avatar = playerData.Avatar;
         self.combatPoint = playerData.CombatPoint;
         self.icon = playerData.Icon;
         self.statFlags = playerData.StatFlags;
@@ -189,12 +190,26 @@ var Me = cc.Class({
         GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_SPCHANGE_NTF);
         GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_LEVELUP_NTF, levelUpData);
 
+        this.levelUpData = levelUpData;
+        this.levelUpFlag = true;
+    },
+    getLevelUpData: function () {
+        if (this.levelUpFlag && this.levelUpData) {
+            this.setLevelUpData(this.levelUpData);
+        }
+        this.levelUpFlag = false;
+        this.levelUpData = null;
+    },
+    setLevelUpFlag: function () {
+        this.levelUpFlag = false;
+        this.levelUpData = null;
     },
     getLevel: function () {
         return self.level;
     },
     setExpChange: function (exp) {
         self.exp = exp;
+        GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_EXPCHANGE_NTF);
     },
     getExp: function () {
         return self.exp;

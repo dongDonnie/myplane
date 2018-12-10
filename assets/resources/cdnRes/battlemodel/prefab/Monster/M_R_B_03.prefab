@@ -8,7 +8,8 @@
       "__id__": 1
     },
     "optimizationPolicy": 0,
-    "asyncLoadAssets": false
+    "asyncLoadAssets": false,
+    "readonly": false
   },
   {
     "__type__": "cc.Node",
@@ -23,10 +24,10 @@
         "__id__": 2
       },
       {
-        "__id__": 3
+        "__id__": 4
       },
       {
-        "__id__": 4
+        "__id__": 3
       }
     ],
     "_prefab": {
@@ -62,8 +63,6 @@
       "y": 1,
       "z": 1
     },
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -74,30 +73,10 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
+    "_is3DNode": false,
     "groupIndex": 0,
-    "_id": ""
-  },
-  {
-    "__type__": "sp.Skeleton",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
-    "_srcBlendFactor": 770,
-    "_dstBlendFactor": 771,
-    "paused": false,
-    "defaultSkin": "",
-    "defaultAnimation": "start",
-    "loop": true,
-    "premultipliedAlpha": true,
-    "timeScale": 1,
-    "_N$skeletonData": {
-      "__uuid__": "7673677c-4fa2-4308-9683-c0201bedfa38"
-    },
-    "_N$debugSlots": false,
-    "_N$debugBones": false,
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_id": ""
   },
   {
@@ -108,9 +87,12 @@
       "__id__": 1
     },
     "_enabled": true,
-    "spine": {
-      "__id__": 2
+    "spine": null,
+    "dragonBone": {
+      "__id__": 3
     },
+    "dbArmature": null,
+    "dbArmatureCallback": null,
     "collider": {
       "__id__": 4
     },
@@ -119,6 +101,32 @@
     "objectType": 0,
     "entity": null,
     "defaultAction": null,
+    "tbl": null,
+    "_id": ""
+  },
+  {
+    "__type__": "dragonBones.ArmatureDisplay",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "_srcBlendFactor": 770,
+    "_dstBlendFactor": 771,
+    "_armatureName": "armatureName",
+    "_animationName": "start",
+    "playTimes": 0,
+    "_N$dragonAsset": {
+      "__uuid__": "7d99f3e0-3ca5-4d58-99e0-44a1ad8ea81b"
+    },
+    "_N$dragonAtlasAsset": {
+      "__uuid__": "6e973fd7-bd0c-43b1-ac46-5b4288dcf52a"
+    },
+    "_N$_defaultArmatureIndex": 0,
+    "_N$_animationIndex": 6,
+    "_N$timeScale": 1,
+    "_N$debugBones": false,
     "_id": ""
   },
   {
@@ -133,12 +141,12 @@
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 117
+      "y": 137
     },
     "_size": {
       "__type__": "cc.Size",
-      "width": 315,
-      "height": 224
+      "width": 366,
+      "height": 203
     },
     "_id": ""
   },

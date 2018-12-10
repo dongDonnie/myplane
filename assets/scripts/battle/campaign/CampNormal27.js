@@ -6,9 +6,11 @@ CampNormal27.data = {
         ["cx-c","cx-d","cx-e-bossditu"],
     ],
     monsterWaves:[
-        {wave:{groups:[34,228,27,193,40,43,230],wait:0,delay:[2,2.5,3,3.5,6,7,8]},maps:{mapIndex:[0],mapSpeed:[1000],mapScale:[1],mapLoop:[1]}},
-        {wave:{groups:[38,39,194],wait:0,delay:[0,0.5,1]}},
-        {wave:{groups:[88,28,33,27],wait:0,delay:[0,1,2,3],anime:1},maps:{mapIndex:[1],mapSpeed:[600],mapScale:[1],mapLoop:[0]}},
+        {wave:{groups:[1018,38,39,42,43,882],wait:0,delay:[1,2.5,3,3.5,5,6]},maps:{mapIndex:[0],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
+        {wave:{groups:[1019,831,830,836,837],wait:0,delay:[0,2,2,4,4]}},
+        {wave:{groups:[1020,552,553],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[51,882,52,834,841,842],wait:0,delay:[0,0,2,2,4,6]}},
+        {wave:{groups:[80],wait:0,delay:[0],anime:1,isBOSS:1},maps:{mapIndex:[1],mapSpeed:[600],mapScale:[1],mapLoop:[0]}},
     ],
     monsterExtra:[311,312,313,314,315,316,317],
 
@@ -26,10 +28,20 @@ CampNormal27.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:3}},
+                {wave:{index:3,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:1.4}},
+            ],
+        },
+        {
+            eventKey:0,
+            checkTime:1,
+            condition:[
+                {wave:{index:4,step:5}},
+            ],
+            effect:[
+                {extra:{open:-2}},
             ],
         },
     ],

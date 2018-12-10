@@ -80,7 +80,7 @@ cc.Class({
         ////因为现在还没有MainData数据落地，所以现在先临时直接使用State来判断激活码的问题////////////////////
 
         if (recSuccess){
-            CommonWnd.showTreasuerExploit(msg.data.OK.RewardItem);
+            CommonWnd.showTreasureExploit(msg.data.OK.RewardItem);
             GlobalVar.me().bagData.updateItemDataByGMDT_ITEM_CHANGE(msg.data.OK.RewardItem);
         }
     },

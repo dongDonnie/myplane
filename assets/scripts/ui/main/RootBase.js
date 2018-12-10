@@ -27,6 +27,16 @@ cc.Class({
         }
     },
 
+    onLoad: function () {
+        let node = new cc.Node("nodeBlock");
+        node.addComponent(cc.BlockInputEvents);
+        node.width = 640;
+        node.height = 1400;
+        this.node.addChild(node);
+        this.nodeBlock = node.getComponent(cc.BlockInputEvents);
+        this.nodeBlock.enabled = false;
+    },
+
     initRoot: function () {
         if (WindowManager.getInstance().findViewInStack(WndTypeDefine.WindowType.E_DT_NORMALROOT_WND) != "" || this.openType == 0) {
             this.animePlay(1);
@@ -59,6 +69,8 @@ cc.Class({
     },
 
     animePlay: function (mode) {
+
+        this.nodeBlock && (this.nodeBlock.enabled = true);
         if (this.selfAnimeName != "") {
             switch (mode) {
                 case 0:
@@ -81,6 +93,7 @@ cc.Class({
     },
 
     animePlayCallBack(name) {
+        this.nodeBlock && (this.nodeBlock.enabled = false);
         if (name == "Escape") {
             if (this.deleteMode) {
                 if (!this.needPopNormalRoot()) {
@@ -103,8 +116,6 @@ cc.Class({
                 }
             }
         }
-        WindowManager.getInstance().btnLock1 = false;
-        WindowManager.getInstance().lockBtn();
     },
 
     touchMain: function () {
@@ -112,10 +123,6 @@ cc.Class({
     },
 
     close: function () {
-        // if(this.checkIsLock()){
-        //     return;
-        // }
-
         if (this.openType != 0) {
             this.deleteMode = true;
             if (this.needPopNormalRoot()) {

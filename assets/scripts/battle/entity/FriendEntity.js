@@ -35,7 +35,7 @@ cc.Class({
         this.autoCurTime = 0;
 
         this.duration=-1;
-        this.moveVec=cc.v2(0,0);
+        this.moveVec=cc.v3(0,0);
 
         this.heroManager = require('HeroManager').getInstance();
     },
@@ -51,7 +51,7 @@ cc.Class({
         this.autoCurTime = 0;
 
         this.duration=-1;
-        this.moveVec=cc.v2(0,0);
+        this.moveVec=cc.v3(0,0);
     },
 
     setProp: function (id, props) {
@@ -127,20 +127,20 @@ cc.Class({
 
     update: function (dt) {
         if(this.duration>0){
-            this.duration-=dt;
+            //this.duration-=dt;
             if(this.duration<0){
                 this.duration=0;
                 this.stopAllActions();
             }
             if(this.moveVec.x==0 && this.moveVec.y==0){
-                this.moveVec=cc.v2(Math.random()*(cc.winSize.width-200)+100,Math.random()*cc.winSize.height*0.5);
+                this.moveVec=cc.v3(Math.random()*(cc.winSize.width-200)+100,Math.random()*cc.winSize.height*0.5);
                 var self=this;
                 this.runAction(
                     cc.sequence(
                         cc.moveTo(0.5,this.moveVec),
                         cc.delayTime(2),
                         cc.callFunc(function(){
-                            self.moveVec=cc.v2(0,0);
+                            self.moveVec=cc.v3(0,0);
                         })
                     )
                 )

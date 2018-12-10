@@ -9,6 +9,7 @@ const GlobalFunc = require('GlobalFunctions');
 const i18n = require('LanguageData');
 const GameServerProto = require("GameServerProto");
 const BattleManager = require('BattleManager');
+const weChatAPI = require("weChatAPI");
 
 const AUDIO_SHILIANCHOU = 'cdnRes/audio/main/effect/shilianchou';
 
@@ -28,12 +29,35 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMALDRAW_VIEW;
         this.animeStartParam(0);
         if (GlobalFunc.isAllScreen() && !this.fixViewComplete) {
             this.fixViewComplete = true;
             this.fixView();
+        }
+
+        let nodeBottom = this.node.getChildByName("nodeBottom");
+        // if (!GlobalVar.getShareSwitch()){
+        if (true){
+            nodeBottom.getChildByName("labelFreeDraw").active = false;
+            nodeBottom.getChildByName("btnFreeDraw").active = false;
+            nodeBottom.getChildByName("btnTenDraw").x = 150;
+            nodeBottom.getChildByName("btnSingleDraw").x = -150;
+            nodeBottom.getChildByName("spriteSingleDrawCost").x = -162;
+            nodeBottom.getChildByName("labelSingleDrawCost").x = -142;
+            nodeBottom.getChildByName("spriteTenDrawCost").x = 135;
+            nodeBottom.getChildByName("labelTenDrawCost").x = 155;
+        }else{
+            nodeBottom.getChildByName("labelFreeDraw").active = true;
+            nodeBottom.getChildByName("btnFreeDraw").active = true;
+            nodeBottom.getChildByName("btnTenDraw").x = 200;
+            nodeBottom.getChildByName("btnSingleDraw").x = 0;
+            nodeBottom.getChildByName("spriteSingleDrawCost").x = -12;
+            nodeBottom.getChildByName("labelSingleDrawCost").x = 8;
+            nodeBottom.getChildByName("spriteTenDrawCost").x = 185;
+            nodeBottom.getChildByName("labelTenDrawCost").x = 205;
         }
 
         this.isFirstIn = true;
@@ -66,6 +90,11 @@ cc.Class({
                 this.isFirstIn = false;
                 this.initSpine();
             }
+
+            let oneFreeCount = GlobalVar.me().drawData.getOneFreeCount();
+            let oneFreeMax = GlobalVar.tblApi.getDataBySingleKey('TblParam', GameServerProto.PTPARAM_TREASURE_ONE_FREE_MAX).dValue;
+            this.node.getChildByName("nodeBottom").getChildByName("labelFreeDraw").getComponent(cc.Label).string = oneFreeCount + "/" + oneFreeMax;
+
             this.node.getChildByName("nodeBlock").active = false;        
             let normalRootWnd = WindowManager.getInstance().findViewInWndNode(WndTypeDefine.WindowType.E_DT_NORMALROOT_WND);
             if (normalRootWnd){
@@ -147,6 +176,11 @@ cc.Class({
             }
             // 播放音效
             GlobalVar.soundManager().playEffect(AUDIO_SHILIANCHOU);
+
+            let oneFreeCount = GlobalVar.me().drawData.getOneFreeCount();
+            let oneFreeMax = GlobalVar.tblApi.getDataBySingleKey('TblParam', GameServerProto.PTPARAM_TREASURE_ONE_FREE_MAX).dValue;
+            self.node.getChildByName("nodeBottom").getChildByName("labelFreeDraw").getComponent(cc.Label).string = oneFreeCount + "/" + oneFreeMax;
+
             
             let items = event.Item;
             let MODE_DRAW = 1
@@ -183,41 +217,15 @@ cc.Class({
         if (this.animePlaying) {
             return;
         }
-        // if(this.checkIsLock()){
-        //     return;
-        // }
         // console.log("预览宝箱");
-        let showItemData = GlobalVar.tblApi.getDataBySingleKey("TblTreasure", GameServerProto.PT_TREASURE_HOT).oVecShowDropItems;
-
-        ////TEST
-        showItemData = [];
-        for (let i = 0; i < 10; i++) {
-            showItemData[i] = [];
-        }
-        showItemData[0].wItemID = 8140;
-        showItemData[1].wItemID = 501;
-        showItemData[2].wItemID = 502;
-        showItemData[3].wItemID = 503;
-        showItemData[4].wItemID = 8100;
-        showItemData[5].wItemID = 8160;
-        showItemData[6].wItemID = 8260;
-        showItemData[7].wItemID = 8260;
-        showItemData[8].wItemID = 8260;
-        showItemData[9].wItemID = 8260;
-        ////
+        let showItemData = GlobalVar.tblApi.getDataBySingleKey("TblTreasure", GameServerProto.PT_TREASURE_HOT).oVecShowDropItem;
 
         let itemMustIDVec = [], itemProbIDVec = [];
         for (let i = 0; i < showItemData.length; i++) {
-            let itemID = showItemData[i].wItemID;
-            let itemData = GlobalVar.tblApi.getDataBySingleKey("TblItem", itemID);
-            if (!itemData) {
-                continue;
-            }
-            let qualityFrame = itemData.wQuality / 100;
-            if (qualityFrame >= 3 && (itemData.byType == 30 || itemData.byType == 9)) {
-                itemMustIDVec.push(itemID);
+            if (showItemData[i].nCount == 1) {
+                itemMustIDVec.push(showItemData[i].wItemID);
             } else {
-                itemProbIDVec.push(itemID);
+                itemProbIDVec.push(showItemData[i].wItemID);
             }
         }
 
@@ -251,10 +259,14 @@ cc.Class({
         ticketsEnough = GlobalVar.me().bagData.getItemCountById(TICKET_ICON_ID) > ticketsCost;
 
         if (count == SINGLE_DRAW) {
-            funConfirm = GlobalVar.handlerManager().drawHandler.sendSingleDrawReq;
+            funConfirm = function(){
+                GlobalVar.handlerManager().drawHandler.sendSingleDrawReq(0);
+            };
             diamondCost = SINGLE_DRAW_DIAMOND_COST;
         } else if (count == TEN_DRAW) {
-            funConfirm = GlobalVar.handlerManager().drawHandler.sendTenDrawReq;
+            funConfirm = function(){
+                GlobalVar.handlerManager().drawHandler.sendTenDrawReq(0);
+            };
             diamondCost = TEN_DRAW_DIAMOND_COST;
         }
 
@@ -268,6 +280,20 @@ cc.Class({
         let title = ticketsEnough ? i18n.t('label.4000245') : i18n.t('label.4000246')
         let text = ticketsEnough ? i18n.t('label.4000247') : i18n.t('label.4000248')
         CommonWnd.showDrawConfirmWnd(null, title, text, count, ticketsEnough, diamondEnough, funCancle, funConfirm, funClose, i18n.t('label.4000214'));
-    }
+    },
+
+
+    onBtnFreeDraw: function (event) {
+        if (this.animePlaying) {
+            return;
+        }
+        if (cc.sys.platform !== cc.sys.WECHAT_GAME){
+            return;
+        }
+
+        weChatAPI.shareNeedClick(104, function () {
+            GlobalVar.handlerManager().drawHandler.sendSingleDrawReq(1);
+        });
+    },
 
 });

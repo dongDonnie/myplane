@@ -17,70 +17,64 @@ cc.Class({
             default: false,
             visible: false,
         },
+        loadingBar: {
+            default: null,
+            type: cc.ProgressBar
+        },
     },
 
     onLoad() {
-        // if (cc.sys.platform === cc.sys.WECHAT_GAME){
-            this.isJsonLoaded = false;
-            this.isLogoFadedIn = false;
-        // }
-        //cc.director.setDisplayStats(true);
-        // var screenSize = cc.view.getFrameSize();
-        // if (screenSize.height / screenSize.width >= 1.78) {
-        //     cc.view.setResolutionPolicy(cc.ResolutionPolicy.FIXED_WIDTH);
-        // }
-        // else {
-        //     cc.view.setResolutionPolicy(cc.ResolutionPolicy.FIXED_HEIGHT);
-        // }
+        cc.game.setFrameRate(60);
 
-        //SCREEN = cc.director.getWinSizeInPixels();
+        this.isJsonLoaded = false;
+        this.isLoadingEnd = false;
 
-        //设为常驻节点
-        // cc.game.addPersistRootNode(this.node);
-        
-        // if (cc.sys.platform === cc.sys.WECHAT_GAME){
-            
-        // }else{
-            // GlobalVar.networkManager().connectToServer('192.168.2.251', 9908);
-        // }
-        // GlobalVar.networkManager().connectToServer('weplane-s1.17fengyou.com', 8101);
         GlobalVar.isAndroid = cc.sys.os == cc.sys.OS_ANDROID;
         GlobalVar.isIOS = cc.sys.os == cc.sys.OS_IOS;
         // GlobalVar.isIOS = true;
+        let self = this;
+
+        let action = cc.sequence(cc.progressLoading(3, 0, 1, null, function (per) {
+            self.loadingBar.node.getChildByName("spriteLight").x = self.loadingBar.totalLength * per;
+        }), cc.callFunc(()=>{
+            self.isLoadingEnd = true;
+        }));
+        this.loadingBar.node.runAction(action);
     },
 
     start() {
-        // if (cc.sys.platform === cc.sys.WECHAT_GAME){
-        //     wx.connectSocket({
-        //         url: 'wss://weplane-s1.17fengyou.com:8102',
-        //         success: res => {
-        //             console.log("test success");
-        //             return true;
-        //         },
-        //         fail: res => {
-        //             // do something
-        //             console.log("test fail");
-        //             return false;
-        //         }
-        //       })
-        // }
-        // return;
-        //cc.game.setFrameRate(60);
-        weChatAPI.setFramesPerSecond(60);
+        //weChatAPI.setFramesPerSecond(60);
         weChatAPI.deviceKeepScreenOn();
 
         i18n.init('zh');
         let self = this;
 
-        GlobalVar.netWaiting().init();
+        //GlobalVar.netWaiting().init();
 
-        this.nodeLogo.runAction(cc.sequence(cc.fadeIn(1.0), cc.callFunc(()=>{
-            self.isLogoFadedIn = true;
-        })))
         GlobalVar.tblApi.init(function () {
             self.isJsonLoaded = true;
-            // GlobalVar.sceneManager().startUp();
+
+            if (!self.isLoadingEnd){
+                self.loadingBar.node.stopAllActions();
+
+                let action = cc.sequence(cc.progressLoading(0.2, self.loadingBar.progress, 1, null, function (per) {
+                    self.loadingBar.node.getChildByName("spriteLight").x = self.loadingBar.totalLength * per;
+                }), cc.callFunc(()=>{
+                    self.isLoadingEnd = true;
+                }));
+
+
+                self.loadingBar.node.runAction(action)
+            }
         });
+
+        if (cc.sys.platform == cc.sys.WECHAT_GAME){
+            let launchInfo = wx.getLaunchOptionsSync();
+            if (launchInfo.query.materialID >= 0){
+                weChatAPI.reportClickMaterial(launchInfo.query.materialID);
+            }
+        }
+
         // GlobalVar.tblApi.init(function () {
         //     GlobalVar.sceneManager().startUp();
         // });
@@ -88,12 +82,10 @@ cc.Class({
 
     update() {
         let self = this;
-        if (this.isJsonLoaded && this.isLogoFadedIn){
+        if (this.isJsonLoaded && this.isLoadingEnd){
             this.isJsonLoaded = false;
-            this.isLogoFadedIn = false;
-            this.nodeLogo.runAction(cc.sequence(cc.delayTime(0.5), cc.fadeOut(1.0), cc.callFunc(()=>{
-                GlobalVar.sceneManager().startUp();
-            })))
+            this.isLoadingEnd = false;
+            GlobalVar.sceneManager().startUp();
         }
     },
 });

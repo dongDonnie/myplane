@@ -1,9 +1,9 @@
 const Defines = require('BattleDefines')
-const BaseObject = require('BaseObject')
+const CoreObject = require('CoreObject')
 const RemoteSprite = require("RemoteSprite")
 
 cc.Class({
-    extends: BaseObject,
+    extends: CoreObject,
 
     properties: {
         pic: {

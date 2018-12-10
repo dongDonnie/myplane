@@ -116,6 +116,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_PURCHASE_WND;
         
         // this.sliderCount.progress = parseInt(parseInt(this.lblCountNum.string) / this.maxCount);
@@ -295,7 +296,7 @@ cc.Class({
             this.lblCostName2.node.active = false;
 
             this.price.push(costItemArray[0].num);
-            this.setIcon(this.nodeCostMini, costItemArray[0].id, 1, 1);
+            this.setIcon(this.nodeCostMini, costItemArray[0].id, -1, 1);
         }
         else {
             this.setIcon(this.nodeCostIcon1, costItemArray[0].id);

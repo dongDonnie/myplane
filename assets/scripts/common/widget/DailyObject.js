@@ -8,6 +8,7 @@ const EventMsgID = require("eventmsgid");
 const CommonWnd = require("CommonWnd");
 const WindowManager = require("windowmgr");
 const i18n = require('LanguageData');
+const weChatAPI = require("weChatAPI");
 
 
 var DailyObject = cc.Class({
@@ -137,6 +138,8 @@ var DailyObject = cc.Class({
         // }
         // ///////////////////
         // 日常任务的完成状态显示
+        this.btnRecv.node.getComponent("ButtonObject").setText(i18n.t('label.4000241'));
+        this.btnRecv.node.getComponent("ButtonObject").fontSize = 28;
         if (data.wID == GameServerProto.PT_DAILY_TASK_VIP_EXP) {
             this.btnGo.node.active = false;
             this.btnRecv.node.active = true;
@@ -145,15 +148,20 @@ var DailyObject = cc.Class({
         } else if (data.wID == GameServerProto.PT_DAILY_TASK_SP1 || data.wID == GameServerProto.PT_DAILY_TASK_SP2){
             let curTimeStamp = GlobalVar.me().serverTime;
             let curTime = GlobalVar.serverTime.getCurrentHHMMSS(curTimeStamp * 1000);
-            let time = curTime[0] * 100 + curTime[1];
-            this.btnGo.node.active = false;
-            this.btnRecv.node.active = true;
-            this.nodeRequire.active = false;
+            let time = curTime[0] * 100 + curTime[1];            
             if (time > data.wEndTime || time < data.wStartTime) {
                 this.btnRecv.interactable = false;
             }else{
                 this.btnRecv.interactable = true;
             }
+            if (GlobalVar.getShareSwitch()){
+                this.btnRecv.node.getComponent("ButtonObject").fontSize = 24;
+                this.btnRecv.node.getComponent("ButtonObject").setText(i18n.t('label.4000304'));
+            }
+            this.btnGo.node.active = false;
+            this.btnRecv.node.active = true;
+            this.nodeRequire.active = false;
+
         } else {
             let curStep = 0;
             let serverStep = GlobalVar.me().dailyData.getDailyStepsByID(data.wID);
@@ -196,7 +204,13 @@ var DailyObject = cc.Class({
     onDailyBtnRecvClick: function (event) {
         let data = this.data;
         // console.log("RecvBtnClick")
-        GlobalVar.handlerManager().dailyHandler.sendDailyRewardReq(data.wID);
+        if (GlobalVar.getShareSwitch() && cc.sys.platform == cc.sys.WECHAT_GAME && (data.wID == GameServerProto.PT_DAILY_TASK_SP1 || data.wID == GameServerProto.PT_DAILY_TASK_SP2)){
+            weChatAPI.shareNormal(121, function(){
+                GlobalVar.handlerManager().dailyHandler.sendDailyRewardReq(data.wID);
+            });
+        }else{
+            GlobalVar.handlerManager().dailyHandler.sendDailyRewardReq(data.wID);
+        }
     },
     onDailyBtnGoClick: function (event) {
         let data = this.data;
@@ -206,9 +220,6 @@ var DailyObject = cc.Class({
     },
 
     goToWnd: function (windowID) {
-        // if(this.checkIsLock()){
-        //     return;
-        // }
         switch (windowID) {
             case WndTypeDefine.WindowTypeID.E_DT_NORMALEQUIPMENT_WND:            //跳转至装备强化
                 GlobalVar.eventManager().removeListenerWithTarget(this);
@@ -233,14 +244,13 @@ var DailyObject = cc.Class({
             case WndTypeDefine.WindowTypeID.E_DT_NORMAL_SP_WND:                 //弹出购买体力窗口
                 GlobalVar.eventManager().removeListenerWithTarget(this);
                 WindowManager.getInstance().popView(false, function () {
-                    CommonWnd.showBuySpConfirmWnd(null, i18n.t('label.4000230'), null, null, null, i18n.t('label.4000214'), i18n.t('label.4000249'));
+                    CommonWnd.showBuySpWnd();
                 }, false, false);
                 break;
             case WndTypeDefine.WindowTypeID.E_DT_NORMAL_STORE_WND:              //弹出商店窗口
                 let systemData = GlobalVar.tblApi.getDataBySingleKey('TblSystem', GameServerProto.PT_SYSTEM_STORE);
                 if (systemData && GlobalVar.me().level < systemData.wOpenLevel) {
                     GlobalVar.comMsg.showMsg(i18n.t('label.4000258').replace("%d", systemData.wOpenLevel || 0).replace("%d", systemData.strName));
-                    WindowManager.getInstance().lockBtn();
                     return;
                 }
 
@@ -265,7 +275,6 @@ var DailyObject = cc.Class({
                 let endlessSystemData = GlobalVar.tblApi.getDataBySingleKey('TblSystem', GameServerProto.PT_SYSTEM_ENDLESS);
                 if (GlobalVar.me().level < endlessSystemData.wOpenLevel){
                     GlobalVar.comMsg.showMsg(i18n.t('label.4000258').replace("%d", endlessSystemData.wOpenLevel).replace("%d", endlessSystemData.strName));
-                    WindowManager.getInstance().lockBtn();
                     return;
                 }
 
@@ -281,7 +290,7 @@ var DailyObject = cc.Class({
                 }, false, false);
                 break;
             default:
-                // this.unLockBtn();
+                
                 break;
         }
     },

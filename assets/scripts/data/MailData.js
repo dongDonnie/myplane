@@ -73,7 +73,7 @@ var mailData = cc.Class({
     },
 
     getNewMail: function (data) {
-        if (data.ErrCode && data.ErrCode != GameServerProto.PTERR_SUCCESS){
+        if (data.ErrCode != GameServerProto.PTERR_SUCCESS){
             self.mailList.push(data.Mail);
             self.checkNotReadMailCount();
         }
@@ -81,7 +81,7 @@ var mailData = cc.Class({
     },
 
     deleteMail: function (data) {
-        if (data.ErrCode && data.ErrCode != GameServerProto.PTERR_SUCCESS){
+        if (data.ErrCode != GameServerProto.PTERR_SUCCESS){
             for(let i = 0; i<data.MailID.length; i++){
                 let mailID = data.MailID[i];
                 let index = self.getMailIndexByID(mailID);

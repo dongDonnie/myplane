@@ -3,12 +3,13 @@ var CampNormal30 = module.exports;
 CampNormal30.data = {
     maps:[
         ["shamo","shamo","shamo"],
-        ["kjznb-tongdao","kjznb-tongdao","kjznb-tongdao"],
+    
     ],
     monsterWaves:[
-        {wave:{groups:[213,163,14,20],wait:0,delay:[2,3,3,3.5]},maps:{mapIndex:[0,1],mapSpeed:[300,800],mapScale:[1,1],mapLoop:[1,1]}},
-        {wave:{groups:[125,126,121,122,33,34,35,36],wait:0,delay:[0,1,2,3,3.5,4,4.5,5]}},
-        {wave:{groups:[95],wait:0,delay:[0],anime:1},maps:{mapIndex:[0,1],mapSpeed:[300,600],mapScale:[1,1.1],mapLoop:[0,0]}},
+        {wave:{groups:[1051,993,994,882],wait:0,delay:[1,2,4,4]},maps:{mapIndex:[0],mapSpeed:[500],mapScale:[1],mapLoop:[1]}},
+        {wave:{groups:[1052,44,45],wait:0,delay:[0,1,2]}},
+        {wave:{groups:[1053,40,41,36,37],wait:0,delay:[0,1,2,3,4]}},
+        {wave:{groups:[96],wait:0,delay:[0],anime:1,isBOSS:1},maps:{mapIndex:[0],mapSpeed:[500],mapScale:[1],mapLoop:[0]}},
     ],
     monsterExtra:[311,312,313,314,315,316,317],
 
@@ -26,11 +27,21 @@ CampNormal30.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:3}},
+                {wave:{index:2,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:1.4}},
             ],
         },
+        {
+            eventKey:0,
+            checkTime:1,
+            condition:[
+                {wave:{index:3,step:5}},
+            ],
+            effect:[
+                {extra:{open:-2}},
+            ],
+        }, 
     ],
 }

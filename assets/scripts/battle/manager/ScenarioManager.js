@@ -48,13 +48,29 @@ var ScenarioManager = cc.Class({
             this.battleCampaignMode.update(dt);
         }
 
-        if (this.battleManager.isCampaignFlag && !!this.battleCampaignMode) {
+        if (this.battleManager.isCampaignFlag && !!this.battleCampaignMode && !this.end) {
             this.battleCampaignMode.update(dt);
+            if(this.battleCampaignMode.step==12){
+                this.end=true;
+            }
         }
 
         // if (this.battleManager.isEditorFlag && !!this.battleEditorMode) {
         //     this.battleEditorMode.update(dt);
         // }
+
+        this.comboKillCurTime += dt;
+        if (this.comboKillCurTime >= this.comboKillHoldTime) {
+            this.battleManager.comboKill = 0;
+        }
+
+        if(this.secondKill>0){
+            this.secondKillTime+=dt;
+            if(this.secondKillTime>=1){
+                this.secondKill=0;
+                this.secondKillTime=0;
+            }
+        }
     },
 
     initScenario: function (mapName) {
@@ -79,6 +95,12 @@ var ScenarioManager = cc.Class({
         //     this.battleEditorMode.init(mapName);
         // }
 
+        this.comboKillHoldTime=3;
+        this.comboKillCurTime=0;
+        this.secondKill=0;
+        this.secondKillTime=0;
+
+        this.end=false;
         return;
     },
 
@@ -87,11 +109,24 @@ var ScenarioManager = cc.Class({
             return;
         }
 
-        this.battleManager.comboKill++;
-        if(this.battleManager.comboKill>999){
-            this.battleManager.comboKill=999;
+        if(entity.canDrop){
+            this.battleManager.comboKill++;
+            if(this.battleManager.comboKill>999){
+                this.battleManager.comboKill=999;
+            }
+
+            this.secondKill++;
+            if(this.secondKill>=10){
+                this.battleManager.unDefeat(1);
+                this.secondKill=0;
+                this.secondKillTime=0;
+            }
+            
+            if(this.battleManager.comboKill%100==0 && this.battleManager.comboKill!=0){
+                this.battleManager.unDefeat(0);
+            }
+            this.comboKillCurTime=0;
         }
-        this.battleManager.comboKillCurTime=0;
 
         if (this.battleManager.isEndlessFlag && !!this.battleEndlessMode) {
             this.battleEndlessMode.kill(entity);

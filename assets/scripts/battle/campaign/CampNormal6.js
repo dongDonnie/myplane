@@ -12,7 +12,7 @@ CampNormal6.data = {
         {wave:{groups:[34,711,40,41],wait:0,delay:[0,2,5,5]}},
         {wave:{groups:[34,710,40],wait:0,delay:[0,0,2]}},
         {wave:{groups:[34,716,41],wait:0,delay:[0,0,2]}},
-        {wave:{groups:[715],wait:0,delay:[0]},maps:{mapIndex:[0,1],mapSpeed:[400,500],mapScale:[1,1],mapLoop:[1,1]}},
+        {wave:{groups:[715],wait:0,delay:[0]}},
     ],
     monsterExtra:[311,312,313,314,315,316,317],
 
@@ -20,7 +20,7 @@ CampNormal6.data = {
         {
             checkTime:-1,
             condition:[
-                {interval:18},
+                {interval:12},
             ],
             effect:[
                 {drop:10000},
@@ -30,40 +30,20 @@ CampNormal6.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:3}},
+                {wave:{index:5,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:1.2}},
             ],
         },
         {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:4}},
+                {wave:{index:6,step:6}},
             ],
             effect:[
-                {extra:-2},
-            ],
-        },
-        {
-            eventKey:0,
-            checkTime:1,
-            condition:[
-                {wave:{index:3,step:8}},
-            ],
-            effect:[
-                {extra:-1},
-            ],
-        },
-        {
-            eventKey:0,
-            checkTime:1,
-            condition:[
-                {wave:{index:4,step:4}},
-            ],
-            effect:[
-                {extra:-2},
+                {extra:{open:-2}},
             ],
         },
     ],

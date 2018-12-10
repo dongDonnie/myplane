@@ -7,8 +7,9 @@ const GameServerProto = require("GameServerProto");
 const CommonWnd = require("CommonWnd");
 const BattleManager = require('BattleManager');
 const SceneDefines = require("scenedefines");
-const GlobalFunc = require('GlobalFunctions')
+const GlobalFunc = require('GlobalFunctions');
 const i18n = require('LanguageData');
+const weChatAPI = require("weChatAPI");
 
 const MODE_COLOR = [
     [125, 255, 94],
@@ -45,11 +46,20 @@ cc.Class({
             default: null,
             type: cc.Label,
         },
+        btnYellowAnime: {
+            default: null,
+            type: cc.Node,
+        },
+        btnOrangeAnime: {
+            default: null,
+            type: cc.Node,
+        },
         plusList: [],
         endlessRankID: null,
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.canBuyBless = true;
         this.typeName = WndTypeDefine.WindowType.E_DT_ENDLESS_CHALLENGE_VIEW;
@@ -61,6 +71,12 @@ cc.Class({
         }
 
         this.addPrefabsText();
+
+        this.countDownTimerID = -1;
+
+        this.btnGameStart = this.node.getChildByName("nodeBottom").getChildByName("btnGameStart");
+
+        this.bShowUseRewardTip = false;
     },
 
     animeStartParam(num) {
@@ -77,7 +93,13 @@ cc.Class({
         if (name == "Escape") {
             this._super("Escape");
             GlobalVar.eventManager().removeListenerWithTarget(this);
-            if (!this.deleteMode) {
+            if (this.countDownTimerID != -1){
+                GlobalVar.gameTimer().delTimer(this.countDownTimerID)
+                this.countDownTimerID = -1;
+            }
+            if (this.bShowUseRewardTip){
+                CommonWnd.showItemBag(-1, null, null, null, 1);
+            }else if (!this.deleteMode) {
                 let TYPE_RANKING_QUEST = 0, TYPE_RANKING_ENDLESS = 1;
                 WindowManager.getInstance().insertView(WndTypeDefine.WindowType.E_DT_RANKINGLIST_VIEW, WndTypeDefine.WindowType.E_DT_NORMALROOT_WND, function (wnd, name, type) {
                     wnd.getComponent(type).setRankingType(TYPE_RANKING_ENDLESS);
@@ -88,6 +110,7 @@ cc.Class({
                 BattleManager.getInstance().quitOutSide();
                 BattleManager.getInstance().startOutside(uiNode.getChildByName('UIMain').getChildByName('nodeBottom').getChildByName('planeNode'),GlobalVar.me().memberData.getStandingByFighterID(),true);
             }
+            this.bShowUseRewardTip = false;
         } else if (name == "Enter") {
             this._super("Enter");
             this.deleteMode = false;
@@ -104,6 +127,11 @@ cc.Class({
             this.node.getChildByName("nodeTop").active = true;
             this.node.getChildByName("nodeCenter").active = true;
             this.node.getChildByName("nodeBottom").active = true;
+
+
+            if (this.bShowUseRewardTip){
+                this.showRewardTip();
+            }
         }
     },
 
@@ -114,6 +142,44 @@ cc.Class({
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_ENDLESS_START_BATTLE, this.startEndlessBattle, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_ENDLESS_RANK_UP_NTF, this.getRankUpResult, this);
         GlobalVar.handlerManager().endlessHandler.sendEndlessGetBagReq();
+    },
+
+    judgeHaveRewardBox: function () {
+        if (GlobalVar.me().endlessData.getChestFlag){
+            GlobalVar.me().endlessData.getChestFlag = false;
+            this.bShowUseRewardTip = true;
+        }
+    },
+
+    showRewardTip: function (data) {
+        let self = this;
+        CommonWnd.showMessage(null, CommonWnd.bothConfirmAndCancel, i18n.t('label.4000216'), i18n.t('label.4000264'), null, function(){
+            self.animePlay(0);
+        });
+    },
+
+    setCountDown: function () {
+        let lastPowerTime = GlobalVar.me().endlessData.getEndlesslastPowerTime();
+        let labelCountDown = this.node.getChildByName("nodeCenter").getChildByName("labelGetChestLeftTIme").getComponent(cc.Label)
+        if (lastPowerTime == 0){
+            labelCountDown.node.active = false;
+            labelCountDown.string = "00:00";
+            return;
+        }
+        labelCountDown.node.active = true;
+        let countDownFunc = function () {
+            let curTime = GlobalVar.me().serverTime;
+            let leftAddTime = 3600 - (curTime - lastPowerTime);
+            let leftMinute = parseInt(leftAddTime/60);
+            let leftSecond = leftAddTime - leftMinute * 60;
+            if (leftMinute.toString().length == 1) leftMinute = "0" + leftMinute;
+            if (leftSecond.toString().length == 1) leftSecond = "0" + leftSecond;
+            labelCountDown.string = leftMinute + ":" + leftSecond;      
+        };
+        countDownFunc();
+        this.countDownTimerID = GlobalVar.gameTimer().startTimer(function () {
+            countDownFunc();
+        }, 1);
     },
 
     enter: function (isRefresh) {
@@ -156,9 +222,22 @@ cc.Class({
             this.updatePlus(plus, plusData);
             // this.plusList.push(plus);
             this.plusList[plusData.byStatusID] = plus;
+
+            
+            if (!GlobalVar.getShareSwitch()){
+                // plus.getChildByName("btnShare").active = true;
+                // plus.getChildByName("nodeBuy").x -= 30;
+                // plus.getChildByName("nodeBuy").width = 110;
+                plus.getChildByName("nodeBuy").active = true;
+                plus.getChildByName("btnShare").active = false;
+            }else{
+                plus.getChildByName("nodeBuy").active = false;
+                plus.getChildByName("btnShare").active = true;
+                plus.getChildByName("btnShare").y = 0;
+            }
         }
 
-        this.setBlessPlusObject();
+        // this.setBlessPlusObject();
     },
 
     updatePlus(plus, data){
@@ -196,6 +275,7 @@ cc.Class({
     },
 
     setPlusCount(plus, count){
+        if (!plus) return;
         plus.getChildByName("spriteCountBg").getChildByName("labelCount").getComponent(cc.Label).string = count;
         plus.getChildByName("spriteCountBg").active = true;
     },
@@ -243,6 +323,27 @@ cc.Class({
             this.canBuyBless = false;
         } else {
             GlobalVar.handlerManager().endlessHandler.sendEndlessBuyStatusReq(plus.data.byStatusID);
+        }
+    },
+
+    onShareButtonClick: function (event) {
+        let btnShare = event.target;
+        let plus = btnShare.parent;
+
+        let BLESS_ID = 1;
+        if (plus.data.byStatusID === BLESS_ID){
+            if (!this.canBuyBless) {
+                return;
+            }
+            let self = this;
+            weChatAPI.shareNormal(plus.data.byStatusID + 107, function () {
+                self.canBuyBless = false;
+                GlobalVar.handlerManager().endlessHandler.sendEndlessBuyBlessReq(1);
+            });
+        } else{
+            weChatAPI.shareNormal(plus.data.byStatusID + 107, function () {
+                GlobalVar.handlerManager().endlessHandler.sendEndlessBuyStatusReq(plus.data.byStatusID, 1);
+            });
         }
     },
 
@@ -295,14 +396,20 @@ cc.Class({
         }
 
         // 设置宝箱数量
-        this.node.getChildByName("nodeCenter").getChildByName("labelRate").getComponent(cc.Label).string = data.PowerPoint + "/" + "24";
-        this.node.getChildByName("nodeCenter").getChildByName("spriteBoxIcon").getComponent("RemoteSprite").setFrame(GlobalVar.me().endlessData)
+        let rewardCountMax = GlobalVar.tblApi.getDataBySingleKey('TblParam', GameServerProto.PTPARAM_ENDLESS_POWERPOINT_MAX).dValue;
+        this.node.getChildByName("nodeCenter").getChildByName("labelRate").getComponent(cc.Label).string = data.PowerPoint + "/" + rewardCountMax;
 
         this.endlessRankID = GlobalVar.me().endlessData.getRankID();
 
-        let spriteBoxIcon = this.node.getChildByName("nodeCenter").getChildByName("spriteBoxIcon");
+        // let spriteBoxIcon = this.node.getChildByName("nodeCenter").getChildByName("spriteBoxIcon");
+        // spriteBoxIcon.getComponent("RemoteSprite").setFrame(rewardData.wRewardItem - 5001);
         let rewardData = GlobalVar.tblApi.getDataBySingleKey('TblEndlessRank', this.endlessRankID);
-        spriteBoxIcon.getComponent("RemoteSprite").setFrame(rewardData.wRewardItem - 5001);
+        let itemObj = this.node.getChildByName("nodeCenter").getChildByName("ItemBoxIcon").getComponent("ItemObject");
+        itemObj.updateItem(rewardData.wRewardItem);
+        itemObj.setSpriteEdgeVisible(false);
+
+        
+        this.setCountDown();
     },
 
     showBlessDesc: function (event) {
@@ -313,21 +420,25 @@ cc.Class({
         }
         let tbldata = GlobalVar.tblApi.getDataBySingleKey('TblEndlessStatus', event.OK.StatusID);
         // 显示祝福的名称
+        let self = this;
 
         let effectText = this.node.getChildByName("nodeCenter").getChildByName("nodeEffect");
-        effectText.active = true;
-        effectText.getComponent(sp.Skeleton).clearTracks();
-        effectText.getComponent(sp.Skeleton).setAnimation(0, "animation", false);
-        let self = this;
-        effectText.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
-            var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-            if (animationName == "animation") {
-                effectText.active = false;
-                self.labelBlessEffectName.string = tbldata.strStatusName;
-                self.labelBlessEffectName.node.active = true;
-                self.canBuyBless = true;
-            }
-        });
+        GlobalFunc.playDragonBonesAnimation(effectText, function () { 
+            effectText.active = false;
+            self.labelBlessEffectName.string = tbldata.strStatusName;
+            self.labelBlessEffectName.node.active = true;
+            self.canBuyBless = true;
+        })
+        // effectText.active = true;
+        // // effectText.getComponent(dragonBones.ArmatureDisplay).clearTracks();
+        // effectText.getComponent(dragonBones.ArmatureDisplay).playAnimation("animation", 1);
+        // let self = this;
+        // effectText.getComponent(dragonBones.ArmatureDisplay).addEventListener(dragonBones.EventObject.COMPLETE, event => {
+        //     effectText.active = false;
+        //     self.labelBlessEffectName.string = tbldata.strStatusName;
+        //     self.labelBlessEffectName.node.active = true;
+        //     self.canBuyBless = true;
+        // });
 
         let BLESS_ID = 1;
         let effect = this.plusList[BLESS_ID].getChildByName("ItemObject").getChildByName("nodeEffect").getComponent(sp.Skeleton);
@@ -374,6 +485,8 @@ cc.Class({
     startEndlessBattle: function (event) {
         if (event.ErrCode !== GameServerProto.PTERR_SUCCESS){
             GlobalVar.comMsg.errorWarning(event.ErrCode);
+            let blockNode=cc.find("Canvas/BlockNode");
+            blockNode.active=false;
             return;
         }
 
@@ -407,24 +520,43 @@ cc.Class({
 
         this.labelBlessEffectName.node.active = false;
 
-        BattleManager.getInstance().setBattleMsg(event.OK);
-        BattleManager.getInstance().isEndlessFlag = true;
-        BattleManager.getInstance().setCampName('CampEndless');
-        BattleManager.getInstance().setMusic('audio/battle/music/battle_bk0');
-        GlobalVar.sceneManager().gotoScene(SceneDefines.BATTLE_STATE);
+        this.btnOrangeAnime.active = false;
+        this.btnYellowAnime.active = true;
+        this.btnYellowAnime.getComponent(cc.Animation).play();
+        this.btnYellowAnime.getComponent("BtnAnime").setCallBack(function () {
+            BattleManager.getInstance().setBattleMsg(event.OK);
+            BattleManager.getInstance().isEndlessFlag = true;
+            BattleManager.getInstance().setCampName('CampEndless');
+            BattleManager.getInstance().setMusic('audio/battle/music/battle_bk0');
+            GlobalVar.sceneManager().gotoScene(SceneDefines.BATTLE_STATE);
+        })
+        GlobalVar.soundManager().playEffect('cdnRes/audio/main/effect/click_gobattle');
+        // BattleManager.getInstance().setBattleMsg(event.OK);
+        // BattleManager.getInstance().isEndlessFlag = true;
+        // BattleManager.getInstance().setCampName('CampEndless');
+        // BattleManager.getInstance().setMusic('audio/battle/music/battle_bk0');
+        // GlobalVar.sceneManager().gotoScene(SceneDefines.BATTLE_STATE);
     },
 
     getRankUpResult: function (event){
         this.endlessRankID = GlobalVar.me().endlessData.getRankID();
 
-        let spriteBoxIcon = this.node.getChildByName("nodeCenter").getChildByName("spriteBoxIcon");
-        let rewardData = GlobalVar.tblApi.getDataBySingleKey('TblEndlessRank', this.endlessRankID);
-        spriteBoxIcon.getComponent("RemoteSprite").setFrame(rewardData.wRewardItem - 5001);
+        // let spriteBoxIcon = this.node.getChildByName("nodeCenter").getChildByName("spriteBoxIcon");
+        // let rewardData = GlobalVar.tblApi.getDataBySingleKey('TblEndlessRank', this.endlessRankID);
+        // spriteBoxIcon.getComponent("RemoteSprite").setFrame(rewardData.wRewardItem - 5001);
     },
 
     onBtnGameStart: function () {
         //GlobalVar.comMsg.showMsg("调整中");
+        let blockNode=cc.find("Canvas/BlockNode");
+        blockNode.active=true;
         GlobalVar.handlerManager().endlessHandler.sendEndlessStartBattleReq();
+        // let action = cc.sequence(cc.moveBy(0.2, 200, 0), cc.moveBy(0.4, -400, 0), cc.moveBy(0.2, 200, 0))
+        // let newAction = cc.delayTime(0.1);
+        // for (let i = 0; i< 5; i++){
+        //     newAction = cc.sequence(newAction, action);
+        // }
+        // this.btnGameStart.runAction(newAction.easing(cc.easeOut(3.0)));
     },
 
     onBtnShowRanking: function () {
@@ -433,5 +565,9 @@ cc.Class({
 
     onDestroy: function () {
         GlobalVar.eventManager().removeListenerWithTarget(this);
+        if (this.countDownTimerID != -1){
+            GlobalVar.gameTimer().delTimer(this.countDownTimerID)
+            this.countDownTimerID = -1;
+        }
     },
 });

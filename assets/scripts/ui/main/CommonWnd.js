@@ -13,9 +13,6 @@ module.exports = {
 
     showMessage: function (callback, mode, title, rstrMsg, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, confirmName, cancelName) {
         let windowMgr = WindowManager.getInstance();
-        // if (windowMgr.checkBtnLock()){
-        //     return;
-        // }
         windowMgr.pushView(WndTypeDefine.WindowType.E_DT_COMMON_WND, function (wnd, name, type) {
             wnd.getComponent(WndTypeDefine.WindowType.E_DT_COMMON_WND).setContent(mode, name, type, title, rstrMsg, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, "", confirmName, cancelName);
             if (callback) {
@@ -25,10 +22,6 @@ module.exports = {
     },
 
     showMessageWithPrefab: function (callback, mode, prefabName, title, rstrMsg, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, confirmName, cancelName) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_COMMON_WND, function (wnd, name, type) {
             wnd.getComponent(WndTypeDefine.WindowType.E_DT_COMMON_WND).setContent(mode, name, type, title, rstrMsg, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, prefabName, confirmName, cancelName);
             if (callback) {
@@ -38,10 +31,6 @@ module.exports = {
     },
 
     showDrawConfirmWnd: function (callback, title, rstrMsg, drawMode, ticketsEnough, diamondEnough, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, confirmName, cancelName) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_COMMON_WND, function (wnd, name, type) {
             wnd.getComponent(WndTypeDefine.WindowType.E_DT_COMMON_WND).setDrawConfirmContent(name, type, title, rstrMsg, drawMode, ticketsEnough, diamondEnough, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, confirmName, cancelName);
             if (callback) {
@@ -51,10 +40,6 @@ module.exports = {
     },
 
     showDrawBoxPreview: function (callback, title, itemMustIDVec, itemProbIDVec, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback){
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_COMMON_WND, function (wnd, name, type) {
             wnd.getComponent(type).setDrawBoxPreviewContent(name, type, title, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback);
             wnd.getComponent(type).setItemShowVec(itemMustIDVec, itemProbIDVec);
@@ -65,10 +50,6 @@ module.exports = {
     },
 
     showBuySpConfirmWnd: function (callback, title, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, confirmName, cancelName) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_COMMON_WND, function (wnd, name, type) {
             wnd.getComponent(WndTypeDefine.WindowType.E_DT_COMMON_WND).setBuySpContent(name, type, title, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, confirmName, cancelName);
             if (callback) {
@@ -78,10 +59,6 @@ module.exports = {
     },
 
     showRewardBoxWnd: function (callback, title, condition, vecItems, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, confirmName, cancelName) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_COMMON_WND, function (wnd, name, type) {
             wnd.getComponent(WndTypeDefine.WindowType.E_DT_COMMON_WND).setItemBoxContent(name, type, title, condition, vecItems, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, confirmName, cancelName);
             if (callback) {
@@ -91,10 +68,6 @@ module.exports = {
     },
 
     showResetQuestTimesWnd: function(callback, title, resetDesc, diamondCost, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, confirmName, cancelName){
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_COMMON_WND, function (wnd, name, type) {
             wnd.getComponent(WndTypeDefine.WindowType.E_DT_COMMON_WND).setResetQuestContent(name, type, title, resetDesc, diamondCost, pFunCloseCallback, pFunConfirmCallback, pFunCancelCallback, confirmName, cancelName);
             if (callback) {
@@ -104,21 +77,12 @@ module.exports = {
     },
 
     showPurchaseWnd: function (getItem, canBuyCount, costItemArray, titleString, describeString, confirmCallback, cancelCallback, setCostNumCallback) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_PURCHASE_WND, function (wnd, name, type) {
             wnd.getComponent(WndTypeDefine.WindowType.E_DT_NORMAL_PURCHASE_WND).setParam(getItem, canBuyCount, costItemArray, titleString, describeString, confirmCallback, cancelCallback, setCostNumCallback);
         }); 
     },
 
     showStoreWithParam: function (storeType) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
-
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_STORE_WND,
             function (wnd, name, type) {
                 wnd.getComponent(WndTypeDefine.WindowType.E_DT_NORMAL_STORE_WND).setStoreType(storeType);
@@ -126,10 +90,6 @@ module.exports = {
     },
 
     showLimitStoreWithParam: function (storeType) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_LIMIT_STORE_WND,
             function (wnd, name, type) {
                 wnd.getComponent(WndTypeDefine.WindowType.E_DT_LIMIT_STORE_WND).setStoreType(storeType);
@@ -137,10 +97,6 @@ module.exports = {
     },
 
     showItemBag: function (showType, selectCallback, choosingCallback, target, openType) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         openType = typeof openType !== 'undefined' ? openType : -1;
         if (WindowManager.getInstance().findViewIndex(WndTypeDefine.WindowType.E_DT_NORMALROOT_WND) != -1) {
             if (openType == 1) {
@@ -184,33 +140,16 @@ module.exports = {
     },
 
     showItemGetWay: function (id, count, slot) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALITEMGETWAY, function (wnd, name, type) {
             wnd.getComponent(type).updateInfo(id, count, 0, slot);
         });
     },
 
     showNormalPlane: function () {
-        // if (WindowManager.getInstance().btnLock) return;
-        // let windowMgr = WindowManager.getInstance();
-        // if (windowMgr.checkBtnLock()){
-        //     return;
-        // }
-        if (WindowManager.getInstance().btnLock1) {
-            // cc.log('fffff');
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALPLANE_WND);
     },
 
     showNormalEquipment: function (memberID) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         if (WindowManager.getInstance().findViewIndex(WndTypeDefine.WindowType.E_DT_NORMALROOT_WND) != -1) {
             WindowManager.getInstance().insertView(WndTypeDefine.WindowType.E_DT_NORMALEQUIPMENT_WND, WndTypeDefine.WindowType.E_DT_NORMALROOT_WND, function (wnd, name, type) {
                 let member = GlobalVar.me().memberData.getMemberByID(memberID);
@@ -224,20 +163,12 @@ module.exports = {
         }
     },
     showImprovementView: function(){
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALIMPROVEMENT_WND, function (wnd, name, type) {
             wnd.getComponent(type).selectEquipment(null, 1);
         }, true, false);
     },
 
     showSelectExpTab: function (choosingCallback, choosingCallbackTarget) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_SELECTEXPVIEW_WND, function (wnd, name, type) {
             if (typeof choosingCallbackTarget !== 'undefined') {
                 wnd.getComponent(type).setChoosingCallback(choosingCallback.bind(choosingCallbackTarget));
@@ -248,72 +179,41 @@ module.exports = {
     },
 
     showGuazai: function () {
-        let windowMgr = WindowManager.getInstance();
-        // if (windowMgr.checkBtnLock()){
-        //     return;
-        // }
-        if (windowMgr.btnLock1) return;
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_GUAZAIMAIN_WND);
     },
 
     showGuazaiAdvance: function (item) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_GUAZAIADVANCE_WND, function (wnd, name, type) {
             wnd.getComponent(type).setParam(item);
         });
     },
 
     showGuazaiSmelter: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_GUAZAISMELTER_WND);
     },
 
-    showBuySpWnd: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
-        WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_BUYSP_WND);
+    showBuySpWnd: function (shareCallBack, purchaseCallback, closeCallback) {
+        WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_BUY_SP_WND, function (wnd, name, type) {
+            wnd.getComponent(type).initBuySpWnd(shareCallBack, purchaseCallback, closeCallback);
+        });
     },
 
     showPlayerInfoWnd: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_PLAYERINFO_WND);
     },
 
     showSettingWnd: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALSETTING, function (wnd, name, type){
         });
     },
 
     showRankingView: function (rankingType) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().insertView(WndTypeDefine.WindowType.E_DT_RANKINGLIST_VIEW, WndTypeDefine.WindowType.E_DT_NORMALROOT_WND, function (wnd, name, type) {
             wnd.getComponent(type).setRankingType(rankingType);
         }, true, false);
     },
 
     showDrawView: function () {
-        // let windowMgr = WindowManager.getInstance();
-        // if (windowMgr.checkBtnLock()){
-        //     return;
-        // }
         if (WindowManager.getInstance().findViewIndex(WndTypeDefine.WindowType.E_DT_NORMALROOT_WND) != -1) {
             WindowManager.getInstance().popToRoot(false, function () {
                 WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALDRAW_VIEW);
@@ -325,27 +225,14 @@ module.exports = {
     },
 
     showNoticeWnd: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALNOTICE_VIEW);
     },
 
     showMailWnd: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALMAIL_VIEW);
     },
 
     showEndlessView: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
-
         if (WindowManager.getInstance().findViewIndex(WndTypeDefine.WindowType.E_DT_NORMALROOT_WND) != -1) {
             WindowManager.getInstance().popToRoot(false, function () {
                 WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_ENDLESS_CHALLENGE_VIEW);
@@ -355,80 +242,46 @@ module.exports = {
         }
     },
     showEndlessModeSelectWnd: function (choosingCallback) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_ENDLESS_MODE_SELECT_WND, function (wnd, name, type) {
             wnd.getComponent(type).setChoosingCallback(choosingCallback);
         });
     },
 
     showRechargeWnd: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         if (GlobalVar.srcSwitch()){
-            WindowManager.getInstance().lockBtn();
             return;
         }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_RECHARGE_WND);
     },
 
     showRichTreasureWnd: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_RICHTREASURE_WND);
     },
 
     showBatchUseWnd: function (useItemID, packItemsData) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_BATCH_USE_WND, function(wnd, name, type){
             wnd.getComponent(type).setResultData(useItemID, packItemsData);
         });
     },
 
     showFeedbackWnd: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_FEEDBACK_WND);
     },
 
     showQuestInfoWnd: function (data, tblData) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_QUESTINFO_WND, function (wnd, name, type) {
             wnd.getComponent(type).initQuestInfoWithData(data, tblData);
         });
     },
 
     showSweepWnd: function (count, data, tblData) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_SWEEP_WND, function (wnd, name, type) {
             wnd.getComponent(type).setSweepCampInfo(data, tblData);
             wnd.getComponent(type).setSweepTimes(count);
         });
     },
 
-    showQuestList: function (force) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
-
+    showQuestList: function (force, chapterIndex, campaignIndex) {
         if (WindowManager.getInstance().findViewIndex(WndTypeDefine.WindowType.E_DT_NORMALROOT_WND) != -1) {
             WindowManager.getInstance().popToRoot(false, function () {
                 WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_QUESTLIST_VIEW, function (wnd, name, type) {
@@ -443,18 +296,15 @@ module.exports = {
     },
 
     showChapterListView: function(chapterType, curMapIndex) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         WindowManager.getInstance().insertView(WndTypeDefine.WindowType.E_DT_NORMAL_CHAPTER_VIEW, WndTypeDefine.WindowType.E_DT_NORMALROOT_WND, function (wnd, name, type) {
             wnd.getComponent(type).initChapterViewWithType(chapterType, curMapIndex);
         }, true, false)
     },
 
-    showTreasuerExploit: function(items, mode){
+    showTreasureExploit: function(items, mode, callback){
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALTREASUREEXPLOIT, function(wnd,name,type){
             wnd.getComponent(type).init(items, mode);
+            callback && callback();
         });
     },
 
@@ -487,9 +337,15 @@ module.exports = {
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_ACTIVE_WND);
     },
 
-    showEquipQualityUpWnd: function(beforeItemID, afterItemID, equipName, equipColor, callback){
+    showEquipQualityUpWnd: function (beforeItemID, afterItemID, equipNamebefore, equipName, equipColorBefore, equipColor, callback){
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_EQUIP_QUALITY_UP_WND, function(wnd, name, type) {
-            wnd.getComponent(type).setDefaultEquipt(beforeItemID, afterItemID, equipName, equipColor, callback);
+            wnd.getComponent(type).setDefaultEquipt(beforeItemID, afterItemID, equipNamebefore, equipName, equipColorBefore, equipColor, callback);
+        });
+    },
+
+    showPlaneQualityUpWnd: function (qualityDataCur, qualityData, callback) {
+        WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_PLANE_QUALITY_UP_WND, function (wnd, name, type) {
+            wnd.getComponent(type).setDefaultEquipt(qualityDataCur, qualityData, callback);
         });
     },
 
@@ -498,6 +354,11 @@ module.exports = {
     },
 
     showNormalFreeGetWnd: function (errCode, shareCallback, purchaseCallback, closeCallback) {
+        if (GlobalVar.srcSwitch() && !GlobalVar.getShareSwitch() && errCode == GameServerProto.PTERR_DIAMOND_LACK){
+            GlobalVar.comMsg.errorWarning(errCode);
+            closeCallback && closeCallback();
+            return;
+        }
         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_FREE_GET_WND, function(wnd, name, type) {
             wnd.getComponent(type).initFreeGetWnd(errCode, shareCallback, purchaseCallback, closeCallback);
         });

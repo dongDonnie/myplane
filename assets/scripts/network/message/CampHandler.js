@@ -54,7 +54,7 @@ cc.Class({
         };
         self.sendMsg(GameServerProto.GMID_CAMP_FREEDRAW_REQ, msg);
     },
-    _recvFreeDrawAck: function (data) {
+    _recvFreeDrawAck: function (msgId,msg) {
         if (typeof msg != "object") {
             return;
         }
@@ -184,9 +184,11 @@ cc.Class({
         GlobalVar.me().campData.setRecvCampReviveData(msg.data);
     },
 
-    sendCampReviveReq: function(reveiveTime){
+    sendCampReviveReq: function(free){
+        let dieCount = GlobalVar.me().campData.dieCount;
         let msg = {
-            ReveiveTime: reveiveTime,
+            ReveiveTime: dieCount + 1,
+            Free: free||0,
         };
 
         self.sendMsg(GameServerProto.GMID_CAMP_REVIVE_REQ, msg);

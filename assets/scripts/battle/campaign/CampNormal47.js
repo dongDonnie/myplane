@@ -2,22 +2,23 @@ var CampNormal47 = module.exports;
 
 CampNormal47.data = {
     maps:[
-        ["tk-e-ditu","tk-e-ditu","tk-e-ditu"],
-        ["tk-e-ditu","tk-e-ditu","tk-f-bossditu"],
+        ["fg_fight_bg_0","fg_fight_bg_0","fg_fight_bg_0"],
     ],
     monsterWaves:[
-        {wave:{groups:[120,127,128,27],wait:0,delay:[2,3,4,4]},maps:{mapIndex:[0],mapSpeed:[1000],mapScale:[1],mapLoop:[1]}},
-        {wave:{groups:[44,45,116,113,14,16,18],wait:0,delay:[0,0.5,1,1.5,3,3,3]}},
-        {wave:{groups:[91],wait:0,delay:[0],anime:1},maps:{mapIndex:[1],mapSpeed:[600],mapScale:[1],mapLoop:[0]}},
+        {wave:{groups:[1350,27,28,882],wait:0,delay:[1.8,2,3.5,4.5]},maps:{mapIndex:[0],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
+        {wave:{groups:[1351,14,16,18],wait:0,delay:[0,0.5,1,2.5]}},
+        {wave:{groups:[1352,45,44,830],wait:0,delay:[0,0,2,4]}},
+        {wave:{groups:[1353,842,834,42,43],wait:0,delay:[0,0.5,1,1.5,3,4]}},
+        {wave:{groups:[1354],wait:0,delay:[0],anime:1,isBOSS:1}},
     ],
 
-    monsterExtra:[311,312,313,314,315,316,317],
+    monsterExtra:[23,141,25,559,560,552,1308,1309,1310,1311,1312],
 
     totalHint:[
         {
             checkTime:-1,
             condition:[
-                {interval:18},
+                {interval:12},
             ],
             effect:[
                 {drop:10000},
@@ -27,11 +28,22 @@ CampNormal47.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:3}},
+                {wave:{index:3,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:1.4}},
             ],
         },
+        {
+            eventKey:0,
+            checkTime:1,
+            condition:[
+                {wave:{index:4,step:5}},
+            ],
+            effect:[
+                {extra:{open:-2}},
+            ],
+        },
+        
     ],
 }

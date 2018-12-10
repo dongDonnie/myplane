@@ -377,11 +377,13 @@ var EntityManager = cc.Class({
 
         if (owner.objectType == Defines.ObjectType.OBJ_HERO) {
             for (let entity of this.entityHeroBltList) {
-                entity.isDead = true;
+                if (entity.owner.uuid == owner.uuid){
+                    entity.isDead = true;
+                }
             }
         } else if (owner.objectType == Defines.ObjectType.OBJ_MONSTER) {
             for (let entity of this.entityMonBltList) {
-                if (entity.owner == owner) {
+                if (entity.owner.uuid == owner.uuid) {
                     entity.isDead = true;
                     if (needDisappearAnime) {
                         entity.disappearAnime = needDisappearAnime;

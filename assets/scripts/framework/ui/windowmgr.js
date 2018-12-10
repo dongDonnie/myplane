@@ -2,32 +2,22 @@ const GlobalVar = require("globalvar");
 const ResMapping = require("resmapping");
 const SceneDefines = require("scenedefines");
 const WndTypeDefine = require("wndtypedefine");
-const CommonDefine = require("define");
 
 var WindowManager = cc.Class({
     extends: cc.Component,
     ctor: function () {
         this.vectorViewStack = [];
         this.mapViewData = {};
-        // this.pushing = false;
-        // this.pushingName='';
         this.addMask = false;
         this.openLog = false;
-        this.itemLock = true;
-        this.btnLock = true;
-        this.btnLock1 = false;
-        this.waitBtnCallback = false;
+        this.pushName = '';
     },
     clearWindowMgr: function () {
         this.vectorViewStack = [];
         this.mapViewData = {};
-        // this.pushing = false;
-        // this.pushingName='';
         this.addMask = false;
         this.openLog = false;
-        this.itemLock = true;
-        this.btnLock = true;
-        this.waitBtnCallback = false;
+        this.pushName = '';
     },
 
     statics: {
@@ -46,33 +36,6 @@ var WindowManager = cc.Class({
         }
     },
 
-    delayLockBtn:function () {
-        this.lockBtn();
-    },
-    checkBtnLock: function () {
-        return false;
-        if (this.btnLock) {
-            return true;
-        } else {
-            this.btnLock = true;
-            this.scheduleOnce(this.delayLockBtn, 2);
-            return false;
-        }
-    },
-    lockBtn: function () {
-        return;
-        this.unschedule(this.delayLockBtn);
-        this.btnLock = true;
-        this.waitBtnCallback = false;
-    },
-    unLockBtn: function () {
-        return;
-        if (!this.waitBtnCallback) {
-            this.btnLock = false;
-            this.waitBtnCallback = true;
-        }
-    },
-
     preLoadView: function (obj, type) {
         let index = type.lastIndexOf('/');
         let typeName = type.substring(index + 1);
@@ -87,18 +50,36 @@ var WindowManager = cc.Class({
                 this.mapViewData[key].destroy();
             }
         }
-        this.waitBtnCallback = false;
-        this.itemLock = true;
-        this.btnLock = true;
     },
 
-    pushView: function (type, callback, needUpMask, param) {
+    pushView: function (type, callback, needUpMask, skipCheck, param) {
         needUpMask = typeof needUpMask !== 'undefined' ? needUpMask : true;
-        this.btnLock1 = true;
+        skipCheck = typeof skipCheck !== 'undefined' ? skipCheck : false;
+
         var typeName = type;
 
         if (param) {
             typeName = type + "_" + param;
+        }
+
+        if (this.findViewIndex(typeName) != -1) {
+            this.showLog("this view is already push");
+            return;
+        }
+
+        if (this.pushName != '' && !skipCheck &&
+            typeName != WndTypeDefine.WindowType.E_DT_MASKBACK_WND &&
+            typeName != WndTypeDefine.WindowType.E_DT_ROOTBACK_WND &&
+            typeName != WndTypeDefine.WindowType.E_DT_NORMALROOT_WND) {
+            this.showLog("window manager is pushing");
+            return;
+        }
+
+        if (typeName != WndTypeDefine.WindowType.E_DT_MASKBACK_WND &&
+            typeName != WndTypeDefine.WindowType.E_DT_ROOTBACK_WND &&
+            typeName != WndTypeDefine.WindowType.E_DT_NORMALROOT_WND) {
+            this.pushName = typeName;
+            this.showLog("push name is " + this.pushName);
         }
 
         if (this.findViewInStack(WndTypeDefine.WindowType.E_DT_MASKBACK_WND) != "") {
@@ -112,50 +93,30 @@ var WindowManager = cc.Class({
             return;
         }
 
-        // if (this.pushing == false) {
-        //     this.pushing = true;
-        //     this.pushingName=typeName;
-        // } else {
-        //     if(this.pushingName==typeName){
-        //         return;
-        //     }
-        //     var self = this;
-        //     this.scheduleOnce(function () {
-        //         self.pushView(type, callback, needUpMask, param);
-        //     }, 0.2);
-        //     return;
-        // }
-
         this.showLog("PushView: typeName = " + typeName);
 
         if (!cc.isValid(this.mapViewData[typeName])) {
-            let resPrefab = GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, "cdnRes/prefab/Windows/" + type);
-            if (resPrefab != null) {
-                this.mapViewData[typeName] = cc.instantiate(resPrefab);
-                this.addView(type, true, true, callback, param);
-                this.showLog("PushView: res was loaded, push success!");
-            } else {
-                var self = this;
-                GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, "cdnRes/prefab/Windows/" + type, function (prefab) {
-                    if (prefab != null) {
-                        self.mapViewData[typeName] = cc.instantiate(prefab);
-                        self.addView(type, true, true, callback, param);
-                        self.showLog("PushView: resmanager loadres success, push success!");
-                    } else {
-                        self.showLog("PushView: push view failed!");
-                    }
-                });
-            }
+            var self = this;
+            GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, "cdnRes/prefab/Windows/" + type, function (prefab) {
+                if (prefab != null) {
+                    self.mapViewData[typeName] = cc.instantiate(prefab);
+                    self.addView(type, true, true, callback, param);
+                    console.log('pushview: ', self.vectorViewStack);
+                    self.showLog("PushView: resmanager loadres success, push success!");
+                } else {
+                    self.showLog("PushView: push view failed!");
+                }
+            });
         } else {
             this.addView(type, true, true, callback, param);
+            console.log('pushview: ', this.vectorViewStack);
             this.showLog("PushView: windowmanager has this view, push success!");
         }
-        console.log('pushview: '+ this.vectorViewStack);
     },
 
     addView: function (type, needRefresh, needRefreshCeilingView, callback, param, insertIndex) {
         insertIndex = typeof insertIndex !== 'undefined' ? insertIndex : -1;
-        var typeName = type;
+        let typeName = type;
 
         if (param) {
             typeName = type + "_" + param;
@@ -163,9 +124,9 @@ var WindowManager = cc.Class({
 
         this.showLog("AddView: typeName = " + typeName);
 
-        var ceilingView = this.getCeilingView();
-        var ceilingViewType = this.getCeilingViewType();
-        var zOrder = CommonDefine.LayerBaseZOrder.WND_Z;
+        let ceilingView = this.getCeilingView();
+        let ceilingViewType = this.getCeilingViewType();
+        let zOrder = 100;
 
         if (ceilingView != null) {
             ceilingView.getComponent(ceilingViewType).escape(needRefreshCeilingView);
@@ -177,7 +138,7 @@ var WindowManager = cc.Class({
             zOrder = this.mapViewData[this.vectorViewStack[insertIndex]].zIndex;
             for (let j = this.vectorViewStack.length - 1; j >= insertIndex; j--) {
                 var z = this.mapViewData[this.vectorViewStack[j]].zIndex;
-                this.mapViewData[this.vectorViewStack[j]].zIndex = (z + 1);
+                this.mapViewData[this.vectorViewStack[j]].zIndex = z + 1;
                 this.showLog("AddView: typeName = " + this.vectorViewStack[j] + "; z = " + (z + 1) + ";");
             }
             this.vectorViewStack.splice(insertIndex, 0, typeName);
@@ -187,14 +148,14 @@ var WindowManager = cc.Class({
 
         //cc.director.getScene().addChild(this.mapViewData[type], zOrder);
         if (GlobalVar.sceneManager().getCurrentSceneType() == SceneDefines.MAIN_STATE) {
-            var wndNode = cc.find("Canvas/WndNode");
+            let wndNode = cc.find("Canvas/WndNode");
             if (wndNode != null) {
                 wndNode.addChild(this.mapViewData[typeName], zOrder, typeName);
                 // if (wndNode.getChildByName(typeName) != this.mapViewData[typeName]){
                 //     wndNode.addChild(this.mapViewData[typeName], zOrder, typeName);
                 // }else{
                 //     this.mapViewData[typeName].active = true;
-                //     this.mapViewData[typeName].zIndex=(zOrder);
+                //     this.mapViewData[typeName].zIndex=zOrder;
                 //     // this.upViewToCeiling(typeName, needRefresh, needRefreshCeilingView);
                 // }
                 this.optimizeView();
@@ -204,8 +165,11 @@ var WindowManager = cc.Class({
                 //if (needRefresh) {
                 this.mapViewData[typeName].getComponent(type).enter(needRefresh);
                 //}
+                if (this.pushName == typeName) {
+                    this.pushName = '';
+                }
+
                 this.showLog("Addview: add " + typeName + " success!");
-                // this.pushing = false;
             }
         } else {
             this.showLog("AddView: addview can not find wndnode!");
@@ -220,20 +184,20 @@ var WindowManager = cc.Class({
         }
         var self = this;
         if (cc.isValid(self.mapViewData[type])) {
-            var ceilingView = self.getCeilingView();
-            var ceilingViewType = self.getCeilingViewType();
-            var zOrder = CommonDefine.LayerBaseZOrder.WND_Z;
+            let ceilingView = self.getCeilingView();
+            let ceilingViewType = self.getCeilingViewType();
+            let zOrder = 100;
             if (ceilingView != null) {
                 ceilingView.getComponent(ceilingViewType).escape(false);
                 zOrder = ceilingView.zIndex + 1;
             }
             // self.mapViewData[type].zIndex=(zOrder)
-            var wndNode = cc.find("Canvas/WndNode");
+            let wndNode = cc.find("Canvas/WndNode");
             wndNode.addChild(self.mapViewData[type], zOrder);
             self.vectorViewStack.push(type);
             self.addMask = false;
             this.mapViewData[type].getComponent(type).enter(true);
-            self.pushView(nextTpye, callback, true, param);
+            self.pushView(nextTpye, callback, true, true, param);
             return;
         }
         GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, "cdnRes/prefab/Windows/" + type, function (prefab) {
@@ -241,12 +205,12 @@ var WindowManager = cc.Class({
                 self.mapViewData[type] = cc.instantiate(prefab);
 
                 if (GlobalVar.sceneManager().getCurrentSceneType() == SceneDefines.MAIN_STATE) {
-                    var wndNode = cc.find("Canvas/WndNode");
+                    let wndNode = cc.find("Canvas/WndNode");
 
                     if (wndNode != null) {
-                        var ceilingView = self.getCeilingView();
-                        var ceilingViewType = self.getCeilingViewType();
-                        var zOrder = CommonDefine.LayerBaseZOrder.WND_Z;
+                        let ceilingView = self.getCeilingView();
+                        let ceilingViewType = self.getCeilingViewType();
+                        let zOrder = 100;
                         if (ceilingView != null) {
                             ceilingView.getComponent(ceilingViewType).escape(false);
                             zOrder = ceilingView.zIndex + 1;
@@ -255,7 +219,7 @@ var WindowManager = cc.Class({
                         self.vectorViewStack.push(type);
                         self.addMask = false;
                         self.mapViewData[type].getComponent(type).enter(true);
-                        self.pushView(nextTpye, callback, true, param);
+                        self.pushView(nextTpye, callback, true, true, param);
                         self.showLog("AddMaskBack: MackBack was created!");
                     } else {
                         self.showLog("AddMaskBack: WndNode was not founded!");
@@ -276,13 +240,14 @@ var WindowManager = cc.Class({
         needRefresh = typeof needRefresh !== 'undefined' ? needRefresh : true;
         needRefreshCeilingView = typeof needRefreshCeilingView !== 'undefined' ? needRefreshCeilingView : true;
 
-        var ceilingView = this.getCeilingView();
+        let ceilingView = this.getCeilingView();
 
         if (ceilingView != null) {
-            var ceilingViewType = this.getCeilingViewType();
-            var ceilingViewName = this.getCeilingViewTypeName();
+            let ceilingViewType = this.getCeilingViewType();
+            let ceilingViewName = this.getCeilingViewTypeName();
             ceilingView.getComponent(ceilingViewType).escape(needRefreshCeilingView);
             this.mapViewData[ceilingViewName].removeFromParent(false);
+            this.mapViewData[ceilingViewName].zIndex=0;
 
             // if (!needKeepView && ceilingViewName != WndTypeDefine.WindowType.E_DT_MASKBACK_WND
             //   && ceilingViewName != WndTypeDefine.WindowType.E_DT_NORMALROOT_WND && ceilingViewName != WndTypeDefine.WindowType.E_DT_ROOTBACK_WND) {
@@ -314,11 +279,6 @@ var WindowManager = cc.Class({
             if (callback) {
                 callback();
             }
-            // let topView = this.getTopView()
-            // if (topView){
-            //     let topViewScript = topView.getComponent(this.getTopViewType());
-            //     topViewScript.unLockBtn();
-            // }
         } else {
             this.showLog("PopView: ceilingView is null!");
         }
@@ -352,23 +312,16 @@ var WindowManager = cc.Class({
         }
 
         if (!cc.isValid(this.mapViewData[typeName])) {
-            var resPrefab = GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, "cdnRes/prefab/Windows/" + type);
-            if (resPrefab != null) {
-                this.mapViewData[typeName] = cc.instantiate(resPrefab);
-                this.addView(type, needRefresh, needRefreshCeilingView, callback, param, index);
-                this.showLog("InsertView: res was loaded, insert success!");
-            } else {
-                var self = this;
-                GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, "cdnRes/prefab/Windows/" + type, function (prefab) {
-                    if (prefab != null) {
-                        self.mapViewData[typeName] = cc.instantiate(prefab);
-                        self.addView(type, needRefresh, needRefreshCeilingView, callback, param, index);
-                        self.showLog("InsertView: resmanager loadres success, insert success!");
-                    } else {
-                        self.showLog("InsertView: insert failed!");
-                    }
-                });
-            }
+            var self = this;
+            GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, "cdnRes/prefab/Windows/" + type, function (prefab) {
+                if (prefab != null) {
+                    self.mapViewData[typeName] = cc.instantiate(prefab);
+                    self.addView(type, needRefresh, needRefreshCeilingView, callback, param, index);
+                    self.showLog("InsertView: resmanager loadres success, insert success!");
+                } else {
+                    self.showLog("InsertView: insert failed!");
+                }
+            });
         } else {
             this.addView(type, needRefresh, needRefreshCeilingView, callback, param, index);
             this.showLog("InsertView: windowmanager has this view, insert success!");
@@ -379,8 +332,8 @@ var WindowManager = cc.Class({
         needRefreshCeilingView = typeof needRefreshCeilingView !== 'undefined' ? needRefreshCeilingView : true;
         needKeepView = typeof needKeepView !== 'undefined' ? needKeepView : false;
 
-        var index = -1;
-        var typeName = type;
+        let index = -1;
+        let typeName = type;
 
         if (param) {
             typeName = type + "_" + param;
@@ -397,11 +350,11 @@ var WindowManager = cc.Class({
             this.showLog("DeleteView: index = " + index);
         }
 
-        var dView = this.mapViewData[this.vectorViewStack[index]];
+        let dView = this.mapViewData[this.vectorViewStack[index]];
         if (dView != null) {
             dView.getComponent(type).escape(true);
             this.mapViewData[typeName].removeFromParent(false);
-
+            this.mapViewData[typeName].zIndex=0;
             // if (!needKeepView && typeName != WndTypeDefine.WindowType.E_DT_MASKBACK_WND
             //     && typeName != WndTypeDefine.WindowType.E_DT_NORMALROOT_WND && typeName != WndTypeDefine.WindowType.E_DT_ROOTBACK_WND) {
             //     this.mapViewData[typeName].destroy();
@@ -423,11 +376,6 @@ var WindowManager = cc.Class({
                 }
                 //}
             }
-            // let topView = this.getTopView()
-            // if (topView){
-            //     let topViewScript = topView.getComponent(this.getTopViewType());
-            //     topViewScript.unLockBtn();
-            // }
         } else {
             this.showLog("DeleteView: " + typeName + " is not exist in Data");
         }
@@ -453,7 +401,7 @@ var WindowManager = cc.Class({
                 if (this.record != '') {
                     if (this.record == WndTypeDefine.WindowType.E_DT_ENDLESS_CHALLENGE_VIEW) {
                         this.pushView(WndTypeDefine.WindowType.E_DT_ENDLESS_CHALLENGE_VIEW, function (wnd, type, name) {
-                            //wnd.getComponent(type).addPrefabsText();
+                            wnd.getComponent(type).judgeHaveRewardBox();
                         });
                     } else if (this.record == WndTypeDefine.WindowType.E_DT_NORMAL_QUESTLIST_VIEW) {
                         WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMAL_QUESTLIST_VIEW, function (wnd, type, name) {
@@ -480,12 +428,11 @@ var WindowManager = cc.Class({
             ceilingView.getComponent(this.getCeilingViewType()).escape(needRefreshCeilingView);
 
             this.mapViewData[typeName].enabled = true;
-            this.mapViewData[typeName].zIndex = (targetZOrder);
+            this.mapViewData[typeName].zIndex = targetZOrder;
 
             for (let i = index + 1; i <= this.vectorViewStack.length - 1; i++) {
-                var view = this.mapViewData[this.vectorViewStack[i]];
-                var zOrder = view.zIndex;
-                view.zIndex = (zOrder - 1);
+                let view = this.mapViewData[this.vectorViewStack[i]];
+                view.zIndex = view.zIndex - 1;
                 this.showLog("upViewToCeiling : typeName = " + this.vectorViewStack[i] + "; z = " + view.zIndex + ";");
             }
 
@@ -508,16 +455,15 @@ var WindowManager = cc.Class({
         this.showLog("downViewToFloor: name = " + typeName + "; index = " + index + ";");
 
         if (index != -1 && index != 0) {
-            var floorView = this.getFloorView();
-            var targetZOrder = floorView.zIndex;
+            let floorView = this.getFloorView();
+            let targetZOrder = floorView.zIndex;
             floorView.getComponent(this.getFloorViewType()).escape(false);
 
-            this.mapViewData[typeName].zIndex = (targetZOrder);
+            this.mapViewData[typeName].zIndex = targetZOrder;
 
             for (let i = insertIndex; i < index; i++) {
                 var view = this.mapViewData[this.vectorViewStack[i]];
-                var zOrder = view.zIndex;
-                view.zIndex = (zOrder + 1);
+                view.zIndex = view.zIndex + 1;
                 this.showLog("downViewToFloor : typeName = " + this.vectorViewStack[i] + "; z = " + view.zIndex + ";");
             }
 
@@ -528,7 +474,7 @@ var WindowManager = cc.Class({
                 this.upViewToCeiling(this.vectorViewStack[this.vectorViewStack.length - 2]);
             }
 
-            var ceilingView = this.getCeilingView();
+            let ceilingView = this.getCeilingView();
             if (ceilingView != null) {
                 this.optimizeView();
                 ceilingView.getComponent(this.getCeilingViewType()).enter(false);
@@ -537,22 +483,21 @@ var WindowManager = cc.Class({
     },
 
     downViewToFloor: function (typeName) {
-        var index = -1;
+        let index = -1;
         index = this.findViewIndex(typeName);
 
         this.showLog("downViewToFloor: name = " + typeName + "; index = " + index + ";");
 
         if (index != -1 && index != 0) {
-            var floorView = this.getFloorView();
-            var targetZOrder = floorView.zIndex;
+            let floorView = this.getFloorView();
+            let targetZOrder = floorView.zIndex;
             floorView.getComponent(this.getFloorViewType()).escape(false);
 
-            this.mapViewData[typeName].zIndex = (targetZOrder);
+            this.mapViewData[typeName].zIndex = targetZOrder;
 
             for (let i = 0; i < index; i++) {
                 var view = this.mapViewData[this.vectorViewStack[i]];
-                var zOrder = view.zIndex;
-                view.zIndex = (zOrder + 1);
+                view.zIndex = view.zIndex + 1;
                 this.showLog("downViewToFloor : typeName = " + this.vectorViewStack[i] + "; z = " + view.zIndex + ";");
             }
 
@@ -563,7 +508,7 @@ var WindowManager = cc.Class({
                 this.upViewToCeiling(this.vectorViewStack[this.vectorViewStack.length - 2]);
             }
 
-            var ceilingView = this.getCeilingView();
+            let ceilingView = this.getCeilingView();
             if (ceilingView != null) {
                 this.optimizeView();
                 ceilingView.getComponent(this.getCeilingViewType()).enter(false);
@@ -579,11 +524,13 @@ var WindowManager = cc.Class({
         //     this.vectorViewStack.splice(index, 1);
         // }
 
-        let topView = this.getTopView();
-        topView.getComponent(this.getTopViewType()).animeStartParam(0, 0);
 
 
         while (this.vectorViewStack.length > 0) {
+            let topView = this.getTopView();
+            if (!!topView && !!topView.getComponent(this.getTopViewType()).animeStartParam) {
+                topView.getComponent(this.getTopViewType()).animeStartParam(0, 0);
+            }
             this.popView(false, null, false);
             this.showLog("poptoroot count :" + this.vectorViewStack.length);
         }
@@ -593,7 +540,7 @@ var WindowManager = cc.Class({
         //     this.optimizeView();
         // }
 
-        if (!!callback){
+        if (!!callback) {
             callback();
         }
     },
@@ -602,8 +549,8 @@ var WindowManager = cc.Class({
         needKeepView = typeof needKeepView !== 'undefined' ? needKeepView : false;
         needRefresh = typeof needRefresh !== 'undefined' ? needRefresh : false;
         needRefreshCeilingView = typeof needRefreshCeilingView !== 'undefined' ? needRefreshCeilingView : false;
-        var index = -1;
-        var typeName = targetType;
+        let index = -1;
+        let typeName = targetType;
 
         if (param) {
             typeName = targetType + "_" + param;
@@ -667,6 +614,21 @@ var WindowManager = cc.Class({
             return this.mapViewData[name];
         }
         return null;
+    },
+
+    hideView: function (typeName) {
+        var name = this.findViewInStack(typeName);
+        if (name != "") {
+            this.mapViewData[name].actiev = false;
+            // cc.find("Canvas/WndNode/" + name).active = false;
+        }
+    },
+
+    showView: function (typeName) {
+        var name = this.findViewInStack(typeName);
+        if (name != "") {
+            cc.find("Canvas/WndNode/" + name).active = true;
+        }
     },
 
     getTopView: function () {
@@ -804,6 +766,24 @@ var WindowManager = cc.Class({
                 //     //this.showLog("ceilingViewSize.width = " + topSize.width + "; ceilingViewSize.height=" + topSize.height + ";");
                 //     //this.showLog("size.width = " + size.width + "; size.height = " + size.height + ";");
                 // }
+                if (topType != WndTypeDefine.WindowType.E_DT_MASKBACK_WND &&
+                    topType != WndTypeDefine.WindowType.E_DT_ROOTBACK_WND &&
+                    topType != WndTypeDefine.WindowType.E_DT_NORMALROOT_WND) { 
+                    let topSize = this.mapViewData[topType].getContentSize();
+                    for (let i = this.vectorViewStack.length - 1; i > 0; i--) {
+                        if (this.vectorViewStack[i] == WndTypeDefine.WindowType.E_DT_MASKBACK_WND ||
+                            this.vectorViewStack[i] == WndTypeDefine.WindowType.E_DT_ROOTBACK_WND ||
+                            this.vectorViewStack[i] == WndTypeDefine.WindowType.E_DT_NORMALROOT_WND) {
+                            continue;
+                        }
+                        let size = this.mapViewData[this.vectorViewStack[i]].getContentSize();
+                        if (topSize.height > size.height + 20) {
+                            this.mapViewData[this.vectorViewStack[i]].active = false;
+                        }
+                        // cc.log(topType + "  ceilingViewSize.width = " + topSize.width + "; ceilingViewSize.height=" + topSize.height + ";");
+                        // cc.log(this.vectorViewStack[i] + "  size.width = " + size.width + "; size.height = " + size.height + ";");
+                    }
+                }
 
                 if (topType == WndTypeDefine.WindowType.E_DT_MASKBACK_WND) {
                     return;
@@ -814,12 +794,12 @@ var WindowManager = cc.Class({
                     this.mapViewData[topType].active = true;
 
                     let i = this.vectorViewStack.length - 2 > 0 ? this.vectorViewStack.length - 2 : 0;
-                    for (let j = 1; j <= 2; j++) {
-                        if (this.vectorViewStack[i - j]) {
-                            if (this.vectorViewStack[i - j] == WndTypeDefine.WindowType.E_DT_NORMALTREASUREEXPLOIT ||
-                                this.vectorViewStack[i - j] == WndTypeDefine.WindowType.E_DT_NORMAL_LEVEL_UP_WND ||
-                                this.vectorViewStack[i - j] == WndTypeDefine.WindowType.E_DT_NORMAL_GET_NEW_ITEM_WND) {
-                                this.mapViewData[this.vectorViewStack[i - j]].active = false;
+                    for (let j = i; j > 0; j--) {
+                        if (this.vectorViewStack[j]) {
+                            if (this.vectorViewStack[j] == WndTypeDefine.WindowType.E_DT_NORMALTREASUREEXPLOIT ||
+                                this.vectorViewStack[j] == WndTypeDefine.WindowType.E_DT_NORMAL_LEVEL_UP_WND ||
+                                this.vectorViewStack[j] == WndTypeDefine.WindowType.E_DT_NORMAL_GET_NEW_ITEM_WND) {
+                                this.mapViewData[this.vectorViewStack[j]].active = false;
                             }
                         }
                     }
@@ -828,7 +808,7 @@ var WindowManager = cc.Class({
         }
 
 
-        
+
     },
 
     showLog: function (str) {

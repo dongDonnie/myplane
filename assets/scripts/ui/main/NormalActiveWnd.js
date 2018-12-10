@@ -9,6 +9,8 @@ const i18n = require('LanguageData');
 const CommonWnd = require("CommonWnd");
 const RemoteSprite = require("RemoteSprite");
 const ResMapping = require("resmapping");
+const StoreageData = require("storagedata");
+const weChatAPI = require("weChatAPI");
 const INIT_COUNT = 5;
 
 var self = null;
@@ -39,6 +41,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_ACTIVE_WND;
         this.animeStartParam(0, 0);
@@ -76,8 +79,11 @@ cc.Class({
     initActiveWnd: function () {
         this.activeTabScroll = this.node.getChildByName("scrollActiveTab").getComponent(cc.ScrollView);
         this.activeTabScroll.node.active = true;
-        if (this.isFirstIn){
-            this.isFirstIn = false;
+        if (this.isFirstIn) {
+            this.curActiveIndex = 0;
+            this.contentIndex = 0;
+            this.activeTabs = [];
+            // this.isFirstIn = false;
             this.activeList = GlobalVar.me().activeData.getActiveListDataByType(GameServerProto.PT_AMS_ACT_TYPE_NORMAL);
             this.activeTabContent = this.activeTabScroll.content;
             this.activeTabContent.removeAllChildren();
@@ -85,10 +91,11 @@ cc.Class({
                 this.addActiveTab(0);
             }
             this.activeTabContent.getComponent(cc.Layout).updateLayout();
-        }else{
+        } else {
             this.activeTabScroll.scrollToLeft();
             this.curActiveIndex = 0;
             this.contentIndex = 0;
+            this.activeTabs = [];
             for (let i = 0; i < this.activeTabs.length; i++) {
                 if (this.curActiveIndex == i) {
                     this.activeTabs[i].getChildByName("spriteBg").getChildByName("spriteSelectBorder").active = true;
@@ -152,46 +159,6 @@ cc.Class({
         this.refreshActiveInfo(index);
     },
 
-    recvActiveFlagChange: function (event) {
-        for (let i = 0; i < this.activeTabs.length; i++){
-            if (this.activeTabs[i].data.Actid == event.Actid){
-                this.activeTabs[i].getChildByName("spriteHot").active = !!event.StatFlag;
-            }
-        }
-    },
-    recvActiveFenResult: function(event){
-        if (event.ErrCode != GameServerProto.PTERR_SUCCESS){
-            GlobalVar.comMsg.errorWarning(event.ErrCode);
-            return;
-        }
-        CommonWnd.showTreasuerExploit(event.Item)
-        let nodeActiveContent = this.node.getChildByName("nodeActiveContent");
-        let nodeContent = nodeActiveContent.getChildByName("nodeType" + this.contentIndex);
-        let scrollview = nodeContent.getChildByName("scrollContent").getComponent(cc.ScrollView);
-        scrollview.loopScroll.refreshViewItem();
-    },
-    recvActiveJoinResult: function(event){
-        if (event.ErrCode != GameServerProto.PTERR_SUCCESS){
-            GlobalVar.comMsg.errorWarning(event.ErrCode);
-            return;
-        }
-        CommonWnd.showTreasuerExploit(event.Item)
-        let self = this;
-        let data = GlobalVar.me().activeData.getActiveDataByActID(this.activeList[this.curActiveIndex].Actid)
-        this.activeContents[this.contentIndex - 1].runAction(cc.sequence(cc.scaleTo(0.1, 1.1), cc.scaleTo(0.05, 1), cc.callFunc(() => {
-            self["refreshContentType" + self.contentIndex](data);
-        })));
-    },
-    recvGetDataMsg: function (event) {
-        if (event.ErrCode != GameServerProto.PTERR_SUCCESS){
-            GlobalVar.comMsg.errorWarning(event.ErrCode);
-        }
-        let curTabActID = this.activeList[this.curActiveIndex].Actid;
-        if (event.Act.Actid == curTabActID) {
-            this.refreshActiveInfo(this.curActiveIndex);
-        }
-    },
-
     refreshActiveInfo: function (index) {
         index = typeof index !== 'undefined' ? index : this.curActiveIndex;
         this.curActiveIndex = index;
@@ -244,6 +211,8 @@ cc.Class({
             }
         } else if (data.Act.OpCfg.Op == "send") {
             this.canClickTab = true;
+        } else {
+            this.canClickTab = true;
         }
 
         if (this.contentIndex != 0) {
@@ -265,8 +234,8 @@ cc.Class({
             let fenCfg = data.Act.OpCfg.FenCfg[index];
             let costCfg = data.Act.CostCfg[index];
             let joinData = null;
-            for (let i = 0; i< data.Join.length; i++){
-                if (data.Join[i].ID == index){
+            for (let i = 0; i < data.Join.length; i++) {
+                if (data.Join[i].ID == index) {
                     joinData = data.Join[i];
                 }
             }
@@ -282,9 +251,9 @@ cc.Class({
             }
             let limitTimes = fenCfg.LimitNum || data.Act.LimitNum
             model.getChildByName("labelLeftTimes").getComponent(cc.Label).string = "今日还可兑换%d次".replace("%d", limitTimes - joinTimes);
-            if (limitTimes - joinTimes <= 0){
+            if (limitTimes - joinTimes <= 0) {
                 model.getChildByName("btnExchange").getComponent(cc.Button).interactable = false;
-            }else{
+            } else {
                 model.getChildByName("btnExchange").getComponent(cc.Button).interactable = true;
             }
             model.data = {
@@ -304,10 +273,10 @@ cc.Class({
         scrollview.loopScroll.setCreateInterval(0);
         scrollview.loopScroll.setCreateModel(nodeModel);
         scrollview.loopScroll.saveCreatedModel(content.children);
-        scrollview.loopScroll.registerUpdateItemFunc(function(daily, index){
+        scrollview.loopScroll.registerUpdateItemFunc(function (daily, index) {
             updateModel(daily, index);
         });
-        scrollview.loopScroll.registerCompleteFunc(function(){
+        scrollview.loopScroll.registerCompleteFunc(function () {
             self.canClickTab = true;
         })
         scrollview.loopScroll.resetView();
@@ -335,8 +304,8 @@ cc.Class({
             let modelData = data.Act.OpCfg.FenCfg[index];
             let ruleCfg = data.Act.RuleCfg[index];
             let joinData = null;
-            for (let i = 0; i< data.Join.length; i++){
-                if (data.Join[i].ID == index){
+            for (let i = 0; i < data.Join.length; i++) {
+                if (data.Join[i].ID == index) {
                     joinData = data.Join[i];
                 }
             }
@@ -354,7 +323,7 @@ cc.Class({
                 let btnRecv = model.getChildByName("btnRecv");
                 btnRecv.getComponent("ButtonObject").setText("已参与");
                 btnRecv.getComponent(cc.Button).interactable = false;
-            }else{
+            } else {
                 let btnRecv = model.getChildByName("btnRecv");
                 btnRecv.getComponent("ButtonObject").setText("领取");
                 btnRecv.getComponent(cc.Button).interactable = true;
@@ -388,10 +357,10 @@ cc.Class({
         scrollview.loopScroll.setCreateInterval(0);
         scrollview.loopScroll.setCreateModel(nodeModel);
         scrollview.loopScroll.saveCreatedModel(content.children);
-        scrollview.loopScroll.registerUpdateItemFunc(function(daily, index){
+        scrollview.loopScroll.registerUpdateItemFunc(function (daily, index) {
             updateModel(daily, index);
         });
-        scrollview.loopScroll.registerCompleteFunc(function(){
+        scrollview.loopScroll.registerCompleteFunc(function () {
             self.canClickTab = true;
         })
         scrollview.loopScroll.resetView();
@@ -413,43 +382,108 @@ cc.Class({
         let nodeContent = nodeActiveContent.getChildByName("nodeType3");
         let nodeReawrds = nodeContent.getChildByName("nodeRewards");
         let nodeBtn = nodeContent.getChildByName("nodeBtn");
+        let nodeInvite = nodeContent.getChildByName("nodeInvite");
         let opCfg = data.Act.OpCfg;
-        let itemProbs = opCfg.ItemProbs
+        let itemProbs = opCfg.ItemProbs;
+        let ruleCfg = data.Act.RuleCfg;
+        let curJoinTime = 0
+        curJoinTime = data.Join[0] ? data.Join[0].Join : 0;
+        let isInvite = false, isShare = false, isAD = false, isShareComplete = false, isFree = false;
+
+        //判断是不是分享或邀请活动
+        let rule = ruleCfg[0].RuleList[0];
+        nodeBtn.getChildByName("labelShare").active = false;
+        if (rule) {
+            if (rule.RuleID == GameServerProto.PT_AMS_RULEID_INVITE) {
+                isInvite = true;
+                nodeReawrds.children[4] && (nodeReawrds.children[4].y = 53);
+                nodeReawrds.children[5] && (nodeReawrds.children[5].y = -79);
+                nodeReawrds.children[6] && (nodeReawrds.children[6].y = -79);
+                nodeReawrds.children[7] && (nodeReawrds.children[7].y = -79);
+                nodeReawrds.children[8] && (nodeReawrds.children[8].y = -79);
+                nodeReawrds.children[9] && (nodeReawrds.children[9].y = 53);
+                nodeBtn.y = 41;
+                nodeInvite.active = true;
+            } else {
+                nodeInvite.active = false;
+                nodeReawrds.children[4] && (nodeReawrds.children[4].y = 13);
+                nodeReawrds.children[5] && (nodeReawrds.children[5].y = -158);
+                nodeReawrds.children[6] && (nodeReawrds.children[6].y = -158);
+                nodeReawrds.children[7] && (nodeReawrds.children[7].y = -158);
+                nodeReawrds.children[8] && (nodeReawrds.children[8].y = -158);
+                nodeReawrds.children[9] && (nodeReawrds.children[9].y = 13);
+                nodeBtn.y = 0;
+
+                if (rule.RuleID == GameServerProto.PT_AMS_RULEID_SHARE) {
+                    isShare = true;
+                    nodeBtn.getChildByName("labelShare").active = true;
+
+                    let curStep = StoreageData.getShareTimesWithKey(data.Act.Actid, data.Act.Limit, data.Act.EndTime);
+                    curStep = curStep > rule.Var * (curJoinTime + 1) ? rule.Var * (curJoinTime + 1): curStep;
+                    // curStep = curStep > data.Act.LimitNum ? data.Act.LimitNum : curStep;
+                    console.log("curStep:", curStep, "  rule.Var:", rule.Var, "  curJoinTime:", curJoinTime);
+                    // if (curStep == rule.Var * (curJoinTime + 1)) {
+                    if (curStep >= rule.Var * (curJoinTime + 1)) {
+                        isShareComplete = true;
+                    }
+
+                    let str = i18n.t('label.4000307');
+                    // str = str.replace("%max", rule.Var * (curJoinTime + 1));
+                    str = str.replace("%max", data.Act.LimitNum * rule.Var);
+                    str = str.replace("%cur", curStep);
+                    nodeBtn.getChildByName("labelShare").getComponent(cc.Label).string = str;
+                } else if (rule.RuleID == GameServerProto.PT_AMS_RULEID_AD) {
+                    isAD = true;
+                } else {
+
+                }
+            }
+        }
+
+
+        // 抽奖提示
+        if (data.Join[0] && data.Join[0].Join >= data.Act.LimitNum) {
+            nodeBtn.getChildByName("btnPurchase").getComponent(cc.Button).interactable = false
+            nodeBtn.getChildByName("btnPurchase").getComponent("ButtonObject").setText("已参与")
+        } else {
+            nodeBtn.getChildByName("btnPurchase").getComponent(cc.Button).interactable = true
+            let btnText = "购 买";
+            (isFree || isShareComplete) && (btnText = "抽 奖");
+            isShare && !isShareComplete && (btnText = "分享到群");
+            isAD && (btnText = "  观看视频");
+            nodeBtn.getChildByName("btnPurchase").getComponent("ButtonObject").setText(btnText);
+        }
+        nodeBtn.getChildByName("labelJoin").getComponent(cc.Label).string = i18n.t('label.4000401').replace("%d", data.Act.LimitNum - curJoinTime);
+        // nodeBtn.setScale(0);
+        // nodeBtn.runAction(cc.sequence(cc.scaleTo(0.15, 1.1), cc.scaleTo(0.05, 1)));
 
         // 抽奖消耗
         let nodeCost = nodeBtn.getChildByName("nodeCost");
-        if (data.Act.Cost == GameServerProto.PT_AMS_ACT_COST_FREE){
+        if (data.Act.Cost == GameServerProto.PT_AMS_ACT_COST_FREE || isInvite) {
             nodeCost.active = false;
-        }else{
+            isFree = true;
+        } else {
             nodeCost.active = true;
             let costItem = data.Act.CostCfg[0].Items[0];
-            if (costItem.ItemID == 3){
+            if (costItem.ItemID == 3) {
                 nodeCost.getChildByName("spriteCostIcon").getComponent("RemoteSprite").setFrame(0);
-            }else if (costItem.ItemID == 2 || costItem.ItemID == 1){
+            } else if (costItem.ItemID == 2 || costItem.ItemID == 1) {
                 nodeCost.getChildByName("spriteCostIcon").getComponent("RemoteSprite").setFrame(1);
             }
-            
-            if (costItem.ItemID == 2){
-                nodeCost.getChildByName("labelCost").getComponent(cc.Label).string = costItem.Count*10000;
-            }else{
+
+            if (costItem.ItemID == 2) {
+                nodeCost.getChildByName("labelCost").getComponent(cc.Label).string = costItem.Count * 10000;
+            } else {
                 nodeCost.getChildByName("labelCost").getComponent(cc.Label).string = costItem.Count;
             }
         }
 
+        // 添加物品展示
         let self = this;
         let addItem = function (index) {
             let item = nodeReawrds.getChildByName("ItemObject" + (index + 1));
             if (!itemProbs[index]) {
-                if (data.Join[0] && data.Join[0].Join == 1){
-                    nodeBtn.getChildByName("btnPurchase").getComponent(cc.Button).interactable = false
-                    nodeBtn.getChildByName("btnPurchase").getComponent("ButtonObject").setText("已参与")
-                } else {
-                    nodeBtn.getChildByName("btnPurchase").getComponent(cc.Button).interactable = true
-                    nodeBtn.getChildByName("btnPurchase").getComponent("ButtonObject").setText("抽 奖")
-                }
-                // nodeBtn.setScale(0);
                 nodeBtn.active = true;
-                // nodeBtn.runAction(cc.sequence(cc.scaleTo(0.15, 1.1), cc.scaleTo(0.05, 1)));
                 self.canClickTab = true;
                 return;
             }
@@ -484,29 +518,77 @@ cc.Class({
         let nodeActiveContent = this.node.getChildByName("nodeActiveContent");
         let nodeContent = nodeActiveContent.getChildByName("nodeType4");
         let nodeBuy = nodeContent.getChildByName("nodeBuy");
+        let ruleCfg = data.Act.RuleCfg;
+        let curJoinTime = 0
+        curJoinTime = data.Join[0] ? data.Join[0].Join : 0;
+        let isInvite = false, isShare = false, isAD = false, isShareComplete = false, isFree = false;
 
+        //判断是不是分享或邀请活动
+        let rule = ruleCfg[0].RuleList[0];
+        nodeBuy.getChildByName("labelShare").active = false;
+        if (rule) {
+            if (rule.RuleID == GameServerProto.PT_AMS_RULEID_INVITE) {
+                isInvite = true;
+            } else {
+                if (rule.RuleID == GameServerProto.PT_AMS_RULEID_SHARE) {
+                    isShare = true;
+                    nodeBuy.getChildByName("labelShare").active = true;
 
-        // 抽奖消耗
-        let nodeCost = nodeBuy.getChildByName("nodeCost");
-        if (data.Act.Cost == GameServerProto.PT_AMS_ACT_COST_FREE){
-            nodeCost.active = false;
-        }else{
-            nodeCost.active = true;
-            let costItem = data.Act.CostCfg[0].Items[0];
-            if (costItem.ItemID == 3){
-                nodeCost.getChildByName("spriteCostIcon").getComponent("RemoteSprite").setFrame(0);
-            }else if (costItem.ItemID == 2 || costItem.ItemID == 1){
-                nodeCost.getChildByName("spriteCostIcon").getComponent("RemoteSprite").setFrame(1);
-            }
-            
-            if (costItem.ItemID == 2){
-                nodeCost.getChildByName("labelCostValue").getComponent(cc.Label).string = costItem.Count*10000;
-            }else{
-                nodeCost.getChildByName("labelCostValue").getComponent(cc.Label).string = costItem.Count;
+                    let curStep = StoreageData.getShareTimesWithKey(data.Act.Actid, data.Act.Limit, data.Act.EndTime);
+                    curStep = curStep > rule.Var * (curJoinTime + 1) ? rule.Var * (curJoinTime + 1) : curStep;
+                    console.log("curStep:", curStep, "  rule.Var:", rule.Var, "  curJoinTime:", curJoinTime);
+                    if (curStep >= rule.Var * (curJoinTime + 1)) {
+                        isShareComplete = true;
+                    }
+                    let str = i18n.t('label.4000307');
+                    // str = str.replace("%max", rule.Var * (curJoinTime + 1));
+                    str = str.replace("%max", data.Act.LimitNum * rule.Var);
+                    str = str.replace("%cur", curStep);
+                    nodeBuy.getChildByName("labelShare").getComponent(cc.Label).string = str;
+                } else if (rule.RuleID == GameServerProto.PT_AMS_RULEID_AD) {
+                    isAD = true;
+                }
             }
         }
 
 
+        // 抽奖提示
+        if (data.Join[0] && data.Join[0].Join >= data.Act.LimitNum) {
+            nodeBuy.getChildByName("btnPurchase").getComponent(cc.Button).interactable = false
+            nodeBuy.getChildByName("btnPurchase").getComponent("ButtonObject").setText("已参与");
+        } else {
+            nodeBuy.getChildByName("btnPurchase").getComponent(cc.Button).interactable = true;
+            let btnText = "购 买";
+            (isFree || isShareComplete) && (btnText = "抽 奖");
+            isShare && !isShareComplete && (btnText = "分享到群");
+            isAD && (btnText = "  观看视频");
+            nodeBuy.getChildByName("btnPurchase").getComponent("ButtonObject").setText(btnText);
+        }
+
+        nodeBuy.getChildByName("labelJoin").getComponent(cc.Label).string = i18n.t('label.4000401').replace("%d", data.Act.LimitNum - curJoinTime);
+
+        // 抽奖消耗
+        let nodeCost = nodeBuy.getChildByName("nodeCost");
+        if (data.Act.Cost == GameServerProto.PT_AMS_ACT_COST_FREE) {
+            nodeCost.active = false;
+            isFree = true;
+        } else {
+            nodeCost.active = true;
+            let costItem = data.Act.CostCfg[0].Items[0];
+            if (costItem.ItemID == 3) {
+                nodeCost.getChildByName("spriteCostIcon").getComponent("RemoteSprite").setFrame(0);
+            } else if (costItem.ItemID == 2 || costItem.ItemID == 1) {
+                nodeCost.getChildByName("spriteCostIcon").getComponent("RemoteSprite").setFrame(1);
+            }
+
+            if (costItem.ItemID == 2) {
+                nodeCost.getChildByName("labelCostValue").getComponent(cc.Label).string = costItem.Count * 10000;
+            } else {
+                nodeCost.getChildByName("labelCostValue").getComponent(cc.Label).string = costItem.Count;
+            }
+        }
+
+        // 奖品展示
         let opCfg = data.Act.OpCfg;
         let itemMusts = opCfg.Items;
         let itemProbs = opCfg.ItemProbs;
@@ -519,13 +601,6 @@ cc.Class({
         let addProbItem = function (index) {
             let itemData = itemProbs[index];
             if (!itemData) {
-                if (data.Join[0] && data.Join[0].Join == 1){
-                    nodeBuy.getChildByName("btnPurchase").getComponent(cc.Button).interactable = false
-                    nodeBuy.getChildByName("btnPurchase").getComponent("ButtonObject").setText("已参与")
-                }else{
-                    nodeBuy.getChildByName("btnPurchase").getComponent(cc.Button).interactable = true;
-                    nodeBuy.getChildByName("btnPurchase").getComponent("ButtonObject").setText("购 买");
-                }
                 // nodeBuy.setScale(0);
                 nodeBuy.active = true;
                 // nodeBuy.runAction(cc.sequence(cc.scaleTo(0.15, 1.1), cc.scaleTo(0.05, 1)));
@@ -607,8 +682,8 @@ cc.Class({
         let fenData = activeData.Act.OpCfg.FenCfg[index];
         let joinTimes = 0;
         let joinData = null;
-        for (let i = 0; i< activeData.Join.length; i++){
-            if (activeData.Join[i].ID == index){
+        for (let i = 0; i < activeData.Join.length; i++) {
+            if (activeData.Join[i].ID == index) {
                 joinData = activeData.Join[i];
             }
         }
@@ -616,7 +691,7 @@ cc.Class({
             joinTimes = joinData.Join;
         }
         let limitTimes = fenData.LimitNum || activeData.Act.LimitNum
-        
+
         let costData = activeData.Act.CostCfg[index];
 
         let costArray = [];
@@ -624,35 +699,132 @@ cc.Class({
         costArray.push(itemcost);
 
         let getArray = [];
-        let itemGet = {id: fenData.Items[0].ItemID, num: fenData.Items[0].Count};
+        let itemGet = { id: fenData.Items[0].ItemID, num: fenData.Items[0].Count };
         getArray.push(itemGet);
 
         let self = this;
-        let confirmCallback = function(){
+        let confirmCallback = function () {
             GlobalVar.handlerManager().activeHandler.sendActiveFenReq(btn.parent.data.actid, btn.parent.data.id, self.buyCount);
         }
         self.buyCount = 0;
-        let callback = function(count){
+        let callback = function (count) {
             self.buyCount = parseInt(count);
-            return parseInt(count)*costData.Items[0].Count;
+            return parseInt(count) * costData.Items[0].Count;
         }
         CommonWnd.showPurchaseWnd(getArray, limitTimes - joinTimes, costArray, "兑换", "兑换道具", confirmCallback, null, callback);
     },
-    onActiveLotteryBtnClick: function(event){
-        // console.log("哇哦~click Lottery");
-        let curTabActID = this.activeList[this.curActiveIndex].Actid
-        GlobalVar.handlerManager().activeHandler.sendActiveJoinReq(curTabActID);
+    //3
+    onActiveLotteryBtnClick: function (event) {
+        let curTabActID = this.activeList[this.curActiveIndex].Actid;
+        let data = GlobalVar.me().activeData.getActiveDataByActID(curTabActID);
+        let ruleCfg = data.Act.RuleCfg;
+        let rule = ruleCfg[0] && ruleCfg[0].RuleList[0];
+        let self = this;
+
+        let curJoinTime = 0;
+        curJoinTime = data.Join[0] ? data.Join[0].Join : 0;
+        if (rule && rule.RuleID == GameServerProto.PT_AMS_RULEID_SHARE) {
+            let curStep = StoreageData.getShareTimesWithKey(data.Act.Actid, data.Act.Limit, data.Act.EndTime);
+            if (curStep >= rule.Var * (curJoinTime + 1)) {
+                console.log("sendActiceJoinReq:  ", "curStep:", curStep, "  rule.Var:", rule.Var, "  curJoinTime:", curJoinTime);
+                GlobalVar.handlerManager().activeHandler.sendActiveJoinReq(curTabActID);
+            } else {
+                let shareSuccessFunc = function () {
+                    curStep = StoreageData.setShareTimesWithKey(data.Act.Actid, data.Act.Limit, data.Act.EndTime);
+                    if (curStep >= rule.Var * (curJoinTime + 1)) {
+                        console.log("sendActiceJoinReq:  ", "curStep:", curStep, "  rule.Var:", rule.Var, "  curJoinTime:", curJoinTime);
+                        GlobalVar.handlerManager().activeHandler.sendActiveJoinReq(curTabActID);
+                    } else {
+                        self.refreshActiveContent(data);
+                    }
+                };
+                if (rule.Param == 0) {
+                    weChatAPI.shareNormal(113, shareSuccessFunc);
+                } else {
+                    weChatAPI.shareNeedClick(113, shareSuccessFunc, null, i18n.t('label.4000311'));
+                }
+            }
+        } else {
+            GlobalVar.handlerManager().activeHandler.sendActiveJoinReq(curTabActID);
+        }
+    },
+    //4
+    onActiveSeLottBtnClick: function (event) {
+        let curTabActID = this.activeList[this.curActiveIndex].Actid;
+        let data = GlobalVar.me().activeData.getActiveDataByActID(curTabActID);
+        let ruleCfg = data.Act.RuleCfg;
+        let rule = ruleCfg[0] && ruleCfg[0].RuleList[0];
+        let self = this;
+
+        let curJoinTime = 0;
+        curJoinTime = data.Join[0] ? data.Join[0].Join : 0;
+        if (rule && rule.RuleID == GameServerProto.PT_AMS_RULEID_SHARE) {
+            let curStep = StoreageData.getShareTimesWithKey(data.Act.Actid, data.Act.Limit, data.Act.EndTime);
+            if (curStep >= rule.Var * (curJoinTime + 1)) {
+                GlobalVar.handlerManager().activeHandler.sendActiveJoinReq(curTabActID);
+            } else {
+                let shareSuccessFunc = function () {
+                    curStep = StoreageData.setShareTimesWithKey(data.Act.Actid, data.Act.Limit, data.Act.EndTime);
+                    if (curStep >= rule.Var * (curJoinTime + 1)) {
+                        GlobalVar.handlerManager().activeHandler.sendActiveJoinReq(curTabActID);
+                    } else {
+                        self.refreshActiveContent(data);
+                    }
+                };
+                if (rule.Param == 0) {
+                    weChatAPI.shareNormal(113, shareSuccessFunc);
+                } else {
+                    weChatAPI.shareNeedClick(113, shareSuccessFunc, null, i18n.t('label.4000311'));
+                }
+            }
+        } else {
+            GlobalVar.handlerManager().activeHandler.sendActiveJoinReq(curTabActID);
+        }
     },
 
-    onActiveSeLottBtnClick: function(event){
-        // console.log("哇哦~click SeLott");
-        let curTabActID = this.activeList[this.curActiveIndex].Actid
-        GlobalVar.handlerManager().activeHandler.sendActiveJoinReq(curTabActID);
+    recvActiveFlagChange: function (event) {
+        for (let i = 0; i < this.activeTabs.length; i++) {
+            if (this.activeTabs[i].data.Actid == event.Actid) {
+                this.activeTabs[i].getChildByName("spriteHot").active = !!event.StatFlag;
+            }
+        }
+    },
+    recvActiveFenResult: function (event) {
+        if (event.ErrCode != GameServerProto.PTERR_SUCCESS) {
+            GlobalVar.comMsg.errorWarning(event.ErrCode);
+            return;
+        }
+        CommonWnd.showTreasureExploit(event.Item)
+        let nodeActiveContent = this.node.getChildByName("nodeActiveContent");
+        let nodeContent = nodeActiveContent.getChildByName("nodeType" + this.contentIndex);
+        let scrollview = nodeContent.getChildByName("scrollContent").getComponent(cc.ScrollView);
+        scrollview.loopScroll.refreshViewItem();
+    },
+    recvActiveJoinResult: function (event) {
+        if (event.ErrCode != GameServerProto.PTERR_SUCCESS) {
+            GlobalVar.comMsg.errorWarning(event.ErrCode);
+            return;
+        }
+        CommonWnd.showTreasureExploit(event.Item)
+        let self = this;
+        let data = GlobalVar.me().activeData.getActiveDataByActID(this.activeList[this.curActiveIndex].Actid)
+        // this.activeContents[this.contentIndex - 1].runAction(cc.sequence(cc.scaleTo(0.1, 1.1), cc.scaleTo(0.05, 1), cc.callFunc(() => {
+            self["refreshContentType" + self.contentIndex](data);
+        // })));
+    },
+    recvGetDataMsg: function (event) {
+        if (event.ErrCode != GameServerProto.PTERR_SUCCESS) {
+            GlobalVar.comMsg.errorWarning(event.ErrCode);
+        }
+        let curTabActID = this.activeList[this.curActiveIndex].Actid;
+        if (event.Act.Actid == curTabActID) {
+            this.refreshActiveInfo(this.curActiveIndex);
+        }
     },
 
     enter: function (isRefresh) {
         if (isRefresh) {
-            for(let i = 0; i< this.activeContents.length; i++){
+            for (let i = 0; i < this.activeContents.length; i++) {
                 this.activeContents[i].active = false;
             }
             this._super(true);
@@ -670,7 +842,7 @@ cc.Class({
     },
 
     close: function (data) {
-        if (this.contentIndex!=0){
+        if (this.contentIndex != 0) {
             this["clearContentType" + this.contentIndex]();
             this.contentIndex = 0;
         }

@@ -34,6 +34,7 @@ var Factory = cc.Class({
 
     start(mgr) {
         this.poolManager = require('PoolManager');
+        this.battleManager = require('BattleManager');
     },
 
     update(dt) {
@@ -92,8 +93,10 @@ var Factory = cc.Class({
 
     shutdownByCustomer: function (customer) {
         for (let e of this.lineList) {
-            if (e.customer == customer) {
-                e.isDead = true;
+            if (e.customer != null) {
+                if (e.customer.uuid == customer.uuid) {
+                    e.isDead = true;
+                }
             }
         }
     },
@@ -104,6 +107,15 @@ var Factory = cc.Class({
                 e.isDead = true;
             }
         }
+    },
+
+    isAllFakeHeroClear: function () {
+        for (let e of this.lineList) {
+            if (e.lineType == Defines.ObjectType.OBJ_FAKE_HERO) {
+                return false
+            }
+        }
+        return true;
     },
 
     produceFake: function (customer, type) {
@@ -205,6 +217,8 @@ var Factory = cc.Class({
                 break;
         }
 
+        dps*=this.battleManager.getInstance().damagePlus;
+
         return {
             dmg: Math.ceil(dps),
             critical: criticalStrike
@@ -261,7 +275,7 @@ var Factory = cc.Class({
             bullet.dmgMsg.dmg = Math.ceil(bullet.dmgMsg.dmg);
         }
 
-        pos_plus = typeof pos_plus !== 'undefined' ? pos_plus : cc.v2(0, 0);
+        pos_plus = typeof pos_plus !== 'undefined' ? pos_plus : cc.v3(0, 0);
         let pos = owner.getPosition().add(pos_plus);
         bullet.setPosition(pos);
 
@@ -287,7 +301,7 @@ var Factory = cc.Class({
         monster.isDead = false;
 
         let designSize = cc.view.getDesignResolutionSize();
-        let pos = cc.v2(0, 0);
+        let pos = cc.v3(0, 0);
 
         if (info.pos.x >= 0 && info.pos.x <= 1) {
             pos.x = cc.winSize.width * info.pos.x;

@@ -1,9 +1,9 @@
-const BaseObject = require('BaseObject')
+const CoreObject = require('CoreObject')
 const GlobalVar = require("globalvar")
 const RemoteSprite = require("RemoteSprite")
 
 cc.Class({
-    extends: BaseObject,
+    extends: CoreObject,
 
     properties: {
         pic: {

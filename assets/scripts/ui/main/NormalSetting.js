@@ -52,6 +52,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMALSETTING;
         this.labelVersion.string = GlobalVar.tblApi.getData('TblVersion')[1].strVersion;
         this.animeStartParam(0, 0);

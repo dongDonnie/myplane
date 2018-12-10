@@ -8,7 +8,8 @@
       "__id__": 1
     },
     "optimizationPolicy": 0,
-    "asyncLoadAssets": false
+    "asyncLoadAssets": false,
+    "readonly": false
   },
   {
     "__type__": "cc.Node",
@@ -23,10 +24,10 @@
         "__id__": 2
       },
       {
-        "__id__": 3
+        "__id__": 4
       },
       {
-        "__id__": 4
+        "__id__": 3
       }
     ],
     "_prefab": {
@@ -62,8 +63,6 @@
       "y": 1,
       "z": 1
     },
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -74,30 +73,10 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
+    "_is3DNode": false,
     "groupIndex": 0,
-    "_id": ""
-  },
-  {
-    "__type__": "sp.Skeleton",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
-    "_srcBlendFactor": 770,
-    "_dstBlendFactor": 771,
-    "paused": false,
-    "defaultSkin": "",
-    "defaultAnimation": "start_1",
-    "loop": true,
-    "premultipliedAlpha": false,
-    "timeScale": 1,
-    "_N$skeletonData": {
-      "__uuid__": "e8c7f9e1-1209-4226-bd8b-b423d417503a"
-    },
-    "_N$debugSlots": false,
-    "_N$debugBones": false,
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_id": ""
   },
   {
@@ -108,9 +87,11 @@
       "__id__": 1
     },
     "_enabled": true,
-    "spine": {
-      "__id__": 2
+    "spine": null,
+    "dragonBone": {
+      "__id__": 3
     },
+    "dbArmature": null,
     "collider": {
       "__id__": 4
     },
@@ -119,6 +100,31 @@
     "objectType": 0,
     "entity": null,
     "defaultAction": null,
+    "_id": ""
+  },
+  {
+    "__type__": "dragonBones.ArmatureDisplay",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "_srcBlendFactor": 770,
+    "_dstBlendFactor": 771,
+    "_armatureName": "armatureName",
+    "_animationName": "start_1",
+    "playTimes": 0,
+    "_N$dragonAsset": {
+      "__uuid__": "2d5e816c-4b47-4d30-b2a4-85cced2cb377"
+    },
+    "_N$dragonAtlasAsset": {
+      "__uuid__": "00036992-35ad-4481-8299-3c43862fbf32"
+    },
+    "_N$_defaultArmatureIndex": 0,
+    "_N$_animationIndex": 6,
+    "_N$timeScale": 1,
+    "_N$debugBones": false,
     "_id": ""
   },
   {
@@ -132,13 +138,13 @@
     "tag": 0,
     "_offset": {
       "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 40
+      "x": -1,
+      "y": 13
     },
     "_size": {
       "__type__": "cc.Size",
-      "width": 124,
-      "height": 240
+      "width": 90,
+      "height": 263
     },
     "_id": ""
   },

@@ -41,6 +41,10 @@ cc.Class({
             default: null,
             type: cc.Sprite,
         },
+        spriteTextWarning: {
+            default: null,
+            type: cc.Sprite,
+        },
         nodeBtnClose: {
             default: null,
             type: cc.Node,
@@ -60,6 +64,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_QUESTINFO_WND;
 
@@ -150,10 +155,12 @@ cc.Class({
             this.spriteBG.height = 780;
             this.spriteBossBack.node.active = true;
             this.spriteBossImg.node.active = true;
+            this.spriteTextWarning.node.active = true;
         } else {
             this.spriteBG.height = 550;
             this.spriteBossBack.node.active = false;
             this.spriteBossImg.node.active = false;
+            this.spriteTextWarning.node.active = false;
         }
         this.nodeQuestInfo.getComponent(cc.Widget).updateAlignment();
         this.nodeBtnClose.getComponent(cc.Widget).updateAlignment();
@@ -320,7 +327,7 @@ cc.Class({
 
         if (!this.checkSpEnougn()) {
             GlobalVar.comMsg.errorWarning(GameServerProto.PTERR_SP_LACK);
-            CommonWnd.showBuySpConfirmWnd(null, i18n.t('label.4000230'), null, null, null, i18n.t('label.4000214'));
+            CommonWnd.showBuySpWnd();
             return;
         }
 
@@ -391,7 +398,7 @@ cc.Class({
 
         if (!this.checkSpEnougn()) {
             GlobalVar.comMsg.errorWarning(GameServerProto.PTERR_SP_LACK);
-            CommonWnd.showBuySpConfirmWnd(null, i18n.t('label.4000230'), null, null, null, i18n.t('label.4000214'));
+            CommonWnd.showBuySpWnd();
             return;
         }
 

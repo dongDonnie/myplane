@@ -7,20 +7,20 @@ CampNormal44.data = {
         ["tk-d-ditu","tk-e-ditu","tk-f-bossditu"],
     ],
     monsterWaves:[
-        {wave:{groups:[27,196,26],wait:0,delay:[2,2.5,3]},maps:{mapIndex:[0,1],mapSpeed:[400,500],mapScale:[1,1],mapLoop:[1,1]}},
-        {wave:{groups:[211],wait:0,delay:[0]}},
-        {wave:{groups:[44,45,118],wait:0,delay:[0,1,2]}}, 
-        {wave:{groups:[42,43,120],wait:0,delay:[0,1,2]}}, 
-        {wave:{groups:[87,20,21,22,23,24],wait:0,delay:[0,2,2.5,3,3.5,4],anime:1},maps:{mapIndex:[0,2],mapSpeed:[400,800],mapScale:[1,1],mapLoop:[0,0]}},
+        {wave:{groups:[1299,26,834,882],wait:0,delay:[2,2.5,3,4]},maps:{mapIndex:[0,1],mapSpeed:[400,500],mapScale:[1,1],mapLoop:[1,1]}},
+        {wave:{groups:[1300,841,842],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[1301,45],wait:0,delay:[0,1,2]}}, 
+        {wave:{groups:[1303,43],wait:0,delay:[0,1,2]}}, 
+        {wave:{groups:[861,1077,1078],wait:0,delay:[0,1,2]}}, 
+        {wave:{groups:[1304],wait:0,delay:[0],anime:1,isBOSS:1},maps:{mapIndex:[0,2],mapSpeed:[400,800],mapScale:[1,1],mapLoop:[0,0]}},
     ],
 
-    monsterExtra:[311,312,313,314,315,316,317],
-
+    monsterExtra:[23,24,25,559,560,552,1308,1309,1310,1311,1312],
     totalHint:[
         {
             checkTime:-1,
             condition:[
-                {interval:18},
+                {interval:12},
             ],
             effect:[
                 {drop:10000},
@@ -30,10 +30,20 @@ CampNormal44.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:4,step:3}},
+                {wave:{index:4,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:1.4}},
+            ],
+        },
+        {
+            eventKey:0,
+            checkTime:1,
+            condition:[
+                {wave:{index:5,step:5}},
+            ],
+            effect:[
+                {extra:{open:-2}},
             ],
         },
     ],

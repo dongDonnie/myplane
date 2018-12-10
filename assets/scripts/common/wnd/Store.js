@@ -121,10 +121,11 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         self.lblRefreshTime.node.active = false;
         this.itemNodeArray = [];  //保存需要运动的那几个节点
         this.animeStartParam(0, 0);
-        this.refreshComplete = false;
+        this.refreshComplete = true;
         this.firstEnter = true;
     },
 
@@ -150,6 +151,7 @@ cc.Class({
         this.hasData = true;   //确保有数据过后才开始初始化窗口
         // this.firstEnter = true;
         self = this;
+        this.refreshComplete = false;
         this.updateWndSize();
     },
 
@@ -194,10 +196,10 @@ cc.Class({
             node2.active = true;
             node1.x = -1000;
             node2.x = 1000;
-            node1.runAction(cc.sequence(cc.delayTime(i *0.2), cc.moveBy(0.2, 852.5, 0), cc.callFunc(function (target) {
+            node1.runAction(cc.sequence(cc.delayTime(i *0.1), cc.moveBy(0.3, 852.5, 0), cc.callFunc(function (target) {
                 target.x = -147.5;
             })));
-            node2.runAction(cc.sequence(cc.delayTime(i *0.2), cc.moveBy(0.2, -852.5, 0), cc.callFunc(function (target) {
+            node2.runAction(cc.sequence(cc.delayTime(i *0.1), cc.moveBy(0.3, -852.5, 0), cc.callFunc(function (target) {
                 target.x = 147.5;
                 if (i == 3){
                     self.refreshComplete = true;
@@ -349,7 +351,7 @@ cc.Class({
         //this.lblRefresh.node.color=LabelColor.CCBlue;
         // if (this.countTime % 20 == 0)
         // this.updateWndSize(this.countTime / 10);
-        this.setRefreshTime();
+        // this.setRefreshTime();
         // this.lblRefreshTime.string = "今日已刷新" + this.refreshTimes + "次";
         var refreshPlan = GlobalVar.me().storeData.getRefreshCostPlan();
         let refreshCardCount = GlobalVar.me().bagData.getItemCountById(refreshPlan.oVecCost1[0].wItemID);
@@ -403,8 +405,12 @@ cc.Class({
 
     setRefreshTime: function () {
         var leftTime = this.time - this.serverTime;
-        if (leftTime < 0)
+        // if (leftTime < 0)
+        if (leftTime < 0 && this.refreshComplete){
             this.requestStoreData();
+            this.hasData = false;
+            this.refreshComplete = false;
+        }
         var hours = parseInt(leftTime / 3600);
         leftTime = leftTime % 3600;
         var mins = parseInt(leftTime / 60) % 60;
@@ -434,7 +440,7 @@ cc.Class({
             Count: this.itemArray[data.id].num,
         }
         this.updateItemState();
-        CommonWnd.showTreasuerExploit([item]);
+        CommonWnd.showTreasureExploit([item]);
     },
 
     updateItemState: function () {

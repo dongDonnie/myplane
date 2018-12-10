@@ -232,6 +232,40 @@ var ResManager = cc.Class({
             }
         }
     },
+    loadMonster:function (id) {
+        let monsterData = GlobalVar.tblApi.getDataBySingleKey('TblBattleMonster', id);
+        let path = 'cdnRes/battlemodel/prefab/Monster/' + monsterData.strName;
+        this.pushDeep(path, ResMapping.ResType.Prefab);
+        for (let z = 0; z < monsterData.oVecSkillIDs.length; z++) {
+            let skill = GlobalVar.tblApi.getDataBySingleKey('TblBattleSkill', monsterData.oVecSkillIDs[z]);
+            if (skill != null) {
+                for (let y in skill.oVecBulletIDs) {
+                    let bullet = GlobalVar.tblApi.getDataBySingleKey('TblBattleBullet', skill.oVecBulletIDs[y]);
+                    if (bullet.strName.indexOf("thunderball") != -1) {
+                        for (let index = 1; index < 10; index += 2) {
+                            let path = 'cdnRes/animebullets/' + bullet.strName + '/' + bullet.strName + '_000' + index;
+                            this.pushDeep(path, ResMapping.ResType.SpriteFrame);
+                        }
+                    } else {
+                        let path = 'cdnRes/bullets/' + bullet.strName;
+                        this.pushDeep(path, ResMapping.ResType.SpriteFrame);
+                    }
+                }
+            }
+        }
+        return monsterData;
+    },
+    loadLoop :function (groups) {
+        for (let ng in groups) {
+            let groupData = GlobalVar.tblApi.getDataBySingleKey('TblBattleGroups', groups[ng]);
+            for (let m = 0; m < groupData.oVecMonsterIDs.length; m++) {
+                let mData = this.loadMonster(groupData.oVecMonsterIDs[m]);
+                for (let em = 0; em < mData.oVecExtra.length; em++) {
+                    this.loadMonster(mData.oVecExtra[em]);
+                }
+            }
+        }
+    },
 
     initDeepPreLoadRes: function (scene) {
         if (typeof this.resDeepArray !== 'undefined') {
@@ -240,10 +274,30 @@ var ResManager = cc.Class({
             this.resDeepArray = [];
         }
         if (scene == SceneDefines.BATTLE_STATE) {
-            this.pushDeep('cdnRes/prefab/BattleScene/UIBattlePause', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/prefab/BattleScene/UIBattleEnd', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/prefab/BattleScene/UIBattleCount', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/prefab/BattleScene/UIBattleCard', ResMapping.ResType.Prefab);
+            // this.pushDeep('cdnRes/prefab/BattleScene/UIBattlePause', ResMapping.ResType.Prefab);
+            // this.pushDeep('cdnRes/prefab/BattleScene/UIBattleEnd', ResMapping.ResType.Prefab);
+            // this.pushDeep('cdnRes/prefab/BattleScene/UIBattleCount', ResMapping.ResType.Prefab);
+            // this.pushDeep('cdnRes/prefab/BattleScene/UIBattleCard', ResMapping.ResType.Prefab);
+
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/EnemyIncoming', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/GetBuff', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/HeroBulletHit', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/MonsterBulletClear', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/MonsterHp', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/Shadow', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/Shield', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/Success', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/LaserBeam', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/HyperBazooka', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/QuantumBrust', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/UnDefeat', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/Warning', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/bBomb', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/bugBomb', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/lBomb', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/miBomb', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/FlyDamageMsg', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/battlemodel/prefab/effect/FlyDamageMsgCritical', ResMapping.ResType.Prefab);
 
             this.pushDeep('cdnRes/battlemodel/motionstreak/huoyan_lan', ResMapping.ResType.Texture2D);
             this.pushDeep('cdnRes/battlemodel/motionstreak/huoyan_lv', ResMapping.ResType.Texture2D);
@@ -264,29 +318,17 @@ var ResManager = cc.Class({
             this.pushDeep('cdnRes/battle/battle_wall_nebula', ResMapping.ResType.SpriteFrame);
             this.pushDeep('cdnRes/battle/battle_wall_light', ResMapping.ResType.SpriteFrame);
             this.pushDeep('cdnRes/battle/heroHit', ResMapping.ResType.SpriteFrame);
-
             this.pushDeep('cdnRes/battle/_text_resist', ResMapping.ResType.SpriteFrame);
             this.pushDeep('cdnRes/battle/_text_miss', ResMapping.ResType.SpriteFrame);
             this.pushDeep('cdnRes/battle/_text_baoji', ResMapping.ResType.SpriteFrame);
+            this.pushDeep('cdnRes/battle/treasure_box_1', ResMapping.ResType.SpriteFrame);
+            this.pushDeep('cdnRes/battle/treasure_box_2', ResMapping.ResType.SpriteFrame);
+            this.pushDeep('cdnRes/battle/treasure_box_3', ResMapping.ResType.SpriteFrame);
+            this.pushDeep('cdnRes/battle/treasure_box_4', ResMapping.ResType.SpriteFrame);
+            this.pushDeep('cdnRes/battle/treasure_box_5', ResMapping.ResType.SpriteFrame);
+            this.pushDeep('cdnRes/battle/treasure_box_6', ResMapping.ResType.SpriteFrame);
 
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/EnemyIncoming', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/GetBuff', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/HeroBulletHit', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/MonsterBulletClear', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/MonsterHp', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/Shadow', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/Shield', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/Success', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/LaserBeam', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/HyperBazooka', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/QuantumBrust', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/Warning', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/bBomb', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/bugBomb', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/lBomb', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/miBomb', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/FlyDamageMsg', ResMapping.ResType.Prefab);
-            this.pushDeep('cdnRes/battlemodel/prefab/effect/FlyDamageMsgCritical', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/audio/battle/music/Boss_Room', ResMapping.ResType.AudioClip);
 
             let memberID = GlobalVar.me().memberData.getStandingByFighterID();
             let memberArray = this.resSliceArray[memberID];
@@ -334,124 +376,33 @@ var ResManager = cc.Class({
                         type: ResMapping.ResType.SpriteFrame
                     });
                 } else if (campName == 'CampEndless') {
-                    let data=require(campName).data;
-                    for (let i = 0; i < data.maps.length; i++){
-                        for (let j = 0; j < data.maps[i].length; j++){
+                    let data = require(campName).data;
+                    for (let i = 0; i < data.maps.length; i++) {
+                        for (let j = 0; j < data.maps[i].length; j++) {
                             let path = 'cdnRes/battlemap/' + data.maps[i][j];
                             this.pushDeep(path, ResMapping.ResType.SpriteFrame);
                         }
                     }
-                    for(let mn in data.monstersNormal){
-                        let groups=data.monstersNormal[mn].groups;
-                        for(let ng in groups){
-                            let groupData = GlobalVar.tblApi.getDataBySingleKey('TblBattleGroups', groups[ng]);
-                            for (let m = 0; m < groupData.oVecMonsterIDs.length; m++) {
-                                let monsterData = GlobalVar.tblApi.getDataBySingleKey('TblBattleMonster', groupData.oVecMonsterIDs[m]);
-                                let path = 'cdnRes/battlemodel/prefab/Monster/' + monsterData.strName;
-                                this.pushDeep(path, ResMapping.ResType.Prefab);
-                                for (let z = 0; z < monsterData.oVecSkillIDs.length; z++) {
-                                    let skill = GlobalVar.tblApi.getDataBySingleKey('TblBattleSkill', monsterData.oVecSkillIDs[z]);
-                                    if (skill != null) {
-                                        for (let y in skill.oVecBulletIDs) {
-                                            let bullet = GlobalVar.tblApi.getDataBySingleKey('TblBattleBullet', skill.oVecBulletIDs[y]);
-                                            if (bullet.strName.indexOf("thunderball") != -1) {
-                                                for (let index = 1; index < 10; index += 2) {
-                                                    let path = 'cdnRes/animebullets/' + bullet.strName + '/' + bullet.strName + '_000' + index;
-                                                    this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                                }
-                                            } else {
-                                                let path = 'cdnRes/bullets/' + bullet.strName;
-                                                this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    for (let mn in data.monstersNormal) {
+                        this.loadLoop(data.monstersNormal[mn].groups);
                     }
-                    for(let me in data.monstersElite){
-                        let groups=data.monstersElite[me].groups;
-                        for(let eg in groups){
-                            let groupData = GlobalVar.tblApi.getDataBySingleKey('TblBattleGroups', groups[eg]);
-                            for (let m = 0; m < groupData.oVecMonsterIDs.length; m++) {
-                                let monsterData = GlobalVar.tblApi.getDataBySingleKey('TblBattleMonster', groupData.oVecMonsterIDs[m]);
-                                let path = 'cdnRes/battlemodel/prefab/Monster/' + monsterData.strName;
-                                this.pushDeep(path, ResMapping.ResType.Prefab);
-                                for (let z = 0; z < monsterData.oVecSkillIDs.length; z++) {
-                                    let skill = GlobalVar.tblApi.getDataBySingleKey('TblBattleSkill', monsterData.oVecSkillIDs[z]);
-                                    if (skill != null) {
-                                        for (let y in skill.oVecBulletIDs) {
-                                            let bullet = GlobalVar.tblApi.getDataBySingleKey('TblBattleBullet', skill.oVecBulletIDs[y]);
-                                            if (bullet.strName.indexOf("thunderball") != -1) {
-                                                for (let index = 1; index < 10; index += 2) {
-                                                    let path = 'cdnRes/animebullets/' + bullet.strName + '/' + bullet.strName + '_000' + index;
-                                                    this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                                }
-                                            } else {
-                                                let path = 'cdnRes/bullets/' + bullet.strName;
-                                                this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    for (let me in data.monstersElite) {
+                        this.loadLoop(data.monstersElite[me].groups);
                     }
-                    for(let ml in data.monstersLine){
-                        let groups=data.monstersLine[ml].groups;
-                        for(let lg in groups){
-                            let groupData = GlobalVar.tblApi.getDataBySingleKey('TblBattleGroups', groups[lg]);
-                            for (let m = 0; m < groupData.oVecMonsterIDs.length; m++) {
-                                let monsterData = GlobalVar.tblApi.getDataBySingleKey('TblBattleMonster', groupData.oVecMonsterIDs[m]);
-                                let path = 'cdnRes/battlemodel/prefab/Monster/' + monsterData.strName;
-                                this.pushDeep(path, ResMapping.ResType.Prefab);
-                                for (let z = 0; z < monsterData.oVecSkillIDs.length; z++) {
-                                    let skill = GlobalVar.tblApi.getDataBySingleKey('TblBattleSkill', monsterData.oVecSkillIDs[z]);
-                                    if (skill != null) {
-                                        for (let y in skill.oVecBulletIDs) {
-                                            let bullet = GlobalVar.tblApi.getDataBySingleKey('TblBattleBullet', skill.oVecBulletIDs[y]);
-                                            if (bullet.strName.indexOf("thunderball") != -1) {
-                                                for (let index = 1; index < 10; index += 2) {
-                                                    let path = 'cdnRes/animebullets/' + bullet.strName + '/' + bullet.strName + '_000' + index;
-                                                    this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                                }
-                                            } else {
-                                                let path = 'cdnRes/bullets/' + bullet.strName;
-                                                this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    for (let me in data.monstersBoss) {
+                        this.loadLoop(data.monstersBoss[me].groups);
                     }
-                    for(let mm in data.monstersMissile){
-                        let groups=data.monstersMissile[mm].groups;
-                        for(let mg in groups){
-                            let groupData = GlobalVar.tblApi.getDataBySingleKey('TblBattleGroups', groups[mg]);
-                            for (let m = 0; m < groupData.oVecMonsterIDs.length; m++) {
-                                let monsterData = GlobalVar.tblApi.getDataBySingleKey('TblBattleMonster', groupData.oVecMonsterIDs[m]);
-                                let path = 'cdnRes/battlemodel/prefab/Monster/' + monsterData.strName;
-                                this.pushDeep(path, ResMapping.ResType.Prefab);
-                                for (let z = 0; z < monsterData.oVecSkillIDs.length; z++) {
-                                    let skill = GlobalVar.tblApi.getDataBySingleKey('TblBattleSkill', monsterData.oVecSkillIDs[z]);
-                                    if (skill != null) {
-                                        for (let y in skill.oVecBulletIDs) {
-                                            let bullet = GlobalVar.tblApi.getDataBySingleKey('TblBattleBullet', skill.oVecBulletIDs[y]);
-                                            if (bullet.strName.indexOf("thunderball") != -1) {
-                                                for (let index = 1; index < 10; index += 2) {
-                                                    let path = 'cdnRes/animebullets/' + bullet.strName + '/' + bullet.strName + '_000' + index;
-                                                    this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                                }
-                                            } else {
-                                                let path = 'cdnRes/bullets/' + bullet.strName;
-                                                this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    for (let me in data.monstersEilteBoss) {
+                        this.loadLoop(data.monstersEilteBoss[me].groups);
+                    }
+                    for (let me in data.monstersChest) {
+                        this.loadLoop(data.monstersChest[me].groups);
+                    }
+                    for (let ml in data.monstersLine) {
+                        this.loadLoop(data.monstersLine[ml].groups);
+                    }
+                    for (let mm in data.monstersMissile) {
+                        this.loadLoop(data.monstersMissile[mm].groups);
                     }
                 } else {
                     let map = require(campName).data;
@@ -465,60 +416,15 @@ var ResManager = cc.Class({
                         if (typeof map.monsterWaves[k].wave === 'undefined') {
                             continue;
                         }
-                        for (let l = 0; l < map.monsterWaves[k].wave.groups.length; l++) {
-                            let groupData = GlobalVar.tblApi.getDataBySingleKey('TblBattleGroups', map.monsterWaves[k].wave.groups[l]);
-                            for (let m = 0; m < groupData.oVecMonsterIDs.length; m++) {
-                                let monsterData = GlobalVar.tblApi.getDataBySingleKey('TblBattleMonster', groupData.oVecMonsterIDs[m]);
-                                let path = 'cdnRes/battlemodel/prefab/Monster/' + monsterData.strName;
-                                this.pushDeep(path, ResMapping.ResType.Prefab);
-                                for (let z = 0; z < monsterData.oVecSkillIDs.length; z++) {
-                                    let skill = GlobalVar.tblApi.getDataBySingleKey('TblBattleSkill', monsterData.oVecSkillIDs[z]);
-                                    if (skill != null) {
-                                        for (let y in skill.oVecBulletIDs) {
-                                            let bullet = GlobalVar.tblApi.getDataBySingleKey('TblBattleBullet', skill.oVecBulletIDs[y]);
-                                            if (bullet.strName.indexOf("thunderball") != -1) {
-                                                for (let index = 1; index < 10; index += 2) {
-                                                    let path = 'cdnRes/animebullets/' + bullet.strName + '/' + bullet.strName + '_000' + index;
-                                                    this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                                }
-                                            } else {
-                                                let path = 'cdnRes/bullets/' + bullet.strName;
-                                                this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        this.loadLoop(map.monsterWaves[k].wave.groups);
                     }
-                    for (let n = 0; n < map.monsterExtra.length; n++) {
-                        let groupData = GlobalVar.tblApi.getDataBySingleKey('TblBattleGroups', map.monsterExtra[n]);
-                        for (let p = 0; p < groupData.oVecMonsterIDs.length; p++) {
-                            let monsterData = GlobalVar.tblApi.getDataBySingleKey('TblBattleMonster', groupData.oVecMonsterIDs[p]);
-                            let path = 'cdnRes/battlemodel/prefab/Monster/' + monsterData.strName;
-                            this.pushDeep(path, ResMapping.ResType.Prefab);
-                            for (let x = 0; x < monsterData.oVecSkillIDs.length; x++) {
-                                let skill = GlobalVar.tblApi.getDataBySingleKey('TblBattleSkill', monsterData.oVecSkillIDs[x]);
-                                if (skill != null) {
-                                    for (let w in skill.oVecBulletIDs) {
-                                        let bullet = GlobalVar.tblApi.getDataBySingleKey('TblBattleBullet', skill.oVecBulletIDs[w]);
-                                        if (bullet.strName.indexOf("thunderball") != -1) {
-                                            for (let index = 1; index < 10; index += 2) {
-                                                let path = 'cdnRes/animebullets/' + bullet.strName + '/' + bullet.strName + '_000' + index;
-                                                this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                            }
-                                        } else {
-                                            let path = 'cdnRes/bullets/' + bullet.strName;
-                                            this.pushDeep(path, ResMapping.ResType.SpriteFrame);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    this.loadLoop(map.monsterExtra);
                 }
             }
         } else if (scene == SceneDefines.MAIN_STATE) {
+            this.pushDeep('cdnRes/prefab/Windows/NormalRoot', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/prefab/Windows/MaskBack', ResMapping.ResType.Prefab);
+            this.pushDeep('cdnRes/prefab/Windows/RootBack', ResMapping.ResType.Prefab);
             this.pushDeep('cdnRes/prefab/Windows/NormalPlane', ResMapping.ResType.Prefab);
             this.pushDeep('cdnRes/prefab/Windows/NormalImprovement', ResMapping.ResType.Prefab);
             this.pushDeep('cdnRes/prefab/Windows/GuazaiMain', ResMapping.ResType.Prefab);
@@ -533,12 +439,12 @@ var ResManager = cc.Class({
 
     deepPreLoadRes: function (callback) {
         if (typeof this.resDeepArray !== 'undefined') {
-            var self=this;
+            var self = this;
             for (let deep in this.resDeepArray) {
-                this.loadRes(this.resDeepArray[deep].type, this.resDeepArray[deep].url, callback,function(type,path){
-                    self.loadRes(type,path,callback,function(errorType,errorPath){
-                        if(!!callback){
-                            callback(null,errorType,errorPath);
+                this.loadRes(this.resDeepArray[deep].type, this.resDeepArray[deep].url, callback, function (type, path) {
+                    self.loadRes(type, path, callback, function (errorType, errorPath) {
+                        if (!!callback) {
+                            callback(null, errorType, errorPath);
                         }
                     });
                 });
@@ -652,7 +558,7 @@ var ResManager = cc.Class({
         }
     },
 
-    loadRes: function (resType, path, callback,errorCB) {
+    loadRes: function (resType, path, callback, errorCB) {
         var self = this;
         path = this.getPathName(path);
         let resObj = null;
@@ -666,7 +572,7 @@ var ResManager = cc.Class({
                 cc.loader.loadRes(path, cc.SpriteFrame, function (err, obj) {
                     if (err) {
                         cc.error("LoadSpriteFrame err." + path);
-                        if(!!errorCB){
+                        if (!!errorCB) {
                             errorCB(ResMapping.ResType.SpriteFrame, path);
                         }
                         return;
@@ -680,7 +586,7 @@ var ResManager = cc.Class({
                 cc.loader.loadRes(path, cc.Prefab, function (err, obj) {
                     if (err) {
                         cc.error("LoadSpriteFrame err." + path);
-                        if(!!errorCB){
+                        if (!!errorCB) {
                             errorCB(ResMapping.ResType.SpriteFrame, path);
                         }
                         return;
@@ -694,7 +600,7 @@ var ResManager = cc.Class({
                 cc.loader.loadRes(path, function (err, obj) {
                     if (err) {
                         cc.error("LoadSpriteFrame err." + path);
-                        if(!!errorCB){
+                        if (!!errorCB) {
                             errorCB(ResMapping.ResType.SpriteFrame, path);
                         }
                         return;
@@ -708,7 +614,7 @@ var ResManager = cc.Class({
                 cc.loader.loadRes(path, function (err, obj) {
                     if (err) {
                         cc.error("LoadSpriteFrame err." + path);
-                        if(!!errorCB){
+                        if (!!errorCB) {
                             errorCB(ResMapping.ResType.SpriteFrame, path);
                         }
                         return;
@@ -722,7 +628,7 @@ var ResManager = cc.Class({
                 cc.loader.loadRes(path, cc.Texture2D, function (err, obj) {
                     if (err) {
                         cc.error("LoadSpriteFrame err." + path);
-                        if(!!errorCB){
+                        if (!!errorCB) {
                             errorCB(ResMapping.ResType.SpriteFrame, path);
                         }
                         return;
@@ -736,7 +642,7 @@ var ResManager = cc.Class({
                 cc.loader.loadRes(path, function (err, obj) {
                     if (err) {
                         cc.error("preLoadResources err." + path);
-                        if(!!errorCB){
+                        if (!!errorCB) {
                             errorCB(ResMapping.ResType.SpriteFrame, path);
                         }
                         return;
@@ -757,7 +663,7 @@ var ResManager = cc.Class({
         return null;
     },
 
-    addCache:function(resType, path,obj){
+    addCache: function (resType, path, obj) {
         this.cache[resType][path] = obj;
     },
 

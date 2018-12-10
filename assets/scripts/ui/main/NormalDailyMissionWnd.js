@@ -7,6 +7,7 @@ const EventMsgID = require("eventmsgid");
 const GameServerProto = require("GameServerProto");
 const CommonWnd = require("CommonWnd");
 const i18n = require('LanguageData');
+const GlobalFunc = require('GlobalFunctions');
 
 const TAB_NEWTASK = 0, TAB_DAILYMISSION = 1;
 const BUTTON_INACTIVE = 0, BUTTON_ACTIVE = 1;
@@ -60,10 +61,15 @@ cc.Class({
         dailyScroll: {
             default: null,
             type: cc.ScrollView,
-        }
+        },
+        labelCompleteQuestName: {
+            default: null,
+            type: cc.Label,
+        },
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_DAILY_MISSION_WND;
 
@@ -192,7 +198,6 @@ cc.Class({
     },
 
     onBtnTapClick: function (event, index) {
-        WindowManager.getInstance().lockBtn();
         if (typeof index == 'undefined' || index < TAB_NEWTASK || index > TAB_DAILYMISSION) {
             index = TAB_DAILYMISSION;
         }
@@ -357,6 +362,14 @@ cc.Class({
             let nodeDaily = this.nodeTabContent[TAB_DAILYMISSION];
             nodeDaily.getChildByName("nodeMisstion").active = false;
             nodeDaily.getChildByName("nodeComplete").active = true;
+            let strTips = "关卡【%chapterID-%campaignID %campName】";
+            let chapterID = GlobalVar.me().campData.getLastChapterID(GameServerProto.PT_CAMPTYPE_MAIN);
+            let campaignID = GlobalVar.me().campData.getLastCampaignID(GameServerProto.PT_CAMPTYPE_MAIN) % 10;
+            strTips = strTips.replace("%chapterID", chapterID).replace("%campaignID", campaignID);
+            let campTblID = GlobalVar.tblApi.getDataBySingleKey('TblChapter', GameServerProto.PT_CAMPTYPE_MAIN)[chapterID - 1].oVecCampaigns[campaignID - 1]
+            let campName = GlobalVar.tblApi.getDataBySingleKey('TblCampaign', campTblID).strCampaignName;
+            strTips = strTips.replace("%campName", campName);
+            this.labelCompleteQuestName.string = strTips;
         }
 
 
@@ -433,9 +446,6 @@ cc.Class({
     },
 
     onActiveRewardBoxClick: function (event, active) {
-        // if(this.checkIsLock()){
-        //     return;
-        // }
         // 是否达到领取条件
         let condition = GlobalVar.me().dailyData.getActive() >= active;
         // 活跃宝箱的内容
@@ -462,40 +472,54 @@ cc.Class({
         let arr = [];
         function compare(property1, property2) {
             return function (a, b) {
-                let value1 = a['wID'] == GameServerProto.PT_DAILY_TASK_VIP_EXP;
-                let value2 = b['wID'] == GameServerProto.PT_DAILY_TASK_VIP_EXP;
+                // 按照是否完成排序
+                let value1 = a.wID == GameServerProto.PT_DAILY_TASK_VIP_EXP;
+                let value2 = b.wID == GameServerProto.PT_DAILY_TASK_VIP_EXP;
                 let aCurStep = 0;
-                let aServerStep = GlobalVar.me().dailyData.getDailyStepsByID(a['wID']);
-                if (aServerStep) {
-                    aCurStep = aServerStep;
-                }
-                if (a.nVar <= aCurStep) {
-                    value1 = value1 || true;
-                }
+                let aServerStep = GlobalVar.me().dailyData.getDailyStepsByID(a.wID);
+                aServerStep && (aCurStep = aServerStep);
+                a.nVar <= aCurStep && (value1 = value1 || true);
                 let bCurStep = 0;
-                let bServerStep = GlobalVar.me().dailyData.getDailyStepsByID(b['wID']);
-                if (bServerStep) {
-                    bCurStep = bServerStep;
-                }
-                if (b.nVar <= bCurStep) {
-                    value2 = value2 || true;
-                }
+                let bServerStep = GlobalVar.me().dailyData.getDailyStepsByID(b.wID);
+                bServerStep && (bCurStep = bServerStep);
+                b.nVar <= bCurStep && (value2 = value2 || true);
                 value1 = value1 ? 1 : 0;
                 value2 = value2 ? 1 : 0;
                 if (value1 != value2) {
                     return -(value1 - value2);
-                } else {
-                    let value3 = a[property1];
-                    let value4 = b[property1];
-                    if (value3 != value4) {
-                        return value3 - value4;
-                    } else {
-                        // 在第一个属性相等的情况下比较第二个属性
-                        let value5 = a[property2];
-                        let value6 = b[property2];
-                        return value5 - value6;
+                }
+
+                // 按照是否在可领取时间段内排序，目前只有午间晚间体力有规定时间
+                let curTimeStamp = GlobalVar.me().serverTime;
+                let curTime = GlobalVar.serverTime.getCurrentHHMMSS(curTimeStamp * 1000);
+                let time = curTime[0] * 100 + curTime[1];
+                let aInTime = 1
+                let bInTime = 1;
+                if (a.wID == GameServerProto.PT_DAILY_TASK_SP1 || a.wID == GameServerProto.PT_DAILY_TASK_SP2){
+                    if (time > a.wEndTime || time < a.wStartTime) {
+                        aInTime = 0;
                     }
                 }
+                if (b.wID == GameServerProto.PT_DAILY_TASK_SP1 || b.wID == GameServerProto.PT_DAILY_TASK_SP2){
+                    if (time > b.wEndTime || time < b.wStartTime) {
+                        bInTime = 0;
+                    }
+                }
+
+                if (aInTime != bInTime){
+                    return -(aInTime - bInTime);
+                }
+
+
+                let value3 = a[property1];
+                let value4 = b[property1];
+                if (value3 != value4) {
+                    return value3 - value4;
+                }
+                // 在第一个属性相等的情况下比较第二个属性
+                let value5 = a[property2];
+                let value6 = b[property2];
+                return value5 - value6;
             }
         }
         // 把Tbl表中读到的日常任务数据转化成数组
@@ -513,6 +537,10 @@ cc.Class({
             this.targetDailyNode = event.target.parent;
             this.targetDailyNode.getComponent("DailyObject").onDailyBtnRecvClick();
             this.recvLock = true;
+            let self = this;
+            setTimeout(() => {
+                self.recvLock = false;
+            }, 1000);
         }
         // console.log("RecvBtnClick")
         // GlobalVar.handlerManager().dailyHandler.sendDailyRewardReq(dailyData.wID);
@@ -532,7 +560,7 @@ cc.Class({
             GlobalVar.comMsg.errorWarning(event.ErrCode);
             return;
         }
-        CommonWnd.showTreasuerExploit(event.Item);
+        CommonWnd.showTreasureExploit(event.Item);
         this.initActiveBoxList();
     },
 
@@ -542,32 +570,48 @@ cc.Class({
             this.recvLock = false;
             return;
         }
+        let self = this;
 
         // 播放音效
-        GlobalVar.soundManager().playEffect(AUDIO_COMMIT_MISSTION);
+        GlobalVar.soundManager().setEffectVolume(0.5);
+        GlobalVar.soundManager().playEffect(AUDIO_COMMIT_MISSTION, false, function(){
+            GlobalVar.soundManager().setEffectVolume(1);
+        });
 
         this.targetDailyNode.runAction(cc.fadeOut(0.3));
         let effect = this.targetDailyNode.getChildByName("nodeEffect");
-        effect.active = true;
-        effect.getComponent(sp.Skeleton).clearTracks();
-        effect.getComponent(sp.Skeleton).setAnimation(0, "animation", false);
-        let self = this;
-        effect.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
-            var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-            if (animationName == "animation") {
-                effect.active = false;
+        GlobalFunc.playDragonBonesAnimation(effect, function () { 
+            effect.active = false;
 
-                self.initActiveBoxList();
-                self.initActiveBar();
-                self.count = -1;
-                self.complete = false;
-                self.dailyCount = 0;
+            self.initActiveBoxList();
+            self.initActiveBar();
+            self.count = -1;
+            self.complete = false;
+            self.dailyCount = 0;
+
+            self.initDailyMisstion();
+            self.recvLock = false;
+            CommonWnd.showTreasureExploit(event.Item);
+        })
+        // effect.active = true;
+        // // effect.getComponent(dragonBones.ArmatureDisplay).stop();
+        // effect.getComponent(dragonBones.ArmatureDisplay).playAnimation("animation", 1);
+        // let self = this;
+        // effect.getComponent(dragonBones.ArmatureDisplay).addEventListener(
+        //     dragonBones.EventObject.COMPLETE, DBEvent => {
+        //         effect.active = false;
+
+        //         self.initActiveBoxList();
+        //         self.initActiveBar();
+        //         self.count = -1;
+        //         self.complete = false;
+        //         self.dailyCount = 0;
         
-                self.initDailyMisstion();
-                self.recvLock = false;
-                CommonWnd.showTreasuerExploit(event.Item);
-            }
-        });
+        //         self.initDailyMisstion();
+        //         self.recvLock = false;
+        //         CommonWnd.showTreasureExploit(event.Item);
+        //     }
+        // );
     },
 
     showNewTaskReward: function (event) {
@@ -575,7 +619,7 @@ cc.Class({
             GlobalVar.comMsg.errorWarning(event.ErrCode);
             return;
         }
-        CommonWnd.showTreasuerExploit(event.Item);
+        CommonWnd.showTreasureExploit(event.Item);
         this.initChallengeTab();
     },
 
@@ -588,14 +632,11 @@ cc.Class({
         let taskData = GlobalVar.tblApi.getDataBySingleKey('TblNewTask', newTaskRate.TaskID);
         let windowID = taskData.wWindowID;
         // console.log("goBtnClick = ", windowID);
-        this.goToWnd(windowID);
+        this.goToWnd(null, windowID);
     },
 
-    goToWnd: function (windowID) {
-        // if(this.checkIsLock()){
-        //     return;
-        // }
-        switch (windowID) {
+    goToWnd: function (event, windowID) {
+        switch (parseInt(windowID)) {
             case WndTypeDefine.WindowTypeID.E_DT_NORMALEQUIPMENT_WND:            //跳转至装备强化
                 GlobalVar.eventManager().removeListenerWithTarget(this);
                 WindowManager.getInstance().popView(false, function () {
@@ -619,7 +660,7 @@ cc.Class({
             case WndTypeDefine.WindowTypeID.E_DT_NORMAL_SP_WND:                 //弹出购买体力窗口
                 GlobalVar.eventManager().removeListenerWithTarget(this);
                 WindowManager.getInstance().popView(false, function () {
-                    CommonWnd.showBuySpConfirmWnd(null, i18n.t('label.4000230'), null, null, null, i18n.t('label.4000214'), i18n.t('label.4000249'));
+                    CommonWnd.showBuySpWnd();
                 }, false, false);
                 break;
             case WndTypeDefine.WindowTypeID.E_DT_NORMAL_STORE_WND:              //弹出商店窗口
@@ -653,7 +694,6 @@ cc.Class({
                 }, false, false);
                 break;
             default:
-                // this.unLockBtn();
                 break;
         }
     },
@@ -721,14 +761,14 @@ cc.Class({
         let state = GlobalVar.me().dailyData.getDailyStateByID(data.wID);
         if (state == 0) return true;
         //当该任务为领取体力的任务，而还未到时间的时候，将该任务移除
-        if (data.wID == GameServerProto.PT_DAILY_TASK_SP1 || data.wID == GameServerProto.PT_DAILY_TASK_SP2) {
-            let curTimeStamp = GlobalVar.me().serverTime;
-            let curTime = GlobalVar.serverTime.getCurrentHHMMSS(curTimeStamp * 1000);
-            let time = curTime[0] * 100 + curTime[1];
-            if (time > data.wEndTime || time < data.wStartTime) {
-                return true;
-            }
-        }
+        // if (data.wID == GameServerProto.PT_DAILY_TASK_SP1 || data.wID == GameServerProto.PT_DAILY_TASK_SP2) {
+        //     let curTimeStamp = GlobalVar.me().serverTime;
+        //     let curTime = GlobalVar.serverTime.getCurrentHHMMSS(curTimeStamp * 1000);
+        //     let time = curTime[0] * 100 + curTime[1];
+        //     if (time > data.wEndTime || time < data.wStartTime) {
+        //         return true;
+        //     }
+        // }
         //当玩家vip等级为0时，排除指定任务
         let vipLevel = GlobalVar.me().vipLevel;
         if (vipLevel == 0 && data.wID == GameServerProto.PT_DAILY_TASK_VIP) {

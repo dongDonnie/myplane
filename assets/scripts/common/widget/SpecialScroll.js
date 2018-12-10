@@ -95,6 +95,7 @@ cc.Class({
 
     initHangar: function (counts) {
         //this.fighterStack.push(this.fighter);
+        this.cleanAllFighter();
         for (let i = 0; i < counts; i++) {
             let fighter = this.addFighter();
             this.fighterStack.push(fighter);

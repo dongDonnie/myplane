@@ -43,15 +43,27 @@ var LoadingScene = cc.Class({
     ctor: function () {
         this.loadingState = LoadingState.E_WAITING;
         this.totalCount = 0;
+        this.bgmComplete=0;
     },
 
     onLoad: function () {
-        this._super();
+        this.openScene();
         GlobalVar.windowManager().releaseView();
         GlobalVar.resManager().clearCache();
         GlobalVar.netWaiting().release();
 
-        this.loadingState = LoadingState.E_PREPARE;
+        var self=this;
+        GlobalVar.resManager().loadRes(ResMapping.ResType.AudioClip, "cdnRes/audio/main/effect/loading", function (clip) {
+            //if(clip==null){
+                self.bgmComplete=-1;
+            //}
+            self.loadingState = LoadingState.E_PREPARE;
+        },function(){
+            self.loadingState = LoadingState.E_PREPARE;
+            self.bgmComplete=-1;
+        });
+
+        this.loadingState === LoadingState.E_WAITING
     },
 
     start: function () {
@@ -61,6 +73,10 @@ var LoadingScene = cc.Class({
         let randomCharaIndex = Math.floor(Math.random() * spriteCount);
         this.labelTip.string = GlobalVar.tblApi.getDataBySingleKey('TblTips', randomTipsIndex).strString;
         this.spriteChara.setFrame(randomCharaIndex);
+    },
+
+    onDestroy() {
+        this.releaseScene();
     },
 
     update: function (dt) {
@@ -86,6 +102,14 @@ var LoadingScene = cc.Class({
 
             this.loadingState = LoadingState.E_WAITING;
 
+            if(this.bgmComplete>0){
+                return;
+            }
+
+            if(this.bgmComplete!=-1){
+                this.bgmComplete=1;
+            }
+
             GlobalVar.netWaiting().init();
 
             let next = GlobalVar.sceneManager().nextScene;
@@ -98,30 +122,43 @@ var LoadingScene = cc.Class({
                 // cc.director.preloadScene("MainScene", this.finishCallback(++GlobalVar.resManager().loadStep));
                 // this.totalCount++;
             } else if (next == SceneDefines.BATTLE_STATE) {
+                GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, 'cdnRes/prefab/BattleScene/UIBattlePause');
+                GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, 'cdnRes/prefab/BattleScene/UIBattleEnd');
+                GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, 'cdnRes/prefab/BattleScene/UIBattleCount');
+                GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, 'cdnRes/prefab/BattleScene/UIBattleCard');
                 cc.director.preloadScene("BattleScene");
                 // cc.director.preloadScene("BattleScene",this.finishCallback(++GlobalVar.resManager().loadStep));
                 // this.totalCount++;
             }
 
             if (this.totalCount == 0) {
-                this.loadingBar.progress = 100;
+                this.loadingBar.progress = 1;
                 this.loadingState = LoadingState.E_FINISH;
             }else{
                 var self=this;
-                let action = cc.progressLoading(1.2, this.loadingBar.progress, 1, null, function (per) {
+                let action = cc.progressLoading(2, 0/*this.loadingBar.progress*/, 1, null, function (per) {
                     self.loadingBar.node.getChildByName("spriteLight").x = self.loadingBar.totalLength * per;
                     self.labelProgressPercent.string = Math.floor(per * 100) + "%";
                 });
                 this.loadingBar.node.runAction(action);
             }
 
+            var self=this;
+            GlobalVar.soundManager().playEffect("cdnRes/audio/main/effect/loading",function(){
+                if(self.bgmComplete!=-1){
+                    self.bgmComplete=2;
+                }
+            });
+
         } else if (this.loadingState === LoadingState.E_FINISH) {
 
-            this.loadingState = LoadingState.E_WAITING;
-            this.releaseScene();
-
-            let nextSceneState = GlobalVar.sceneManager().nextScene;
-            GlobalVar.sceneManager().directGotoScene(nextSceneState);
+            if(this.bgmComplete==2 || this.bgmComplete==-1){
+                this.loadingState = LoadingState.E_WAITING;
+                this.releaseScene();
+    
+                let nextSceneState = GlobalVar.sceneManager().nextScene;
+                GlobalVar.sceneManager().directGotoScene(nextSceneState);
+            }
 
         } else {
 
@@ -160,7 +197,8 @@ var LoadingScene = cc.Class({
         //         this.loadingState = LoadingState.E_FINISH;
         //     }
         // }
-        let action = cc.progressLoading(1.2, this.loadingBar.progress, percent<=1?percent:1, function () {
+        //this.loadingBar.node.stopAllActions();
+        let action = cc.progressLoading(2, this.loadingBar.progress, percent<=1?percent:1, function () {
             if (percent >= 1) {
                 if (step == -1 || step >= self.totalCount) {
                     self.loadingState = LoadingState.E_FINISH;
@@ -171,10 +209,6 @@ var LoadingScene = cc.Class({
             self.labelProgressPercent.string = Math.floor(per * 100) + "%";
         });
         this.loadingBar.node.runAction(action);
-    },
-
-    releaseScene: function () {
-        this._super();
     },
 
 });

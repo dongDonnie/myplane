@@ -8,6 +8,8 @@ const GlobalFunctions = require("GlobalFunctions");
 const CommonWnd = require("CommonWnd");
 const WndTypeDefine = require("wndtypedefine");
 
+const AUDIO_LEVEL_UP = 'cdnRes/audio/main/effect/shengji';
+const AUDIO_QUALITY_UP = 'cdnRes/audio/main/effect/wujinchongfeng'
 
 var self = null;
 
@@ -36,13 +38,11 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         // GlobalVar.eventManager().addEventListener(EventMsgId.EVENT_GUAZAI_CHANGE_NTF, this.onGuazaiChangedCallback, this);
         // GlobalVar.eventManager().addEventListener(EventMsgId.EVENT_GUAZAI_LVUP_NTF, this.onGuazaiLvUpCallback, this);
 
         this.animeStartParam(0, 0);
-    },
-
-    start: function () {
         for (let i = 1; i < 6; i++) {
             self.getNodeByName('ItemObject' + i).on('touchstart', self.touchStart, self);
             self.getNodeByName('ItemObject' + i).on('touchend', self.touchEnd, self);
@@ -61,7 +61,8 @@ cc.Class({
             return;
         }
         if (itemObject.getLabelNumberData() == 1) self.lastItem = true;
-        
+        GlobalVar.gameTimer().delTimer(self.itemTimeHandler);
+
         self.expBottleTouched(null, itemObject.itemID);
         self.durTime = 0;
         self.curTime = 2;
@@ -90,13 +91,8 @@ cc.Class({
         if (!self.press) {
             var itemObject = event.target.getComponent("ItemObject");
             if (itemObject.getLabelNumberData() <= 0 && !self.lastItem) {
-                if(WindowManager.getInstance().checkBtnLock()){
-                    return;
-                }
-
                 WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALITEMGETWAY, function (wnd, name, type) {
                     wnd.getComponent(type).updateInfo(itemObject.itemID, itemObject.getLabelNumberData(), 0, -1);
-                    WindowManager.getInstance().lockBtn();
                 });
             }
         }
@@ -131,6 +127,7 @@ cc.Class({
         GlobalVar.eventManager().addEventListener(EventMsgId.EVENT_GUAZAI_DIRTY_NTF, this.onGuazaiDirtyCallback, this);
         GlobalVar.eventManager().addEventListener(EventMsgId.EVENT_GUAZAI_QUALITY_UP, this.playGuazaiQualityUpEffect, this);
         GlobalVar.eventManager().addEventListener(EventMsgId.EVENT_GUAZAI_LEVEL_UP, this.playGuazaiUseItemEffect, this);
+        GlobalVar.eventManager().addEventListener(EventMsgId.EVENT_BAG_ADDITEM_NTF, this.bagAddItem, this);
     },
 
     enter: function (isRefresh) {
@@ -306,7 +303,6 @@ cc.Class({
         this.getNodeByName("nodeShengjie").active = true;
         // cc.log(guazaiItem);
         if (!guazaiItem.oVecQualityUpNeed[0]) {
-            GlobalVar.comMsg.showMsg("已达到满阶");
             this.getNodeByName("nodeShengjie").active = false;
             return;
         }
@@ -350,7 +346,6 @@ cc.Class({
     },
 
     expBottleTouched: function (target, data) {
-        WindowManager.getInstance().lockBtn();
         if (GlobalVar.me().bagData.getItemCountById(data) <= 0)
             return;
         let GMDT_ITEM_COUNT = {
@@ -382,8 +377,6 @@ cc.Class({
             GlobalVar.comMsg.showMsg("升阶材料不足");
             WindowManager.getInstance().pushView(WndTypeDefine.WindowType.E_DT_NORMALITEMGETWAY, function (wnd, name, type) {
                 wnd.getComponent(type).updateInfo(guazaiItem.oVecQualityUpNeed[0].wItemID, guazaiSlotArray.length, 0, -1);
-                // WindowManager.getInstance().lockItem();
-                WindowManager.getInstance().lockBtn();
             });
             return;
         }
@@ -402,9 +395,6 @@ cc.Class({
     },
 
     onBtnChangeTouched: function () {
-        // if(this.checkIsLock()){
-        //     return;
-        // }
         let selectFunc = function (item) {
             let guazai = GlobalVar.tblApi.getDataBySingleKey('TblGuaZai', item.ItemID);
             if (guazai.byPosition == GlobalVar.me().guazaiData.guazaiSelectPos)
@@ -427,42 +417,90 @@ cc.Class({
     },
 
     playGuazaiQualityUpEffect: function () {
+        GlobalVar.soundManager().playEffect(AUDIO_QUALITY_UP);
         let effect = this.node.getChildByName("imgbg").getChildByName("nodeQualityUpEffect");
         effect.active = true;
+        // effect.getComponent(dragonBones.ArmatureDisplay).playAnimation("animation", 1);
+        // effect.getComponent(dragonBones.ArmatureDisplay).addEventListener(dragonBones.EventObject.COMPLETE, event => {
+        //     var animationName = event.animationState ? event.animationState.name : "";
+        //     if (animationName == "animation") {
+        //         effect.active = false;
+        //     }
+        // });
         effect.getComponent(sp.Skeleton).clearTracks();
         effect.getComponent(sp.Skeleton).setAnimation(0, "animation", false);
-        let self = this;
         effect.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
             var animationName = trackEntry.animation ? trackEntry.animation.name : "";
             if (animationName == "animation") {
                 effect.active = false;
             }
-        });
+        })
     },
 
     playGuazaiUseItemEffect: function (event) {
-        if (event.levelUpFlag){
+        GlobalVar.soundManager().playEffect(AUDIO_LEVEL_UP);
+        if (event.levelUpFlag) {
             let self = this;
             let effect = this.node.getChildByName("imgbg").getChildByName("nodeUseExpItemEffect");
-            effect.active = true;
-            effect.getComponent(sp.Skeleton).clearTracks();
-            effect.getComponent(sp.Skeleton).setAnimation(0, "animation", false);
-            effect.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
-                var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-                if (animationName == "animation") {
-                    effect.active = false;
-                    let levelUpEffect = self.node.getChildByName("imgbg").getChildByName("nodeLevelUpEffect");
-                    levelUpEffect.active = true;
-                    levelUpEffect.getComponent(sp.Skeleton).clearTracks();
-                    levelUpEffect.getComponent(sp.Skeleton).setAnimation(1, "animation", false);
-                    levelUpEffect.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
-                        var animationName = trackEntry.animation ? trackEntry.animation.name : "";
-                        if (animationName == "animation") {
-                            levelUpEffect.active = false;
-                        }
-                    });
-                }
-            });
+            GlobalFunctions.playDragonBonesAnimation(effect, function () { 
+                effect.active = false;
+                let levelUpEffect = self.node.getChildByName("imgbg").getChildByName("nodeLevelUpEffect");
+                levelUpEffect.active = true;
+                GlobalFunctions.playDragonBonesAnimation(levelUpEffect, function () { 
+                    levelUpEffect.active = false;
+                })
+                // levelUpEffect.getComponent(dragonBones.ArmatureDisplay).playAnimation("animation", 1);
+                // levelUpEffect.getComponent(dragonBones.ArmatureDisplay).addEventListener(dragonBones.EventObject.COMPLETE, event => {
+                //     var animationName = event.animationState ? event.animationState.name : "";
+                //     if (animationName == "animation") {
+                //         levelUpEffect.active = false;
+                //     }
+                // });
+            })
+            // effect.active = true;
+            // effect.getComponent(dragonBones.ArmatureDisplay).playAnimation("animation", 1);
+            // effect.getComponent(dragonBones.ArmatureDisplay).addEventListener(dragonBones.EventObject.COMPLETE, event => {
+            //     var animationName = event.animationState ? event.animationState.name : "";
+            //     if (animationName == "animation") {
+            //         effect.active = false;
+            //         let levelUpEffect = self.node.getChildByName("imgbg").getChildByName("nodeLevelUpEffect");
+            //         levelUpEffect.active = true;
+            //         levelUpEffect.getComponent(dragonBones.ArmatureDisplay).playAnimation("animation", 1);
+            //         levelUpEffect.getComponent(dragonBones.ArmatureDisplay).addEventListener(dragonBones.EventObject.COMPLETE, event => {
+            //             var animationName = event.animationState ? event.animationState.name : "";
+            //             if (animationName == "animation") {
+            //                 levelUpEffect.active = false;
+            //             }
+            //         });
+            //     }
+            // });
         }
+        // if (event.levelUpFlag){
+        //     let self = this;
+        //     let effect = this.node.getChildByName("imgbg").getChildByName("nodeUseExpItemEffect");
+        //     effect.active = true;
+        //     effect.getComponent(sp.Skeleton).clearTracks();
+        //     effect.getComponent(sp.Skeleton).setAnimation(0, "animation", false);
+        //     effect.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
+        //         var animationName = trackEntry.animation ? trackEntry.animation.name : "";
+        //         if (animationName == "animation") {
+        //             effect.active = false;
+        //             let levelUpEffect = self.node.getChildByName("imgbg").getChildByName("nodeLevelUpEffect");
+        //             levelUpEffect.active = true;
+        //             levelUpEffect.getComponent(sp.Skeleton).clearTracks();
+        //             levelUpEffect.getComponent(sp.Skeleton).setAnimation(1, "animation", false);
+        //             levelUpEffect.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
+        //                 var animationName = trackEntry.animation ? trackEntry.animation.name : "";
+        //                 if (animationName == "animation") {
+        //                     levelUpEffect.active = false;
+        //                 }
+        //             });
+        //         }
+        //     });
+        // }
+    },
+
+    bagAddItem: function (data) {
+        this.updateLvlUpPanel();
     },
 });

@@ -48,6 +48,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_SWEEP_WND;
         this.content = this.sweepScroll.content;
@@ -134,10 +135,11 @@ cc.Class({
     refreshUI: function(event){
         if (event.ErrCode && event.ErrCode != GameServerProto.PTERR_SUCCESS){
             GlobalVar.comMsg.errorWarning(event.ErrCode);
+            this.leftSweepTimes = 0;
             return;
         }
         // 播放音效
-        GlobalVar.soundManager().playEffect(AUDIO_SWEEP_QUEST);
+        // GlobalVar.soundManager().playEffect(AUDIO_SWEEP_QUEST);
         this.campData.PlayCount = event.OK.PlayCount;
         this.addSweepPrefabs(event.OK)
         this.setLeftTimesCount(event.OK.PlayCount);
@@ -186,14 +188,14 @@ cc.Class({
                 if (i != 0){
                     layout.children[i].runAction(cc.sequence(cc.scaleTo(0.2, 1.1), cc.scaleTo(0.2, 1)));
                 }else{
-                    layout.children[i].runAction(cc.sequence(cc.scaleTo(0.2, 1.2), cc.scaleTo(0.2, 1), cc.callFunc(()=>{
+                    layout.children[i].runAction(cc.sequence(cc.scaleTo(0.2, 1.1), cc.scaleTo(0.2, 1), cc.callFunc(()=>{
+                        self.leftSweepTimes -= 1;
                         self.sendSweepMsg();
                     })))
                 }
             }
         };
 
-        this.leftSweepTimes -= 1;
         sweep.x=(-1000);
         sweep.runAction(
             cc.sequence(
@@ -244,7 +246,7 @@ cc.Class({
 
         if (!this.checkSpEnougn()){
             GlobalVar.comMsg.errorWarning(GameServerProto.PTERR_SP_LACK);
-            CommonWnd.showBuySpConfirmWnd(null, i18n.t('label.4000230'), null, null, null, i18n.t('label.4000214'));
+            CommonWnd.showBuySpWnd();
             return;
         }
 
@@ -347,9 +349,9 @@ cc.Class({
         for (let i = 0; i < data.RewardItem.length; i++) {
             let item = cc.instantiate(this.itemPrefab);
             item.getComponent("ItemObject").updateItem(data.RewardItem[i].ItemID, data.RewardItem[i].Count);
-            if (data.RewardItem[i].ItemID !== 1 && data.RewardItem[i].ItemID !== 2 && data.RewardItem[i].Count <=1){
-                item.getComponent("ItemObject").setAllVisible(false);
-            }
+            // if (data.RewardItem[i].ItemID !== 1 && data.RewardItem[i].ItemID !== 2 && data.RewardItem[i].Count <=1){
+                // item.getComponent("ItemObject").setAllVisible(false);
+            // }
             item.getComponent("ItemObject").setClick(true, 2);
             item.y = -item.height;
             item.x = i * (item.width + 10);
@@ -358,7 +360,7 @@ cc.Class({
             item.scale = 0;
             layout.addChild(item);
         }
-        // layout.getComponent(cc.Layout).updateLayout();
+        layout.getComponent(cc.Layout).updateLayout();
         if (layout.width > 560) {
             let scale = 560 / layout.width
             layout.setScale(scale);

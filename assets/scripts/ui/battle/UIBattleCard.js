@@ -30,6 +30,18 @@ cc.Class({
         this.cardDrawState = [];
         this.gameEndData = {};
         this.canClickedRecvBtn = false;
+
+        if (!GlobalVar.getShareSwitch()){
+            this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("btnRecv").active = true;
+            this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("btnRecvNew").active = false;
+            this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("btnRecvAll").active = false;
+            this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("label").active = false;
+        }else{
+            this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("btnRecvNew").active = true;
+            this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("btnRecv").active = false;
+            this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("btnRecvAll").active = true;
+            this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("label").active = true;
+        }
     },
 
     start:function(){
@@ -37,6 +49,7 @@ cc.Class({
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_CAMP_FREEDRAW_NTF, this.getFreeDrawCardNtf, this);
         this.node.getChildByName("nodeBottom").getChildByName("nodeButton").active = false;
         this.initCardRewardView();
+        require('Guide').getInstance().showRecv(this);
     },
 
     onDestroy: function () {
@@ -51,17 +64,12 @@ cc.Class({
                 labelTip.active = false;
                 GlobalVar.sceneManager().gotoScene(SceneDefines.MAIN_STATE);
             } else if (index == RECV_ALL_REWARD){
-                GlobalVar.comMsg.showMsg("分享未完成")
-                return;
                 let self = this;
-                let shareSuccessCallback = function () {
+                weChatAPI.shareNormal(106, function() {
                     self.canClickedRecvBtn = true;
+                    // console.log("发送freedraw消息");
                     GlobalVar.handlerManager().campHandler.sendFreeDrawReq();
-                };
-        
-                let materials = GlobalVar.materials[1];
-                let ranNum = Math.floor(Math.random()*materials.length);
-                weChatAPI.shareNormal(materials[ranNum], shareSuccessCallback);
+                });
             }
         }else{
             this.touchRandomCard();
@@ -104,13 +112,15 @@ cc.Class({
             // 发送消息
             // 接收到消息后再执行this.getDrawCardNtf();
             GlobalVar.handlerManager().campHandler.sendDrawRewardReq(index);
-            console.log("发送freedraw消息");
         }
     },
 
     getDrawCardNtf: function (data) {
         if (data.ErrCode != GameServerProto.PTERR_SUCCESS){
             GlobalVar.comMsg.errorWarning(data.ErrCode);
+            setTimeout(() => {
+                GlobalVar.sceneManager().gotoScene(SceneDefines.MAIN_STATE);
+            }, 1500);
             return;
         }
         this.curDrawCount = data.OK.DrawCount;
@@ -143,6 +153,7 @@ cc.Class({
                     });
                     let scale2 = cc.scaleTo(0.25, 1, 1);
                     this.spriteNodeList[index].runAction(cc.sequence(scale1, callFun, scale2));
+                    this.cardDrawState[index] = true;
                 }else if (!this.cardDrawState[index]){
                     let scale1 = cc.scaleTo(0.25, 0, 1);
                     let callFun = cc.callFunc(() => {
@@ -162,34 +173,33 @@ cc.Class({
     },
 
     getFreeDrawCardNtf: function (data) {
-        let self = this;
         // let repeatTimes = 5;
         // let curReapeatTime = 0;
         console.log("收到freedraw消息");
+        let self = this;
         for (let i = 0; i < this.cardDrawState.length; i++) {
             let index = i;
             if (!this.cardDrawState[index]){
-                self.spriteNodeList[index].getChildByName("spriteCard").getComponent("RemoteSprite").setFrame(0);
-                // let scale1 = cc.scaleTo(0.25, 0, 1);
-                // let callFun1 = cc.callFunc(() => {
-                //     self.spriteNodeList[index].getChildByName("spriteCard").getComponent("RemoteSprite").setFrame(1)
-                //     self.spriteNodeList[index].getChildByName("ItemObject").active = true;
-                //     self.spriteNodeList[index].getChildByName("labelItemName").active = true;
-                // });
+                let scale1 = cc.scaleTo(0.25, 0, 1);
+                let callFun = cc.callFunc(() => {
+                    self.spriteNodeList[index].getChildByName("spriteCard").getComponent("RemoteSprite").setFrame(0)
+                });
                 // let callFun2 = cc.callFunc(()=>{
                 //     self.spriteNodeList[index].getChildByName("spriteCard").getComponent("RemoteSprite").setFrame(2)
                 //     self.spriteNodeList[index].getChildByName("ItemObject").active = false;
                 //     self.spriteNodeList[index].getChildByName("labelItemName").active = false;
                 // })
-                // let scale2 = cc.scaleTo(0.25, 1, 1);
-                // let delay = cc.delayTime(0.5);
-                // this.spriteNodeList[index].runAction(cc.sequence(delay, scale1, callFun, scale2).repeat(repeatTimes).easing(cc.easeSineOut()));
+                let scale2 = cc.scaleTo(0.25, 1, 1);
+                let delay = cc.delayTime(0.5);
+                this.spriteNodeList[index].runAction(cc.sequence(delay, scale1, callFun, scale2).easing(cc.easeSineOut()));
             }
         }
         this.canClickedRecvBtn = false;
-        this.node.getChildByName("nodeBottom").getChildByName("btnRecv").x = 0;
-        this.node.getChildByName("nodeBottom").getChildByName("btnRecvAll").active = false;
-
+        this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("btnRecv").x = 0;
+        this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("btnRecvAll").active = false;
+        this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("label").active = false;
+        this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("btnRecvNew").active = false;
+        this.node.getChildByName("nodeBottom").getChildByName("nodeButton").getChildByName("btnRecv").active = true;
     },
 
 });

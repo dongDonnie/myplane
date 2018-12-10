@@ -2,16 +2,20 @@ var CampNormal48 = module.exports;
 
 CampNormal48.data = {
     maps:[
-        ["bfc-boss-01","bfc-boss-01","bfc-boss-01"],
+        ["bfc-a","bfc-a","bfc-a"],
+        ["bfc-b-01hebing","bfc-b-01hebing","bfc-b-01hebing"],
     ],
     monsterWaves:[
-        {wave:{groups:[19,25,26,194,231,232],wait:0,delay:[2,3,4,5,9,9]},maps:{mapIndex:[0],mapSpeed:[500],mapScale:[1],mapLoop:[1]}},
-        {wave:{groups:[273,42,43,27],wait:0,delay:[0,4,4,4]}},
-        {wave:{groups:[191,230],wait:0,delay:[0,1]}},
-        {wave:{groups:[93],wait:0,delay:[0],anime:1},maps:{mapIndex:[0],mapSpeed:[800],mapScale:[1],mapLoop:[0]}},
+        {wave:{groups:[1359,588,590],wait:0,delay:[1.8,3,4]},maps:{mapIndex:[0,1],mapSpeed:[200,400],mapScale:[1,1],mapLoop:[1,1]}},
+        {wave:{groups:[773,776,1360],wait:0,delay:[0,1.2,2]}},
+        {wave:{groups:[792,795,798,1361,1362],wait:0,delay:[0,0,0,0.8,2]}},
+        {wave:{groups:[1363,1364],wait:0,delay:[0,1]}},
+        {wave:{groups:[1365,772,777],wait:0,delay:[0,1,2]}},
+        {wave:{groups:[1366,792,798],wait:0,delay:[0,2,3]}},
+        {wave:{groups:[1405,690,800],wait:0,delay:[0,1.5,3]}},
     ],
 
-    monsterExtra:[311,312,313,314,315,316,317],
+    monsterExtra:[773],
 
     totalHint:[
         {
@@ -23,15 +27,6 @@ CampNormal48.data = {
                 {drop:10000},
             ]
         },
-        {
-            eventKey:0,
-            checkTime:1,
-            condition:[
-                {wave:{index:3,step:3}},
-            ],
-            effect:[
-                {extra:-1},
-            ],
-        },
+        
     ],
 }

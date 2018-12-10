@@ -8,6 +8,8 @@ cc.Class({
 
     properties: {
         dmgMsg:null,
+        hasAllScreenDamage:true,
+        damageInterval:1,
     },
 
     ctor: function () {
@@ -16,6 +18,8 @@ cc.Class({
 
     reset() {
         this._super();
+        this.hasAllScreenDamage=true;
+        this.damageInterval=0.016;
     },
 
     newObject() {
@@ -46,4 +50,19 @@ cc.Class({
     update(dt) {
         this._super(dt);
     },
+
+    setAllScreenDamage:function(yes){
+        this.hasAllScreenDamage=typeof yes !=='undefined'?yes:true;
+    },
+    getAllScreenDamage:function(){
+        return this.hasAllScreenDamage;
+    },
+
+    setDamageInterval:function(interval){
+        this.damageInterval=typeof interval!=='undefined'?interval:0.1;
+    },
+    getDamageInterval:function(){
+        return this.damageInterval;
+    },
+    
 });

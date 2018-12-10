@@ -5,6 +5,7 @@ const GlobalVar = require('globalvar')
 const WndTypeDefine = require("wndtypedefine");
 const EventMsgID = require("eventmsgid");
 const GameServerProto = require("GameServerProto");
+const weChatAPI = require("weChatAPI");
 
 cc.Class({
     extends: RootBase,
@@ -29,8 +30,10 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_PLAYERINFO_WND;
         this.animeStartParam(0, 0);
+
     },
 
     start:function(){
@@ -50,6 +53,18 @@ cc.Class({
         } else if (name == "Enter") {
             this._super("Enter");
             this.initPlayerInfoWnd();
+
+            //RENAME
+            GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_GET_RENAME_ACK, this.getReNameData, this);
+
+
+            let spriteHeader = this.node.getChildByName("nodeCenter").getChildByName("spriteHeader");
+            if (cc.sys.platform === cc.sys.WECHAT_GAME) {
+                console.log("GlobalVar.showAuthorization:", GlobalVar.showAuthorization);
+                if (GlobalVar.showAuthorization){
+                    this.createAuthorizeBtn(spriteHeader);
+                }
+            }
         }
     },
 
@@ -121,7 +136,7 @@ cc.Class({
         this.setPlayerCombat(GlobalVar.me().getCombatPoint() || 0);
         this.setPlayerLevel(GlobalVar.me().getLevel() || 0);
         this.setRollName(GlobalVar.me().getRoleName() || "");
-        this.setPlayerAvatar(GlobalVar.me().avatar);
+        this.setPlayerAvatar(GlobalVar.me().loginData.getLoginReqDataAvatar());
         
         this.setExpBar(GlobalVar.me().getLevel(), GlobalVar.me().getExp());
     },
@@ -140,7 +155,7 @@ cc.Class({
         let levelUpData = GlobalVar.tblApi.getDataBySingleKey('TblLevel', level);
         let levelUpNeedExp = levelUpData.dwExp;
         let percent = exp/levelUpNeedExp;
-
+        this.progressExp.node.getChildByName('expValue').getComponent(cc.Label).string = exp + '/' + levelUpNeedExp;
         if (cc.game.renderType != cc.game.RENDER_TYPE_WEBGL){
             this.progressExp.progress = percent;
         }else{
@@ -156,8 +171,7 @@ cc.Class({
         }
 
         let nodeCenter = this.node.getChildByName("nodeCenter");
-        let spritePlayerHeadImg = nodeCenter.getChildByName("spritePlayerHeadImg");
-        let spriteHeader = spritePlayerHeadImg.getChildByName("spriteHeader");
+        let spriteHeader = nodeCenter.getChildByName("spriteHeader");
         
         url = url + "?aaa=aa.png";
         cc.loader.load(url, function (err, tex) {
@@ -209,6 +223,98 @@ cc.Class({
     },
     setPlayerDefGrow: function (data) {
         this.getLabel("labelDefGrow").string = data;
+    },
+
+    close: function () {
+        if (this.btnAuthorize){
+            this.btnAuthorize.destroy();
+            this.btnAuthorize = null;
+        }
+        this._super();
+    },
+
+    getReNameData: function (data) {
+        if (data.ErrCode != GameServerProto.PTERR_SUCCESS){
+            GlobalVar.comMsg.errorWarning(data.ErrCode);
+            return;
+        }
+
+        GlobalVar.me().loginData.setLoginReqDataAvatar(data.Avatar);
+        GlobalVar.me().roleName = data.RoleName;
+        GlobalVar.me().roleID = data.RoleID;
+        GlobalVar.me().avatar = data.Avatar;
+        this.setPlayerAvatar(GlobalVar.me().loginData.getLoginReqDataAvatar());
+        this.setRollName(GlobalVar.me().getRoleName() || "");
+        // this.onPlayerInfoBtnClick();
+    },
+
+
+    createAuthorizeBtn(btnNode) {
+        let self = this;
+        let createBtn = function(){
+            let btnSize = cc.size(btnNode.width+20,btnNode.height+20);
+            let frameSize = cc.view.getFrameSize();
+            // console.log("winSize: ",winSize);
+            // console.log("frameSize: ",frameSize);
+            //适配不同机型来创建微信授权按钮
+            let worldPos = btnNode.parent.convertToWorldSpaceAR(btnNode.position);
+            let viewPos = self.node.convertToNodeSpaceAR(worldPos);
+
+            let left = (cc.winSize.width*0.5+viewPos.x-btnSize.width*0.5)/cc.winSize.width*frameSize.width;
+            let top = (cc.winSize.height*0.5-viewPos.y-btnSize.height*0.5)/cc.winSize.height*frameSize.height;
+            let width = btnSize.width/cc.winSize.width*frameSize.width;
+            let height = btnSize.height/cc.winSize.height*frameSize.height;
+            console.log("button pos: ",cc.v3(left,top));
+            console.log("button size: ",cc.size(width,height));
+        
+    
+            self.btnAuthorize = wx.createUserInfoButton({
+                type: 'text',
+                text: '',
+                style: {
+                    left: left,
+                    top: top,
+                    width: width,
+                    height: height,
+                    lineHeight: 0,
+                    backgroundColor: '',
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    fontSize: 16,
+                    borderRadius: 4
+                }
+            })
+        
+            self.btnAuthorize.onTap((uinfo) => {
+                // console.log("onTap uinfo: ",uinfo);
+                if (uinfo.userInfo) {
+                    // console.log("wxLogin auth success");
+                    wx.showToast({title:"授权成功"});
+                    weChatAPI.getUserInfo(function(userInfo){
+                        GlobalVar.me().roleName = userInfo.nickName;
+                        GlobalVar.me().loginData.setLoginReqDataAvatar(userInfo.avatarUrl);
+                        GlobalVar.handlerManager().mainHandler.sendReNameReq(GlobalVar.me().roleID, userInfo.nickName, userInfo.avatarUrl);
+
+                    })
+                }else {
+                    // console.log("wxLogin auth fail");
+                    // wx.showToast({title:"授权失败"});
+                    // self.onPlayerInfoBtnClick();
+                }                        
+                if (self.btnAuthorize){
+                    self.btnAuthorize.destroy();
+                    self.btnAuthorize = null;
+                }
+                GlobalVar.showAuthorization = false;
+            });
+        }
+        if (GlobalVar.me().loginData.getLoginReqDataAvatar() != "" && GlobalVar.me().loginData.getLoginReqDataAvatar() != null){
+            return;
+        }
+
+        weChatAPI.getSetting("userInfo", null, function(){
+            createBtn();
+        })
     },
 
 });

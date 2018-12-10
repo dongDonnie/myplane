@@ -8,6 +8,11 @@ const GameServerProto = require("GameServerProto");
 const md5 = require("md5");
 const weChatAPI = require("weChatAPI");
 
+const ENDLESS_STATUS_SCORE_PLUS_5 = 9;
+const ENDLESS_STATUS_SCORE_PLUS_10 = 10;
+const ENDLESS_STATUS_SCORE_PLUS_15 = 11;
+const ENDLESS_STATUS_GOLD_DOUBLE = 5;
+
 cc.Class({
     extends: UIBase,
 
@@ -29,11 +34,23 @@ cc.Class({
             default: [],
             visible: false,
         },
+        btnRecvGold: {
+            default: null,
+            type: cc.Button,
+        },
+        btnRecvShare: {
+            default: null,
+            type: cc.Button,
+        },
         labelGetGold: {
             default: null,
             type: cc.Label,
         },
         labelTenGetGold: {
+            default: null,
+            type: cc.Label,
+        },
+        labelScoreAdd: {
             default: null,
             type: cc.Label,
         },
@@ -83,14 +100,22 @@ cc.Class({
         } else if (this.nodeAccountList[2].active) {
             let bmgr = BattleManager.getInstance();
             let battleMsg = bmgr.battleMsg;
+            let endlessScore = bmgr.endlessScore;
+            if (bmgr.battleMsg.BattleBlessStatusID == ENDLESS_STATUS_SCORE_PLUS_5){
+                endlessScore = parseInt(endlessScore * 1.05);
+            }else if (bmgr.battleMsg.BattleBlessStatusID == ENDLESS_STATUS_SCORE_PLUS_10){
+                endlessScore = parseInt(endlessScore * 1.1);
+            }else if (bmgr.battleMsg.BattleBlessStatusID == ENDLESS_STATUS_SCORE_PLUS_15){
+                endlessScore = parseInt(endlessScore * 1.15);
+            }
             let tokenStr = "%d:%d:%d:%d:%d#cdss0dfsd35Cs"; //m_stStat.m_dwSeed, m_stStat.m_byBlessStatusID, m_stStat.m_byDieCount, rstReq.m_nScore, rstReq.m_byPackageCount);
-            tokenStr = tokenStr.replace("%d", GlobalVar.me().endlessData.getSeed()).replace("%d", battleMsg.BattleBlessStatusID).replace("%d", 0).replace("%d", bmgr.endlessScore).replace("%d", 0)
+            tokenStr = tokenStr.replace("%d", GlobalVar.me().endlessData.getSeed()).replace("%d", battleMsg.BattleBlessStatusID).replace("%d", GlobalVar.me().campData.getBattleDieCount()).replace("%d", endlessScore).replace("%d", bmgr.endlessGetChsetCount)
             let token = md5.MD5(tokenStr);
-            GlobalVar.handlerManager().endlessHandler.sendEndlessEndBattleReq(bmgr.endlessScore, 0, 0, token);
+            GlobalVar.handlerManager().endlessHandler.sendEndlessEndBattleReq(endlessScore, 0, bmgr.endlessGetChsetCount, token);
             if (cc.sys.platform == cc.sys.WECHAT_GAME) {
                 let historyMaxScore = GlobalVar.me().endlessData.getHistoryMaxScore();
-                if (bmgr.endlessScore >= historyMaxScore) {
-                    weChatAPI.submitUserData("score", bmgr.endlessScore);
+                if (endlessScore >= historyMaxScore) {
+                    weChatAPI.submitUserData("score", endlessScore);
                 }
             }
             let rankID = GlobalVar.me().endlessData.getRankID();
@@ -98,8 +123,12 @@ cc.Class({
                 rankID = 1;
             }
             let nextModeData = GlobalVar.tblApi.getDataBySingleKey('TblEndlessRank', rankID + 1);
-            if (nextModeData && bmgr.endlessScore >= nextModeData.nScoreReq){
+            if (nextModeData && endlessScore >= nextModeData.nScoreReq){
                 GlobalVar.handlerManager().endlessHandler.sendEndlessRankUpReq();
+            }
+
+            if (bmgr.endlessGetChsetCount > 0){
+                GlobalVar.me().endlessData.getChestFlag = true;
             }
         }
     },
@@ -168,7 +197,7 @@ cc.Class({
                 let stars = nodeBattleWin.getChildByName("spriteClearingBg").children;
                 for (let i = 0; i < stars.length; i++) {
                     if ((i + 1) <= winData.Star) {
-                        stars[i].runAction(cc.sequence(cc.delayTime(0.25 * (i + 1)), cc.callFunc(() => {
+                        stars[i].runAction(cc.sequence(cc.delayTime(0.3 * (i + 1)), cc.callFunc(() => {
                             stars[i].setScale(2);
                             stars[i].getChildByName("spriteStarGet").active = true;
                             GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/battle_end_getstar');
@@ -217,6 +246,7 @@ cc.Class({
                     item.opacity = 255;
                     this.nodeGetItem.addChild(item);
                     item.getComponent("ItemObject").updateItem(winData.RewardItem[i].ItemID, winData.RewardItem[i].Count);
+                    item.getChildByName('firstreward').active = false;
                 }
 
                 this.nodeGetItem.getComponent(cc.Layout).updateLayout();    
@@ -239,10 +269,35 @@ cc.Class({
 
     initEndlessEndUINew: function () {
         let nodeEndless = this.nodeAccountList[2];
+        if (!GlobalVar.getShareSwitch()){
+            nodeEndless.getChildByName("nodeRecvGold").active = false;
+            nodeEndless.getChildByName("spriteContinueTip").active = true;
+            this.node.getChildByName("btnEnd").active = true;
+        }else{
+            nodeEndless.getChildByName("nodeRecvGold").active = true;
+            nodeEndless.getChildByName("spriteContinueTip").active = false;
+            this.node.getChildByName("btnEnd").active = false;
+        }
+
+        let rewardData = GlobalVar.tblApi.getDataBySingleKey('TblEndlessRank', GlobalVar.me().endlessData.getRankID());
+        let itemObj = nodeEndless.getChildByName("spriteHintBg").getChildByName("spriteTreasureBoxBg").getChildByName("ItemBox").getComponent("ItemObject");
+        itemObj.updateItem(rewardData.wRewardItem);
+        itemObj.setSpriteEdgeVisible(false);
+
         let bmgr = BattleManager.getInstance();
         let obtainScore = bmgr.endlessScore;
         let historyMaxScore = GlobalVar.me().endlessData.getHistoryMaxScore();
         let weekMaxScore = GlobalVar.me().endlessData.getWeekMaxScore();
+        if (bmgr.battleMsg.BattleBlessStatusID == ENDLESS_STATUS_SCORE_PLUS_5){
+            obtainScore = parseInt(obtainScore * 1.05);
+            this.labelScoreAdd.string = "5%";
+        }else if (bmgr.battleMsg.BattleBlessStatusID == ENDLESS_STATUS_SCORE_PLUS_10){
+            obtainScore = parseInt(obtainScore * 1.1);
+            this.labelScoreAdd.string = "10%";
+        }else if (bmgr.battleMsg.BattleBlessStatusID == ENDLESS_STATUS_SCORE_PLUS_15){
+            obtainScore = parseInt(obtainScore * 1.15);
+            this.labelScoreAdd.string = "15%";
+        }
 
         let nodeScoreObtain = {
             target: nodeEndless.getChildByName("spriteClearingBg").getChildByName("labelObtainScore"),
@@ -256,11 +311,27 @@ cc.Class({
             targetScore: historyMaxScore > obtainScore ? historyMaxScore : obtainScore,
         };
         this.targetDatas.push(nodeHistoryScore);
+        let nodeChest = {
+            target: nodeEndless.getChildByName("spriteHintBg").getChildByName("labelChest").getChildByName("labelTreasureBoxCount"),
+            startScore: 0,
+            targetScore: bmgr.endlessGetChsetCount,
+        };
+        this.targetDatas.push(nodeChest);
 
         if (obtainScore >= weekMaxScore) {
             nodeEndless.getChildByName("spriteHintBg").getChildByName("spriteWeeklySign").active = true;
         } else {
             nodeEndless.getChildByName("spriteHintBg").getChildByName("spriteWeeklySign").active = false;
+        }
+
+
+        if (!GlobalVar.getShareSwitch()){
+            nodeEndless.getChildByName("nodeRecvGold").active = false;
+            nodeEndless.getChildByName("spriteContinueTip").active = true;
+            this.node.getChildByName("btnEnd").active = true;
+            return;
+        }else{
+
         }
 
         let NORMAL_GET = 0, TEN_GET = 1;
@@ -284,11 +355,20 @@ cc.Class({
         let NORMAL_GET = 0, TEN_GET = 1;
         let maxGold = GlobalVar.tblApi.getDataBySingleKey('TblParam', GameServerProto.PTPARAM_ENDLESS_GOLD_DAYMAX).dValue;
         let getGold = parseInt((1000 * score) / (score + 120000));
-        if (mode == TEN_GET) {
-            getGold *= 10;
-        }
         let todayCanGetGold = maxGold - GlobalVar.me().endlessData.getTodayGold();
-        return getGold > todayCanGetGold ? todayCanGetGold : getGold;
+        getGold = getGold * 5;
+        let bmgr = BattleManager.getInstance();
+        for (let i = 0; i< bmgr.battleMsg.BattleStatus.length; i++){
+            if (bmgr.battleMsg.BattleStatus[i].StatusID == ENDLESS_STATUS_GOLD_DOUBLE){
+                getGold *= 2;
+            }
+        }
+        getGold = getGold > todayCanGetGold ? todayCanGetGold : getGold;
+        getGold = getGold > 10000 ? 10000 : getGold;
+        if (mode == NORMAL_GET) {
+            getGold = parseInt(getGold/5);
+        }
+        return getGold;
     },
 
     onRecvGoldBtnClick: function (event, index) {
@@ -302,19 +382,21 @@ cc.Class({
             this.alreadRecvGoldBtnClick = true;
             getGold = parseInt(this.labelGetGold.string);
             GlobalVar.handlerManager().endlessHandler.sendEndlessGetGoldReq(getGold);
-            GlobalVar.sceneManager().gotoScene(SceneDefines.MAIN_STATE);
+            setTimeout(() => {
+                GlobalVar.sceneManager().gotoScene(SceneDefines.MAIN_STATE);
+            }, 1000);
         }else{
             getGold = parseInt(this.labelTenGetGold.string);
 
-            let shareSuccesCallbck = function () {
+            if (cc.sys.platform !== cc.sys.WECHAT_GAME){
+                return;
+            }
+
+            weChatAPI.shareNormal(107, function () {
                 self.alreadRecvGoldBtnClick = true;
                 GlobalVar.handlerManager().endlessHandler.sendEndlessGetGoldReq(getGold);
                 GlobalVar.sceneManager().gotoScene(SceneDefines.MAIN_STATE);
-            };
-
-            let materials = GlobalVar.materials[1];
-            let ranNum = Math.floor(Math.random()*materials.length);
-            weChatAPI.shareNormal(materials[ranNum], shareSuccesCallbck);
+            });
         }
     },
 

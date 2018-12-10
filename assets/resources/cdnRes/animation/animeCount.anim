@@ -2,7 +2,7 @@
   "__type__": "cc.AnimationClip",
   "_name": "animeCount",
   "_objFlags": 0,
-  "_rawFiles": null,
+  "_native": "",
   "_duration": 2.5,
   "sample": 60,
   "speed": 1,
@@ -42,6 +42,21 @@
     }
   },
   "events": [
+    {
+      "frame": 0,
+      "func": "playCountEffect",
+      "params": []
+    },
+    {
+      "frame": 1,
+      "func": "playCountEffect",
+      "params": []
+    },
+    {
+      "frame": 2,
+      "func": "playCountEffect",
+      "params": []
+    },
     {
       "frame": 2.5,
       "func": "countdown",

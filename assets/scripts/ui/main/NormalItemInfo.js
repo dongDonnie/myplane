@@ -94,6 +94,7 @@ cc.Class({
     },
 
     onLoad() {
+        this._super();
         i18n.init('zh');
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMALITEMINFO;
         this.animeStartParam(0, 0);
@@ -237,7 +238,7 @@ cc.Class({
                 CommonWnd.showBatchUseWnd(this.itemID, event.GetItem);
             }
         } else {
-            CommonWnd.showTreasuerExploit(event.GetItem);
+            CommonWnd.showTreasureExploit(event.GetItem);
         }
     },
 
@@ -259,7 +260,9 @@ cc.Class({
         nodeBoxTips.getChildByName("nodeIcon").addChild(item);
         nodeBoxTips.getChildByName("labelIconName").getComponent(cc.Label).string = boxData.strName;
         nodeBoxTips.getChildByName("labelIconName").color = GlobalFunc.getCCColorByQuality(quality);
-
+        this.node.getChildByName("btnUseMore").active = false;
+        this.node.getChildByName("btnUseOne").active = false;
+        this.btnConfirm.node.active = true;
 
         let rewardItemId = boxData.oVecItems[0].wItemID
         let rewardItemData = GlobalVar.tblApi.getDataBySingleKey('TblItem', rewardItemId)

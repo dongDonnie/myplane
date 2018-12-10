@@ -6,6 +6,9 @@ const GameServerProto = require("GameServerProto");
 const CommonWnd = require("CommonWnd");
 const i18n = require('LanguageData');
 
+
+const TREAURE_GOLD = "cdnRes/audio/main/effect/kaicai";
+
 var self = null;
 cc.Class({
     extends: RootBase,
@@ -22,6 +25,7 @@ cc.Class({
     },
 
     onLoad() {
+        this._super();
         this.animeStartParam(0, 0);
     },
 
@@ -57,7 +61,7 @@ cc.Class({
             return;
         }
         let item = [GlobalVar.tblApi.getDataBySingleKey('TblTreasureGoldReward', this.times[this.clickBtn]).stItem];
-        CommonWnd.showTreasuerExploit(item);
+        CommonWnd.showTreasureExploit(item);
         this.initBoxStatus();
     },
 
@@ -93,6 +97,7 @@ cc.Class({
             }
             return;
         }
+        GlobalVar.soundManager().playEffect(TREAURE_GOLD);
         GlobalVar.comMsg.pushMsg(data.Item[0].Count, data.Crit);
         this.changeCanClickTimes(data.MiningTimes);
         this.initBoxStatus();

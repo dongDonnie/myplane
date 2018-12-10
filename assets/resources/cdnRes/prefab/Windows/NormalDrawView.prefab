@@ -546,8 +546,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 546,
-      "height": 114
+      "width": 553,
+      "height": 115
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -592,7 +592,7 @@
     "_srcBlendFactor": 770,
     "_dstBlendFactor": 771,
     "_spriteFrame": {
-      "__uuid__": "5662def4-e92c-477c-9b08-08264e2e7eae"
+      "__uuid__": "35186b1a-e55e-46c4-8368-1890f9ee2dda"
     },
     "_type": 0,
     "_sizeMode": 1,
@@ -1606,7 +1606,7 @@
     },
     "_position": {
       "__type__": "cc.Vec3",
-      "x": -197,
+      "x": -200,
       "y": -36,
       "z": 0
     },
@@ -1659,7 +1659,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 150,
+      "width": 120,
       "height": 30
     },
     "_anchorPoint": {
@@ -1705,8 +1705,8 @@
     "_srcBlendFactor": 1,
     "_dstBlendFactor": 771,
     "_useOriginalSize": false,
-    "_string": "  免费寻宝",
-    "_N$string": "  免费寻宝",
+    "_string": "分享到群",
+    "_N$string": "分享到群",
     "_fontSize": 30,
     "_lineHeight": 30,
     "_enableWrapText": true,
@@ -1760,7 +1760,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 150,
+      "width": 120,
       "height": 30
     },
     "_anchorPoint": {
@@ -1806,8 +1806,8 @@
     "_srcBlendFactor": 1,
     "_dstBlendFactor": 771,
     "_useOriginalSize": false,
-    "_string": "  免费寻宝",
-    "_N$string": "  免费寻宝",
+    "_string": "分享到群",
+    "_N$string": "分享到群",
     "_fontSize": 30,
     "_lineHeight": 30,
     "_enableWrapText": true,
@@ -1841,7 +1841,7 @@
       "__id__": 43
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_level": 0,
     "_components": [
       {
@@ -1951,7 +1951,7 @@
     "btnState": true,
     "btnPress": false,
     "_N$fontColor": 0,
-    "_N$textLabel": "  免费寻宝",
+    "_N$textLabel": "分享到群",
     "_id": ""
   },
   {
@@ -2017,7 +2017,7 @@
       "__id__": 1
     },
     "component": "NormalDrawView",
-    "handler": "onBtnDraw",
+    "handler": "onBtnFreeDraw",
     "customEventData": "0"
   },
   {
@@ -2574,7 +2574,7 @@
     },
     "_position": {
       "__type__": "cc.Vec3",
-      "x": 203,
+      "x": 200,
       "y": -36,
       "z": 0
     },
@@ -3219,7 +3219,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "spriteTenDrawCostItem",
+    "_name": "spriteTenDrawCost",
     "_objFlags": 0,
     "_parent": {
       "__id__": 42
@@ -3484,7 +3484,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "labelTenDrawCost",
+    "_name": "labelFreeDraw",
     "_objFlags": 0,
     "_parent": {
       "__id__": 42
@@ -3518,12 +3518,12 @@
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "x": 0,
+      "x": 0.5,
       "y": 0.5
     },
     "_position": {
       "__type__": "cc.Vec3",
-      "x": -220,
+      "x": -200,
       "y": 20,
       "z": 0
     },

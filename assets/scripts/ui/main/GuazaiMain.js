@@ -20,6 +20,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         this.dirty = true;
         this.typeName = WndTypeDefine.WindowType.E_DT_GUAZAIMAIN_WND;
@@ -110,11 +111,6 @@ cc.Class({
     },
 
     update: function (dt) {
-        // if (this.btnLock){
-        //     let index = WindowManager.getInstance().findViewIndex(this.typeName);
-        //     let ceilingViewTypeName = WindowManager.getInstance().getCeilingViewTypeName();
-        // }
-
         if (!this.dirty)
             return;
         this.dirty = false;
@@ -175,9 +171,6 @@ cc.Class({
     },
 
     onGuazaiBtnTouchedCallback: function (target, data) {
-        // if(this.checkIsLock()){
-        //     return;
-        // }
         // cc.log(GlobalVar.me().guazaiData.guazaiWear);
         GlobalVar.me().guazaiData.guazaiSelectPos = data;
         if (GlobalVar.me().guazaiData.guazaiWear[data]) {
@@ -206,9 +199,6 @@ cc.Class({
     },
 
     onGuazaiSmelterTouchedCallback: function () {
-        // if(this.checkIsLock()){
-        //     return;
-        // }
         CommonWnd.showGuazaiSmelter();
     },
 
@@ -245,10 +235,6 @@ cc.Class({
 
     onGuazaiExploreBtnTouched: function () {
         // CommonWnd.showDrawView();
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         this.animePlay(0);
     },
 

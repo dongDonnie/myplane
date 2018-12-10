@@ -21,6 +21,7 @@ var leaderData = cc.Class({
         self.totalHotFlag = [false, false, false, false, false, false];
         self.levelUpHotFlag = [false, false, false, false, false, false];
         self.qualityUpHotFlag = [false, false, false, false, false, false];
+        self.showCombatLate = false;
     },
 
     setData: function (data) {
@@ -105,6 +106,7 @@ var leaderData = cc.Class({
             self.data.EquipBag.Equips[equipData.Pos - 1] = equipData;
             self.updateHotPoint();
             self.calcLeaderEquipsProp();
+            self.showCombatLate = true;
         }
         // else {
         //     GlobalVar.comMsg.errorWarning(msg.data.ErrCode);
@@ -138,6 +140,14 @@ var leaderData = cc.Class({
 
     getLeaderEquipsProp: function (data) {
         return self.leaderEquipProp;
+    },
+
+    getShowCombatLate: function () {
+        if (self.showCombatLate) {
+            self.showCombatLate = false
+            return true;
+        }
+        return false
     },
 });
 

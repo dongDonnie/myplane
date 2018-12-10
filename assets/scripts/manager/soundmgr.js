@@ -19,6 +19,7 @@ var SoundManager = cc.Class({
         this.tempBGM.callback = null;
         this.bPlayBGM = true; //StoreageData.getBgmOnOff();
         this.bPlayEffect = true; //StoreageData.getEffectOnOff();
+        this.curEffectName='';
     },
 
     clearSoundMgr: function(){
@@ -32,6 +33,7 @@ var SoundManager = cc.Class({
         this.tempBGM.callback = null;
         this.bPlayBGM = true; //StoreageData.getBgmOnOff();
         this.bPlayEffect = true; //StoreageData.getEffectOnOff();
+        this.curEffectName='';
     },
 
     statics: {
@@ -101,6 +103,9 @@ var SoundManager = cc.Class({
     },
 
     playEffect(name, callback) {
+        if(this.curEffectName==name && name=='gold_bing'){
+            return;
+        }
         this.playAudio('EFFECT', name, false, this.effectVolume, callback);
     },
 
@@ -140,23 +145,28 @@ var SoundManager = cc.Class({
         }
         var self = this;
         GlobalVar.resManager().loadRes(ResMapping.ResType.AudioClip, path, function (clip) {
-            self.play(type, clip, loop, volume, callback);
+            self.play(type, clip, loop, volume, callback,path);
         });
     },
 
-    play(type, clip, loop, volume, callback) {
+    play(type, clip, loop, volume, callback,name) {
         if (!this.checkSwitch(type)) {
             // cc.log("switch off, play " + type + "failed");
             return;
         }
         let audioIndex = cc.audioEngine.play(clip, loop, volume);
-        if (!!callback) {
-            cc.audioEngine.setFinishCallback(audioIndex, callback);
-        }
+        var self=this;
+        cc.audioEngine.setFinishCallback(audioIndex, function(){
+            if (!!callback) {
+                callback();
+            }
+            self.curEffectName='';
+        });
         if (type == 'BGM') {
             this.currentBGM = audioIndex;
         } else if (type == 'EFFECT') {
             this.currentEffect = audioIndex;
+            this.curEffectName=name;
         }
     },
 

@@ -67,6 +67,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         i18n.init('zh');
         self = this;
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMALBAG;
@@ -110,14 +111,15 @@ cc.Class({
             bagWidget.bottom = 90;
             bagWidget.updateAlignment();
             let Widget = this.bagScroll.node.getComponent(cc.Widget);
-            Widget.top = 248;
-            Widget.bottom = 208;
+            Widget.top = 258;
+            Widget.bottom = 218;
             if (GlobalFunc.isAllScreen()) {
                 Widget.top += 120;
-                Widget.bottom -= 120;
+                Widget.bottom += 120;
             }
             Widget.updateAlignment();
         }
+
     },
 
     animePlayCallBack(name) {
@@ -156,9 +158,6 @@ cc.Class({
     },
 
     addSize: function () {
-        // if(this.checkIsLock()){
-        //     return;
-        // }
         let useDiamond = GlobalVar.tblApi.getDataBySingleKey('TblItemBagUnlock', this.gridCounts - 100 + 20);
         if (useDiamond != null) {
             let str = i18n.t('label.4000215').replace('%d', useDiamond.nDiamond);
@@ -178,7 +177,7 @@ cc.Class({
             return;
         }
         this.showBag(GlobalVar.me().bagData.getData(), true);
-        CommonWnd.showMessage(null, CommonWnd.oneConfirm, i18n.t('label.4000216'), i18n.t('label.4000220'));
+        GlobalVar.comMsg.showMsg(i18n.t('label.4000220'));
     },
 
     sellItem: function (slot, count) {

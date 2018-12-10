@@ -47,9 +47,9 @@ cc.Class({
         this.side = 0;
         this.pos = 0;
 
-        this.shader=false;
-        this.shaderRender=null;
-        this.shaderStartTime=0;
+        // this.shader=false;
+        // this.shaderRender=null;
+        // this.shaderStartTime=0;
 
         //this.motionNode=null;
     },
@@ -95,19 +95,19 @@ cc.Class({
                     let index = objectName.lastIndexOf('_');
                     let id = objectName.substring(index + 1, objectName.length);
                     
-                    this.partObject.setPosition(cc.v2(0, -65));
+                    this.partObject.setPosition(cc.v3(0, -65));
                     if(id=='710'){
-                        this.partObject.setPosition(cc.v2(0, -35));
+                        this.partObject.setPosition(cc.v3(0, -35));
                     }
                     // if(id=='1810'){
-                    //     this.partObject.setPosition(cc.v2(0, -65));
+                    //     this.partObject.setPosition(cc.v3(0, -65));
                     // }
                     // if(id=='1820'){
-                    //     this.partObject.setPosition(cc.v2(0, -65));
+                    //     this.partObject.setPosition(cc.v3(0, -65));
                     // }
                 }
 
-                this.shaderRender=this.part.getSpine();
+                //this.shaderRender=this.part.getSpine();
 
                 if(this.objectType==Defines.ObjectType.OBJ_HERO && this.showType==0){
                     this.addMotionStreak('huoyan');
@@ -129,7 +129,7 @@ cc.Class({
             sp.spriteFrame = GlobalVar.resManager().loadRes(ResMapping.ResType.SpriteFrame, path);
             //sp.spriteFrame = GlobalVar.resManager().loadRes(ResMapping.ResType.SpriteFrame, 'cdnRes/itemicon/' + objectName);
             this.addChild(this.partObject);
-            this.shaderRender=sp;
+            //this.shaderRender=sp;
         }
         return false;
     },
@@ -141,19 +141,15 @@ cc.Class({
 
     pauseAction() {
         if (this.partObject != null) {
-            let spine = this.partObject.getComponent(sp.Skeleton);
-            if (spine != null) {
-                spine.paused = true;
-            }
+            this.partObject.getComponent('CoreObject').pauseAction();
+            this.pauseAllActions();
         }
     },
 
     resumeAction() {
         if (this.partObject != null) {
-            let spine = this.partObject.getComponent(sp.Skeleton);
-            if (spine != null) {
-                spine.paused = false;
-            }
+            this.partObject.getComponent('CoreObject').resumeAction();
+            this.resumeAllActions();
         }
     },
 
@@ -169,18 +165,19 @@ cc.Class({
     },
 
     openShader: function (open) {
-        if(this.shaderRender==null){
-            this.shader = false;
-            this.shaderStartTime = 0;
-            return;
-        }
+        return;
+        // if(this.shaderRender==null){
+        //     this.shader = false;
+        //     this.shaderStartTime = 0;
+        //     return;
+        // }
 
-        this.shader = typeof open !== 'undefined' ? open : false;
-        if (this.shader) {
-            this.shaderStartTime = Date.now()-5000;
-        }else{
-            this.shaderStartTime = 0;
-        }
+        // this.shader = typeof open !== 'undefined' ? open : false;
+        // if (this.shader) {
+        //     this.shaderStartTime = Date.now()-5000;
+        // }else{
+        //     this.shaderStartTime = 0;
+        // }
     },
 
     update(dt) {
@@ -188,10 +185,10 @@ cc.Class({
             return;
         }
 
-        if (this.shader && !!this.shaderRender) {
-            let time = (Date.now() - this.shaderStartTime) / 1000;
-            ShaderUtils.setShader(this.shaderRender, "projective", time);
-        }
+        // if (this.shader && !!this.shaderRender) {
+        //     let time = (Date.now() - this.shaderStartTime) / 1000;
+        //     ShaderUtils.setShader(this.shaderRender, "projective", time);
+        // }
 
         if (BattleManager.getInstance().isEditorFlag) {
             return;
@@ -315,7 +312,7 @@ cc.Class({
     },
 
     hitWithDamage(dmg,immediately) {
-        immediately=typeof immediately!=='undefined'?immediately:false;
+        immediately=typeof immediately!=='undefined'?immediately:0;
         
         if (this.invincibleTime > 0) {
             return;
@@ -325,13 +322,12 @@ cc.Class({
             return;
         }
 
-        if(immediately){
-            this.hp = 0;
-            // if (this.objectType == Defines.ObjectType.OBJ_HERO) {
-            //     BattleManager.getInstance().result = 0;
-            //     BattleManager.getInstance().gameState = Defines.GameResult.END;
-            // }
-            return;
+        if(immediately==1){
+            dmg = this.maxHp;
+        }else if(immediately==2){
+            dmg=this.maxHp*0.3;
+        }else if(immediately==3){
+            dmg=this.maxHp*0.5;
         }
 
         // if (this.state == FighterState.Crazy) {
@@ -346,7 +342,7 @@ cc.Class({
 
         if (this.hp > dmg) {
             this.hp -= dmg;
-            require('HeroManager').getInstance().skillLevelDown();
+            //require('HeroManager').getInstance().skillLevelDown();
         } else {
             this.hp = 0;
             // if (this.objectType == Defines.ObjectType.OBJ_HERO) {
@@ -378,27 +374,32 @@ cc.Class({
     },
 
     flyIntoScreen(callback) {
-        GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/leave_battle');
+        this.invincibleTime = 1.6;
+        if (BattleManager.getInstance().gameState == Defines.GameResult.START){
+            GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/hero_appear');
+        }else{
+            GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/leave_battle');
+        }
         var self=this;
         if (!!callback) {
             this.runAction(
                 cc.sequence(
-                    cc.moveBy(1.0, cc.v2(0, 0.7 * cc.winSize.height)),
+                    cc.moveBy(1.0, cc.v3(0, 0.7 * cc.winSize.height)),
                     cc.callFunc(function(){
                         self.removeComponent(cc.MotionStreak);
                     }),
-                    cc.moveBy(0.5, cc.v2(0, -0.3 * cc.winSize.height)),
+                    cc.moveBy(0.5, cc.v3(0, -0.3 * cc.winSize.height)),
                     cc.callFunc(callback)
                 )
             );
         } else {
             this.runAction(
                 cc.sequence(
-                    cc.moveBy(1.0, cc.v2(0, 0.7 * cc.winSize.height)),
+                    cc.moveBy(1.0, cc.v3(0, 0.7 * cc.winSize.height)),
                     cc.callFunc(function(){
                         self.removeComponent(cc.MotionStreak);
                     }),
-                    cc.moveBy(0.5, cc.v2(0, -0.3 * cc.winSize.height))
+                    cc.moveBy(0.5, cc.v3(0, -0.3 * cc.winSize.height))
                 )
             );
         }
@@ -413,7 +414,7 @@ cc.Class({
             this.runAction(
                 cc.sequence(
                     cc.delayTime(0.6),
-                    cc.moveBy(1, cc.v2(0, cc.winSize.height)),
+                    cc.moveBy(1, cc.v3(0, cc.winSize.height)),
                     cc.callFunc(callback)
                 )
             );
@@ -421,7 +422,7 @@ cc.Class({
             this.runAction(
                 cc.sequence(
                     cc.delayTime(0.6),
-                    cc.moveBy(1, cc.v2(0, cc.winSize.height)),
+                    cc.moveBy(1, cc.v3(0, cc.winSize.height)),
                 )
             );
         }

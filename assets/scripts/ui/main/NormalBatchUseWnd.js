@@ -22,9 +22,14 @@ cc.Class({
             default: null,
             type: cc.Prefab,
         },
+        btnContinue: {
+            default: null,
+            type: cc.Button
+        }
     },
 
     onLoad: function () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMAL_BATCH_USE_WND;
 
         this.content = this.resultScroll.content;
@@ -90,6 +95,11 @@ cc.Class({
         let itemCount = GlobalVar.me().bagData.getItemCountById(this.useItemID);
         this.node.getChildByName("labelLeft").getComponent(cc.Label).string = itemCount;
         this.node.getChildByName("labelLeft").active = true;
+        if (itemCount == 0) {
+            this.btnContinue.interactable = false;
+        } else {
+            this.btnContinue.interactable = true;
+        }
         this.canContinueUse = false;
         this.updateItemGet(0);
     },
@@ -165,7 +175,10 @@ cc.Class({
         }
     },
 
-    onBtnClose: function(){
+    onBtnClose: function () {
+        if (!this.canContinueUse) {
+            return;
+        }
         this.closing = true;
         this.resetWnd();
         this.close();

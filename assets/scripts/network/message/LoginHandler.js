@@ -72,6 +72,8 @@ cc.Class({
         //     token: String     我们自己的登录Token
         //     code: String      微信的登录凭证
         // }
+        // 约定不修改服务器存储的用户头像
+        avatar && (avatar = avatar.trim());
         if (cc.sys.platform === cc.sys.WECHAT_GAME) {
             
             let plat = "android";
@@ -115,6 +117,9 @@ cc.Class({
     },
 
     sendCreateRollReq: function (RoleName, avatar) {
+
+        // 约定不修改服务器存储的用户头像
+        avatar && (avatar = avatar.trim());
         if (cc.sys.platform === cc.sys.WECHAT_GAME) {
             let msg = {
                 Icon: 40000,

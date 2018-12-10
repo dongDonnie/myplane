@@ -54,7 +54,8 @@ module.exports = {
     EVENT_ENDLESS_START_BATTLE: "event_endless_start_battle",
 
     EVENT_SETSTATUS_COUNT: "event_setstatus_count",
-    EVENT_SPCHANGE_NTF:"EVENT_SPCHANGE_NTF",
+    EVENT_SPCHANGE_NTF: "EVENT_SPCHANGE_NTF",
+    EVENT_EXPCHANGE_NTF: "event_expchange_ntf",
     EVENT_COMBATPOINT_CHANGE_NTF: "event_combatpoint_change_ntf",
     EVENT_LEVELUP_NTF: "event_levelup_ntf",
     EVENT_BUY_SP_RESULT:"event_buysp_result",
@@ -129,6 +130,7 @@ module.exports = {
     EVENT_MEMBER_FLAG_CHANGE: "event_member_flag_change",
     EVENT_FULICZ_FLAG_CHANGE: "event_fulicz_flag_change",
     EVENT_THEBAG_FLAG_CHANGE: "event_thebag_flag_change",
+    EVENT_CAMP_FLAG_CHANGE: 'event_camp_flag_change',
 
     //share
     EVENT_GET_FREE_GOLD: "event_get_free_gold",

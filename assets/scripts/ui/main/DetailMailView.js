@@ -34,6 +34,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_DETAILMAIL_VIEW;
 
         this.animeStartParam(0, 0);
@@ -49,14 +50,15 @@ cc.Class({
             this._super("Escape");
             let getItem = this.data.Attachments;
             for (let i = 0; i<getItem.length; i++){
-                getItem[i].Count = getItem.ItemCount;
+                getItem[i].Count = getItem[i].ItemCount;
             }
             let showItem = this.showItem;
             WindowManager.getInstance().popView(false, function () {
-                if (showItem){
-                    CommonWnd.showTreasuerExploit(getItem);
-                }
+                // if (showItem){
+                //     CommonWnd.showTreasureExploit(getItem);
+                // }
             }, false, false);
+            GlobalVar.eventManager().removeListenerWithTarget(this);
         } else if (name == "Enter") {
             this._super("Enter");
             this.waitForClose = false;
@@ -125,16 +127,32 @@ cc.Class({
 
     onBtnRecvMail: function () {
         //带附件的邮件，领取附件才算是已读
-        this.btnRecv.enabled = false;
-        this.btnRecv.node.color = cc.color(160, 160, 160);
+        this.btnRecv.interactable = false;
         GlobalVar.handlerManager().mailHandler.sendReadMailReq(this.data.MailID);
         this.waitForClose = true;
+        this.showGetItem();
+        // let levelUpData = {};
+        // levelUpData.GoldReward = 111;
+        // levelUpData.SpReward = 222;
+        // levelUpData.LevelOld = 9;
+        // levelUpData.LevelCur = 10;
+        // GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_LEVELUP_NTF, levelUpData);
     },
 
-    closeWindow: function () {
+    showGetItem: function () {            
         if (this.waitForClose){
             this.showItem = true;
-            this.close();
+            this.scrollViewAttach.content.removeAllChildren();
+            // this.close();
+            let getItem = this.data.Attachments;
+            for (let i = 0; i<getItem.length; i++){
+                getItem[i].Count = getItem[i].ItemCount;
+            }
+            if (this.showItem){
+                setTimeout(function () {
+                    CommonWnd.showTreasureExploit(getItem)
+                }, 150);
+            }
         }
     },
 

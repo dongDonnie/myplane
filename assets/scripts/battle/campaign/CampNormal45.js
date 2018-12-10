@@ -5,14 +5,17 @@ CampNormal45.data = {
         ["fg_fight_bg_0","fg_fight_bg_0","fg_fight_bg_0"],
     ],
     monsterWaves:[
-        {wave:{groups:[27,117,118,119,19,25,26],wait:0,delay:[2,4,5,6,8,9,10]},maps:{mapIndex:[0],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
-        {wave:{groups:[36,35,192,120],wait:0,delay:[0,0.5,1,1.5]}},
-        {wave:{groups:[28,31,127,128],wait:0,delay:[0,0,4,4]},maps:{mapIndex:[0],mapSpeed:[1000],mapScale:[1.3],mapLoop:[1]}},
-        {wave:{groups:[126,125,27,119],wait:0,delay:[0,0,4,5]}},
-        {wave:{groups:[167,168],wait:0,delay:[0,1]}},
+        {wave:{groups:[1326,19,25,26],wait:0,delay:[1.5,2,3,3]},maps:{mapIndex:[0],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
+        {wave:{groups:[1327,35],wait:0,delay:[0,1]}},
+        {wave:{groups:[1328,31],wait:0,delay:[0,0]}},
+        {wave:{groups:[1329,27],wait:0,delay:[0,1]}},
+        {wave:{groups:[1330],wait:0,delay:[0,1]}},
+        {wave:{groups:[1331],wait:0,delay:[0,1]}},
+        {wave:{groups:[1332],wait:0,delay:[0,1]}},
+        {wave:{groups:[1333],wait:0,delay:[0,1]}},
     ],
 
-    monsterExtra:[311,312,313,314,315,316,317],
+    monsterExtra:[311,312,313,314,315,316,317,14,17,19,20,22,25,27,28,30,35,36,39,40,42,45,47,48,50,51,52,573,830,831,832,833,834,836,839,1066,1067,1069,1070,1072,1073,1074,1075,1077,1078],
 
     totalHint:[
         {
@@ -28,20 +31,20 @@ CampNormal45.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:3}},
+                {wave:{index:0,step:6}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:2.8}},
             ],
         },
         {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:4}},
+                {wave:{index:7,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-2}},
             ],
         },
     ],

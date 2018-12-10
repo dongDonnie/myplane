@@ -35,10 +35,9 @@ cc.Class({
         GlobalVar.me().spData.setSpBuy(msg.data);
     },  
       
-    sendSpBuyReq: function (reserved) {
-        reserved = reserved?reserved:1;
+    sendSpBuyReq: function (free) {
         let msg = {
-            Reserved : reserved,
+            Free : free||0,
         };
         self.sendMsg(GameServerProto.GMID_SP_BUY_REQ, msg);
     },

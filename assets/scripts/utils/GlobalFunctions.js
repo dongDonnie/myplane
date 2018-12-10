@@ -103,3 +103,58 @@ gf.getShareCanGetGold = function (level) {
     canGetGold = (parseInt(canGetGold/100) + 1) * 100;
     return canGetGold;
 };
+
+gf.interceptStr = function (str, lens, strEnd) {
+    if (str == null)
+    return '';
+    if (strEnd == undefined) strEnd = '';
+    let len = 0;
+    for (let i = 0; i < str.length; i++) {
+        let c = str.charCodeAt(i);
+        if (c >= 0 && c <= 128)
+            len++;
+        else
+            len += 2;
+        if (len > lens)
+            return str.substr(0, i) + strEnd;
+    }
+    return str;
+};
+
+gf.playDragonBonesAnimation = function (node, callback, ani, playtimes) {
+    node.active = true;
+    ani = ani == undefined ? 'animation' : ani;
+    playtimes = playtimes == undefined ? 1 : playtimes;
+    node.getComponent(dragonBones.ArmatureDisplay).playAnimation(ani, playtimes);
+    let complete = function (event) {
+        var animationName = event.animationState ? event.animationState.name : "";
+        if (animationName == ani && !!callback) {
+            callback();
+        }
+        node.getComponent(dragonBones.ArmatureDisplay).removeEventListener(dragonBones.EventObject.COMPLETE);
+    };
+    node.getComponent(dragonBones.ArmatureDisplay).addEventListener(dragonBones.EventObject.COMPLETE, complete);
+};
+
+gf.stopDragonBonesAnimation = function (node) {
+    if (!node.getComponent(dragonBones.ArmatureDisplay)) return;
+    node.getComponent(dragonBones.ArmatureDisplay).armature().animation.stop();
+};
+
+gf.playSpineAnimation = function (node, callback, isClearTracks, trackIndex, ani, loop) {
+    node.active = true;
+    isClearTracks = isClearTracks == undefined ? true : isClearTracks;
+    trackIndex = trackIndex == undefined ? 0 : trackIndex;
+    ani = ani == undefined ? 'animation' : ani;
+    loop = loop == undefined ? false : loop;
+    if (isClearTracks) {
+        node.getComponent(sp.Skeleton).clearTracks();
+        node.getComponent(sp.Skeleton).setAnimation(trackIndex, ani, loop);
+    }
+    node.getComponent(sp.Skeleton).setCompleteListener(trackEntry => {
+        var animationName = trackEntry.animation ? trackEntry.animation.name : "";
+        if (animationName == ani && !!callback) {
+            callback();
+        }
+    })
+};

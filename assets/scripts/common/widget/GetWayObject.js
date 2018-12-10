@@ -9,7 +9,7 @@ var GetWayObject = cc.Class({
     extends: UIBase,
 
     ctor: function () {
-        this.iconFrameStack = [];
+        this.iconFrameStack = {};
         this.iconFrameStack[0] = {
             local: "cdnRes/daily/dailyicon_power.png",
             url: ""
@@ -122,7 +122,7 @@ var GetWayObject = cc.Class({
             this.setLabelName(this.getwayData.strName);
 
             if (this.getwayID == 22){
-                let strTips = "通关【%chapterID-%campaignID %campName】掉落";
+                let strTips = "[%chapterID-%campaignID %campName]掉落";
                 strTips = strTips.replace("%chapterID", param1).replace("%campaignID", param2);
                 let campTblID = GlobalVar.tblApi.getDataBySingleKey('TblChapter', GameServerProto.PT_CAMPTYPE_MAIN)[param1 - 1].oVecCampaigns[param2 - 1]
                 let campName = GlobalVar.tblApi.getDataBySingleKey('TblCampaign', campTblID).strCampaignName;
@@ -153,6 +153,7 @@ var GetWayObject = cc.Class({
                 path = this.iconFrameStack[0].local;
             }
         }
+        path = this.iconFrameStack[0].local;
         this.spriteIcon.getComponent("RemoteSprite").loadFrame(path);
     },
 
@@ -183,7 +184,6 @@ var GetWayObject = cc.Class({
                 let systemData = GlobalVar.tblApi.getDataBySingleKey('TblSystem', GameServerProto.PT_SYSTEM_STORE);
                 if (systemData && GlobalVar.me().level < systemData.wOpenLevel) {
                     GlobalVar.comMsg.showMsg(i18n.t('label.4000258').replace("%d", systemData.wOpenLevel || 0).replace("%d", systemData.strName));
-                    WindowManager.getInstance().lockBtn();
                     return;
                 }
 
@@ -202,7 +202,6 @@ var GetWayObject = cc.Class({
                 let endlessSystemData = GlobalVar.tblApi.getDataBySingleKey('TblSystem', GameServerProto.PT_SYSTEM_ENDLESS);
                 if (GlobalVar.me().level < endlessSystemData.wOpenLevel){
                     GlobalVar.comMsg.showMsg(i18n.t('label.4000258').replace("%d", endlessSystemData.wOpenLevel).replace("%d", endlessSystemData.strName));
-                    WindowManager.getInstance().lockBtn();
                     return;
                 }
 
@@ -219,19 +218,38 @@ var GetWayObject = cc.Class({
                 let campaignList = chapterDataList[self.param1 - 1].oVecCampaigns;
                 let planetData = GlobalVar.tblApi.getDataBySingleKey('TblCampaign', campaignList[self.param2 - 1]);
 
+                if (!campData){
+                    GlobalVar.comMsg.errorWarning(GameServerProto.PTERR_CAMP_NOT_OPEN);
+                    return;
+                }
 
                 WindowManager.getInstance().popView(false, function () {
                     CommonWnd.showQuestInfoWnd(campData, planetData);
                 }, false, false);
                 break;
-            // case WndTypeDefine.WindowSystemID.E_DT_NORMAL_RICHTREASURE_WND:       //淘金
-            //     GlobalVar.eventManager().removeListenerWithTarget(this);
-            //     WindowManager.getInstance().popView(false, function () {
-            //         GlobalVar.handlerManager().drawHandler.sendTreasureData();
-            //     }, false, false);
-            //     break;
+            case WndTypeDefine.WindowSystemID.E_DT_NORMAL_RICHTREASURE_WND:       //淘金
+                GlobalVar.eventManager().removeListenerWithTarget(this);
+                WindowManager.getInstance().popView(false, function () {
+                    GlobalVar.handlerManager().drawHandler.sendTreasureData();
+                }, false, false);
+                break;
+            case WndTypeDefine.WindowSystemID.E_DT_NORMAL_DAILY_MISSION_WND:
+                GlobalVar.eventManager().removeListenerWithTarget(this);
+                WindowManager.getInstance().popView(false, function () {
+                    GlobalVar.handlerManager().dailyHandler.sendGetDailyDataReq();
+                }, false, false);
+                break;
+            case WndTypeDefine.WindowSystemID.E_DT_LIMIT_STORE_WND:
+                let systemData1 = GlobalVar.tblApi.getDataBySingleKey('TblSystem', GameServerProto.PT_SYSTEM_FULI_GIFT);
+                if (systemData1 && GlobalVar.me().level < systemData1.wOpenLevel) {
+                    GlobalVar.comMsg.showMsg(i18n.t('label.4000258').replace("%d", systemData1.wOpenLevel || 0).replace("%d", systemData1.strName));
+                    return;
+                }
+                WindowManager.getInstance().popView(false, function () {
+                    CommonWnd.showLimitStoreWithParam(1);
+                }, false, false);
+                break;
             default:
-                // this.unLockBtn();
                 break;
         }
     },

@@ -62,18 +62,30 @@ GlobalVar.netWaiting = function(){
 },
 
 GlobalVar.IosRechargeLock = true;
+GlobalVar.androidRechargeLock = true;
 GlobalVar.srcSwitch = function () {
     if (GlobalVar.isIOS){
         return GlobalVar.IosRechargeLock;
+    }else if (GlobalVar.isAndroid){
+        return GlobalVar.androidRechargeLock;
+    }
+    return false;
+},
+GlobalVar.shareOpen = false;
+GlobalVar.getShareSwitch = function () {
+    if (cc.sys.platform == cc.sys.WECHAT_GAME){
+        return GlobalVar.shareOpen;
     }
     return false;
 },
 
-GlobalVar.cleanAllMgr = function (){
+GlobalVar.showAuthorization = true;
+
+GlobalVar.cleanAllMgr = function () {
     Soundmanager.getInstance().clearSoundMgr();
     WindowManager.getInstance().clearWindowMgr();
     Me.destroyInstance();
-}
+};
 
 GlobalVar.tblApi = new TblApi;
 GlobalVar.messageDispatcher = new MessageDispatcher;

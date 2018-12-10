@@ -30,6 +30,9 @@ var UIMain = cc.Class({
         this.registerEvent();
         this.checkFlagSetHotPoint();
         this.getVoucher();
+        this.updateExpBar();
+        this.judgeLevelUp();
+        this.setMode();
 
         if (!GlobalFunc.isAllScreen() && !this.fixViewComplete) {
             this.fixViewComplete = true;
@@ -38,17 +41,15 @@ var UIMain = cc.Class({
         if (cc.sys.platform === cc.sys.WECHAT_GAME) {
             this.checkInvite();
             this.reportMaterialClick();
+            weChatAPI.getShareConfig();
             weChatAPI.setWithShareTicket(true);
             weChatAPI.getMaterials(function (data) {
-                GlobalVar.materials = data;
-            })
+                console.log("Materials:", data);   
+            });
             
             if (GlobalVar.me().loginData.getLoginReqDataServerID()) {
                 weChatAPI.reportServerLogin(GlobalVar.me().loginData.getLoginReqDataAccount(), GlobalVar.me().loginData.getLoginReqDataServerID(), GlobalVar.me().serverTime * 100);
             }
-
-            let avatarNode = this.node.getChildByName("imgTopBg").getChildByName("spriteAvatarImg");
-            this.createAuthorizeBtn(avatarNode);
         }
 
         if (!GlobalVar.srcSwitch()){
@@ -83,10 +84,11 @@ var UIMain = cc.Class({
 
         
         GlobalVar.handlerManager().campHandler.sendGetCampBagReq(GameServerProto.PT_CAMPTYPE_MAIN);
+
     },
 
     update:function(dt){
-
+        
     },
 
     registerEvent: function () {
@@ -97,16 +99,16 @@ var UIMain = cc.Class({
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_LEVELUP_NTF, this.showPlayerLevelUpWnd, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_NEWTASK_REWARD, this.setNewTaskDesc, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_LOGIN_DATA_NTF, this.onLoginDataEvent, this);
-        GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_BUY_SP_RESULT, this.getBuySpResult, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_GETDAILY_DATA, this.dailyMsgRecv, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_GETACTIVE_LIST, this.activeMsgRecv, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_GET_RICHTREASURE_RESULT, this.richTreasureMsgRecv, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_RETURNTO_LOGINSCENE, this.quitBattlePlane, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_GET_RCGBAG_RESULT, this.rcgbagRecv, this);
+        GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_EXPCHANGE_NTF, this.updateExpBar, this);
 
         //RENAME
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_GET_RENAME_ACK, this.getReNameData, this);
-
+        
         //hotpoint
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_SET_MAIL_FLAG, this.setMailFlag, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_DAILY_FLAG_CHANGE, this.setDailyFlag, this);
@@ -117,6 +119,7 @@ var UIMain = cc.Class({
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_MEMBER_FLAG_CHANGE, this.setMemberFlag, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_THEBAG_FLAG_CHANGE, this.setBagFlag, this);
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_FULICZ_FLAG_CHANGE, this.setFuliFlag, this);
+        GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_CAMP_FLAG_CHANGE,this.setCampFlag,this);
     },
 
     checkFlagSetHotPoint: function(){
@@ -137,6 +140,20 @@ var UIMain = cc.Class({
 
     },
 
+    judgeLevelUp: function () {
+        if(!config.NEED_GUIDE)
+            GlobalVar.me().getLevelUpData();
+    },
+
+    updateExpBar: function () {
+        let level = GlobalVar.me().getLevel();
+        let levelUpData = GlobalVar.tblApi.getDataBySingleKey('TblLevel', level);
+        let levelUpNeedExp = levelUpData.dwExp;
+        let exp = GlobalVar.me().getExp();
+        let percent = exp / levelUpNeedExp;
+        this.getNodeByName('ExpProgress').getComponent(cc.Sprite).fillRange = percent;
+    },
+
     showNotice: function () {
         if(config.NEED_GUIDE){
             return;
@@ -151,7 +168,6 @@ var UIMain = cc.Class({
             }
             
             GlobalVar.me().alreadedShowNotice = true;
-            WindowManager.getInstance().unLockBtn();
             if (noticeCount > 0){
                 CommonWnd.showNoticeWnd();
             }
@@ -207,6 +223,10 @@ var UIMain = cc.Class({
         this.setFlagByNodeName("btnoFirstCharge", flags.FuLiCZFlag);
     },
 
+    setCampFlag: function (data) {
+        this.setFlagByNodeName("btnoCharpter", data.length > 0);
+    },
+
     setFlagByNodeName(nodeName, flag){
         let node = this.getNodeByName(nodeName);
         if (!!node){
@@ -236,7 +256,7 @@ var UIMain = cc.Class({
         this.setRollName(GlobalVar.me().getRoleName() || "");
         this.setPlayerLevel(GlobalVar.me().getLevel() || 0);
         this.setPlayerCombat(GlobalVar.me().getCombatPoint() || 0);
-        this.setPlayerAvatar(GlobalVar.me().avatar);
+        this.setPlayerAvatar(GlobalVar.me().loginData.getLoginReqDataAvatar());
 
         this.setNewTaskDesc(GlobalVar.me().dailyData.getNewTaskData(), GameServerProto.PT_NEW_TASK_TYPE_CAMP);
     },
@@ -247,10 +267,7 @@ var UIMain = cc.Class({
             return;
         }
 
-        GlobalVar.me().avatar = data.Avatar;
-        GlobalVar.me().roleName = data.RoleName;
-        GlobalVar.me().roleID = data.RoleID;
-        this.setPlayerAvatar(GlobalVar.me().avatar);
+        this.setPlayerAvatar(GlobalVar.me().loginData.getLoginReqDataAvatar());
         this.setRollName(GlobalVar.me().getRoleName() || "");
     },
 
@@ -258,7 +275,14 @@ var UIMain = cc.Class({
         weChatAPI.judgeInvite();
     },
     reportMaterialClick: function () {
-        weChatAPI.reportClickMaterial();
+        // weChatAPI.reportClickMaterial();
+
+        let onShowFunc = function (res) {
+            if (res.query.materialID >= 0){
+                weChatAPI.reportClickMaterial(res.query.materialID);
+            }
+        };
+        weChatAPI.setOnShowListener(onShowFunc);
     },
 
     showPlayerLevelUpWnd: function (event) {
@@ -344,9 +368,25 @@ var UIMain = cc.Class({
     },
 
     setRollName: function (rollName) {
+        var interceptStr = function (str, lens, strEnd) {
+            if (str == null)
+                return '';
+            if (strEnd == undefined) strEnd = '';
+            let len = 0;
+            for (let i = 0; i < str.length; i++) {
+                let c = str.charCodeAt(i);
+                if (c >= 0 && c <= 128)
+                    len++;
+                else
+                    len += 2;
+                if (len > lens)
+                    return str.substr(0, i) + strEnd;
+            }
+            return str;
+        };
         let imgTopBg = this.node.getChildByName("imgTopBg");
         let lblName = imgTopBg.getChildByName("nodeUserInfo").getChildByName("lblName").getComponent(cc.Label);
-        lblName.string = rollName;
+        lblName.string = interceptStr(rollName, 6, '...');
     },
 
     setPlayerLevel: function (level) {
@@ -403,6 +443,10 @@ var UIMain = cc.Class({
     },
 
     onDestroy: function () {
+        if (this.btnAuthorize){
+            this.btnAuthorize.destroy();
+            this.btnAuthorize = null;
+        }
         GlobalVar.eventManager().removeListenerWithTarget(this);
     },
 
@@ -463,24 +507,14 @@ var UIMain = cc.Class({
     },
     onSettingBtnClicked: function (event) {
         CommonWnd.showSettingWnd();
-        // let materials = GlobalVar.materials[1];
-        // let ranNum = Math.floor(Math.random()*materials.length);
-        // weChatAPI.shareNeedClick(materials[ranNum], function () {
-        //     console.log("分享成功");
-        // });
     },
 
     onDailyBtnClick: function (event) {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         GlobalVar.handlerManager().dailyHandler.sendGetDailyDataReq();
     },
     dailyMsgRecv: function (errCode){
         if (errCode != GameServerProto.PTERR_SUCCESS){
             GlobalVar.comMsg.errorWarning(errCode);
-            WindowManager.getInstance().lockBtn();
             return;
         }
         CommonWnd.showDailyMissionWnd();
@@ -519,7 +553,6 @@ var UIMain = cc.Class({
         let endlessSystemData = GlobalVar.tblApi.getDataBySingleKey('TblSystem', GameServerProto.PT_SYSTEM_ENDLESS);
         if (GlobalVar.me().level < endlessSystemData.wOpenLevel){
             GlobalVar.comMsg.showMsg(i18n.t('label.4000258').replace("%d", endlessSystemData.wOpenLevel).replace("%d", endlessSystemData.strName));
-            WindowManager.getInstance().lockBtn();
             return;
         }
         
@@ -529,7 +562,7 @@ var UIMain = cc.Class({
         CommonWnd.showPlayerInfoWnd();
     },
     onBuySpBtnClick: function (event) {
-        CommonWnd.showBuySpConfirmWnd(null, i18n.t('label.4000230'), null, null, null, i18n.t('label.4000214'), i18n.t('label.4000249'));
+        CommonWnd.showBuySpWnd();
     },
 
     onRechargeBtnClick: function (event) {
@@ -541,7 +574,6 @@ var UIMain = cc.Class({
         // CommonWnd.showRichTreasureWnd();
         GlobalVar.handlerManager().drawHandler.sendTreasureData();
     },
-
 
     onFeedbackBtnClick: function (event) {
         CommonWnd.showFeedbackWnd();
@@ -557,16 +589,11 @@ var UIMain = cc.Class({
     onActiveBtnClick: function (event){
         // GlobalVar.comMsg.showMsg("未完成");
         // return;
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         GlobalVar.handlerManager().activeHandler.sendGetActiveListReq(GameServerProto.PT_AMS_ACT_TYPE_NORMAL, 0);
     },
     activeMsgRecv: function (errCode){
         if (errCode != GameServerProto.PTERR_SUCCESS){
             GlobalVar.comMsg.errorWarning(errCode);
-            WindowManager.getInstance().lockBtn();
             return;
         }
         CommonWnd.showActiveWnd();
@@ -591,27 +618,9 @@ var UIMain = cc.Class({
             msg.Params.push(p);
         }
         GlobalVar.handlerManager().gmCmdHandler.sendReq(GameServerProto.GMID_GMCMD_REQ, msg);
-        // cc.log(this.edbxGMCMD.string);
-    },
-
-
-    getBuySpResult: function (event) {
-        if (event.ErrCode && event.ErrCode !== GameServerProto.PTERR_SUCCESS) {
-            if (event.ErrCode == GameServerProto.PTERR_DIAMOND_LACK){
-                CommonWnd.showNormalFreeGetWnd(event.ErrCode);
-            } else{
-                GlobalVar.comMsg.errorWarning(event.ErrCode);
-            }
-        } else {
-            GlobalVar.comMsg.showMsg(i18n.t('label.4000231'));
-        }
     },
 
     onTreasuryBtnTouched: function () {
-        let windowMgr = WindowManager.getInstance();
-        if (windowMgr.checkBtnLock()){
-            return;
-        }
         CommonWnd.showDrawView();
     },
 
@@ -619,7 +628,6 @@ var UIMain = cc.Class({
         let systemData = GlobalVar.tblApi.getDataBySingleKey('TblSystem', GameServerProto.PT_SYSTEM_STORE);
         if (systemData && GlobalVar.me().level < systemData.wOpenLevel) {
             GlobalVar.comMsg.showMsg(i18n.t('label.4000258').replace("%d", systemData.wOpenLevel || 0).replace("%d", systemData.strName));
-            WindowManager.getInstance().lockBtn();
             return;
         }
         CommonWnd.showStoreWithParam(1);
@@ -629,7 +637,6 @@ var UIMain = cc.Class({
         let systemData = GlobalVar.tblApi.getDataBySingleKey('TblSystem', GameServerProto.PT_SYSTEM_FULI_GIFT);
         if (systemData && GlobalVar.me().level < systemData.wOpenLevel) {
             GlobalVar.comMsg.showMsg(i18n.t('label.4000258').replace("%d", systemData.wOpenLevel || 0).replace("%d", systemData.strName));
-            WindowManager.getInstance().lockBtn();
             return;
         }
         CommonWnd.showLimitStoreWithParam(1);
@@ -644,90 +651,52 @@ var UIMain = cc.Class({
 
     onBtnMoreGame: function (event){
         if (cc.sys.platform != cc.sys.WECHAT_GAME) return;
-        const appid = "wx845a2f34af2f4235";
-        var parm = "pages/main/main";
-        let gender = 0;
-        weChatAPI.getUserInfo(function(userInfo){
-            gender = userInfo.gender;
-        })
-        parm = parm.indexOf('?') > 0 ? parm : parm +'?';
-        parm = parm.indexOf('gender') > 0 ? parm : parm + '&gender='+ gender;
+        // const appid = "wx845a2f34af2f4235";
+        // var parm = "pages/main/main";
+        // let gender = 0;
+        // weChatAPI.getUserInfo(function(userInfo){
+        //     gender = userInfo.gender;
+        // })
+        // parm = parm.indexOf('?') > 0 ? parm : parm +'?';
+        // parm = parm.indexOf('gender') > 0 ? parm : parm + '&gender='+ gender;
 
-        weChatAPI.navigateToMiniProgram(appid, parm);
-    },
-
-
-    createAuthorizeBtn(btnNode) {
-        let self = this;
-        let createBtn = function(){
-            let btnSize = cc.size(btnNode.width+20,btnNode.height+20);
-            let frameSize = cc.view.getFrameSize();
-            // console.log("winSize: ",winSize);
-            // console.log("frameSize: ",frameSize);
-            //适配不同机型来创建微信授权按钮
-            let worldPos = btnNode.parent.convertToWorldSpaceAR(btnNode.position);
-            let viewPos = self.node.convertToNodeSpaceAR(worldPos);
-
-            let left = (cc.winSize.width*0.5+viewPos.x-btnSize.width*0.5)/cc.winSize.width*frameSize.width;
-            let top = (cc.winSize.height*0.5-viewPos.y-btnSize.height*0.5)/cc.winSize.height*frameSize.height;
-            let width = btnSize.width/cc.winSize.width*frameSize.width;
-            let height = btnSize.height/cc.winSize.height*frameSize.height;
-            // console.log("button pos: ",cc.v2(left,top));
-            // console.log("button size: ",cc.size(width,height));
-        
-    
-            self.btnAuthorize = wx.createUserInfoButton({
-                type: 'text',
-                text: '',
-                style: {
-                    left: left,
-                    top: top,
-                    width: width,
-                    height: height,
-                    lineHeight: 0,
-                    backgroundColor: '',
-                    color: '#ffffff',
-                    textAlign: 'center',
-                    fontSize: 16,
-                    borderRadius: 4
-                }
-            })
-        
-            self.btnAuthorize.onTap((uinfo) => {
-                // console.log("onTap uinfo: ",uinfo);
-                if (uinfo.userInfo) {
-                    // console.log("wxLogin auth success");
-                    wx.showToast({title:"授权成功"});
-                    weChatAPI.getUserInfo(function(userInfo){
-                        GlobalVar.me().avatar = userInfo.avatarUrl;
-                        GlobalVar.me().roleNmae = userInfo.nickName;
-                        GlobalVar.handlerManager().mainHandler.sendReNameReq(GlobalVar.me().roleID, userInfo.nickName, userInfo.avatarUrl);
-                        if (self.btnAuthorize){
-                            self.btnAuthorize.destroy();
-                            self.btnAuthorize = null;
-                        }
-                    })
-                }else {
-                    // console.log("wxLogin auth fail");
-                    // wx.showToast({title:"授权失败"});
-                }
-                self.onPlayerInfoBtnClick();
-            });
-        }
-
-
-        weChatAPI.getSetting("userInfo", function(){
-
-        }, function(){
-            if (GlobalVar.me().avatar == ""){
-                createBtn();
+        // weChatAPI.navigateToMiniProgram(appid, parm);
+        weChatAPI.requestGetMoreFunInfo(function (data) {
+            console.log("moreInfo:", data);
+            let moreGameInfo = data.moreInfoList;
+            if (moreGameInfo.length == 0){
+                return;
             }
-        })
-
+            let randomNum = parseInt(moreGameInfo.length * Math.random());
+            let navigateData = moreGameInfo[randomNum];
+            let appid = navigateData.key;
+            let parm = navigateData.parm;
+            let gender = 0;
+            weChatAPI.getUserInfo(function(userInfo){
+                gender = userInfo.gender;
+                parm = parm.indexOf('?') > 0 ? parm : parm +'?';
+                parm = parm.indexOf('gender') > 0 ? parm : parm + '&gender='+ gender;
+                weChatAPI.navigateToMiniProgram(appid, parm);
+            }, function () {
+                parm = parm.indexOf('?') > 0 ? parm : parm +'?';
+                parm = parm.indexOf('gender') > 0 ? parm : parm + '&gender='+ gender;
+                weChatAPI.navigateToMiniProgram(appid, parm);
+            });
+        });
     },
 
     skipGuide: function () {
         config.NEED_GUIDE = false;
         cc.find('Canvas/GuideNode').active = false;
+    },
+
+    setMode: function () {
+        if (!config.GM_SWITCH) {
+            this.edbxGMCMD.node.active = false;
+            this.getNodeByName('btnSendGM').active = false;
+            this.getNodeByName('btnoBattleDemo').active = false;
+            this.getNodeByName('btnoBattleEditor').active = false;
+            cc.find('Canvas/GuideNode/skip').active = false;
+        }
     },
 });

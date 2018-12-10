@@ -80,9 +80,12 @@ cc.Class({
     },
 
     onLoad () {
+        this._super();
         i18n.init('zh');
         this.typeName=WndTypeDefine.WindowType.E_DT_NORMALITEMGETWAY;
         this.animeStartParam(0, 0);
+        this.canClose = true;
+        this.isFirstIn = true;
     },
 
     animeStartParam(paramScale, paramOpacity) {
@@ -125,7 +128,7 @@ cc.Class({
         this.setName(itemData.strName,itemData.wQuality);
         this.setDescription(itemData.strItemDesc);
         this.setLabelNumberData(num);
-        this.clearGetWay();
+        // this.clearGetWay();
         this.slot=slot;
         if(slot==-1){
             this.setBtnSellVisible(false);
@@ -147,16 +150,35 @@ cc.Class({
     },
 
     initGetWay: function (way) {
-        this.clearGetWay();
+        // this.clearGetWay();
+        this.scrollviewGetWay.loopScroll.releaseViewItems();
         let self = this;
-        for (let i = 0; i < way.length; i++) {
-            let getway = this.addGetWay();
-            getway.getComponent("GetWayObject").updateGetWay(way[i].wSystemID, way[i].nParam1, way[i].nParam2);
+        // for (let i = 0; i < way.length; i++) {
+        //     let getway = this.addGetWay();
+        //     getway.getComponent("GetWayObject").updateGetWay(way[i].wSystemID, way[i].nParam1, way[i].nParam2);
+        //     getway.getComponent("GetWayObject").setJumpCallback(function () {
+        //         self.close();
+        //     },)
+        //     this.getwayStack.push(getway);
+        // }
+        if (this.isFirstIn){
+            this.isFirstIn = false;
+            this.scrollviewGetWay.loopScroll.setGapDisY(5);
+            this.scrollviewGetWay.loopScroll.setCreateModel(this.getwayPrefab);
+            this.scrollviewGetWay.loopScroll.registerCompleteFunc(function(){
+                self.canClose = true;
+            })
+        }
+        this.scrollviewGetWay.loopScroll.setTotalNum(way.length);
+        this.scrollviewGetWay.loopScroll.registerUpdateItemFunc(function(getway, index){
+            getway.getComponent("GetWayObject").updateGetWay(way[index].wSystemID, way[index].nParam1, way[index].nParam2);
             getway.getComponent("GetWayObject").setJumpCallback(function () {
                 self.close();
             },)
-            this.getwayStack.push(getway);
-        }
+        });
+        this.scrollviewGetWay.loopScroll.resetView();
+
+
         if(way.length==0){
             let getway = this.addGetWay();
             getway.getComponent("GetWayObject").updateGetWay();
@@ -228,6 +250,10 @@ cc.Class({
     },
 
     close: function () {
+        if (!this.canClose){
+            return;
+        }
+        this.scrollviewGetWay.loopScroll.releaseViewItems();
         this._super();
     },
 

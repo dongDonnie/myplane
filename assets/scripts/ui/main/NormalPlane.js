@@ -108,6 +108,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMALPLANE_WND;
         this.animeStartParam(0);
         if (GlobalFunc.isAllScreen()) {
@@ -247,7 +248,7 @@ cc.Class({
         need = typeof need !== 'undefined' ? need : 1;
         if (type == 1) {
             this.itemObject.getComponent("ItemObject").updateItem(id);
-            this.itemObject.getComponent("ItemObject").setClick(false);
+            this.itemObject.getComponent("ItemObject").setClick(true, 0);
             this.labelConfitionData.string = GlobalVar.tblApi.getDataBySingleKey('TblItem', id).strName + '*' + need; //i18n.t("item." + id) + '*' + need;
             let own = GlobalVar.me().bagData.getItemCountById(id);
             this.labelOwn.string = own;
@@ -312,11 +313,13 @@ cc.Class({
             let self = this;
             let item = self.itemObject.getComponent("ItemObject");
             CommonWnd.showItemGetWay(item.itemID, item.getLabelNumberData(), item.getSlot());
-            WindowManager.getInstance().lockBtn();
             return;
         }
         if (msg.data.ErrCode == 0) {
-            CommonWnd.showMessage(null, CommonWnd.oneConfirm, i18n.t('label.4000216'), i18n.t('label.4000224'));
+            // CommonWnd.showMessage(null, CommonWnd.oneConfirm, i18n.t('label.4000216'), i18n.t('label.4000224'));
+            CommonWnd.showGetNewRareItemWnd(this.memberID, 0, 2, function() {
+                WindowManager.getInstance().popView(false, null, false);
+            });
         }
         if (msg.data.ErrCode != GameServerProto.PTERR_SUCCESS){
             GlobalVar.comMsg.errorWarning(msg.data.ErrCode);

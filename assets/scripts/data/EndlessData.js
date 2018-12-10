@@ -19,8 +19,8 @@ var EndlessData = cc.Class({
         self.token = "";
         self.bagData = {};
         self.startBattleData = null;
-        self.curMode = StoreageData.getEndlessMode();
-        
+        self.curMode = -1;
+        self.getChestFlag = false;
     },
 
     saveEndlessBagData: function (data) {
@@ -28,6 +28,7 @@ var EndlessData = cc.Class({
         self.bagData = data.Bag;
         GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_GET_ENDLESS_DATA, data);
     },
+
     setBlessMsg: function (data) {
         // console.log("BlessData:", data);
         if (data.ErrCode == GameServerProto.PTERR_SUCCESS) {
@@ -41,6 +42,12 @@ var EndlessData = cc.Class({
 
     getBlessStatusID: function () {
         return self.bagData.BlessStatusID || -1;
+    },
+    getEndlessRewardCount: function () {
+        return self.bagData.PowerPoint;
+    },
+    getEndlesslastPowerTime: function () {
+        return self.bagData.LastPowerTime;
     },
 
     setStatusCount: function (data) {
@@ -78,6 +85,7 @@ var EndlessData = cc.Class({
     saveStartBattleData: function (data) {
         if (data.ErrCode == GameServerProto.PTERR_SUCCESS) {
             self.startBattleData = data.OK;
+            GlobalVar.me().campData.dieCount = 0;
         }
         GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_ENDLESS_START_BATTLE, data);
     },
@@ -126,11 +134,19 @@ var EndlessData = cc.Class({
         }
     },
 
+    saveEndlessPowerNtf: function (data) {
+        self.bagData.PowerPoint = data.PowerPoint;
+        self.bagData.LastPowerTime = data.LastPowerTime;
+    },
+
     setEndlessMode: function (modeIndex) {
         self.curMode = modeIndex;
         StoreageData.setEndlessMode(modeIndex);
     },
     getEndlessMode: function () {
+        if (self.curMode = -1){
+            self.curMode = StoreageData.getEndlessMode();
+        }
         return self.curMode;
     },
 

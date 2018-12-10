@@ -2,15 +2,17 @@ var CampNormal25 = module.exports;
 
 CampNormal25.data = {
     maps:[
-        ["xingkong","xingkong","xingkong"],
-        ["tk-b","tk-c","tk-b"],
+        ["cx-a","cx-a","cx-a"],
+
     ],
     monsterWaves:[
-        {wave:{groups:[14,20,119],wait:0,delay:[2,2,4]},maps:{mapIndex:[0,1],mapSpeed:[250,600],mapScale:[1,1],mapLoop:[1,1]}},
-        {wave:{groups:[15,21,116,170,40,120],wait:0,delay:[0,0,3,4,8,9]}},
-        {wave:{groups:[111,114,42,35,37,18,27],wait:0,delay:[0,0,0,3,3.5,4,4.5]}},
-        {wave:{groups:[38,119,39],wait:0,delay:[0,0.5,1]}},
-        {wave:{groups:[168,169,118],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[999,995,545],wait:0,delay:[1,2,3]},maps:{mapIndex:[0],mapSpeed:[600],mapScale:[1],mapLoop:[1]}},
+        {wave:{groups:[1000,561,562],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[1001,882,837],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[1002,1003,546],wait:0,delay:[0,2,4]}},
+        {wave:{groups:[370,544,35,36],wait:0,delay:[0,2,3,4]}},
+        {wave:{groups:[1004,830,831],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[604],wait:0,delay:[0,2,4]}},
     ],
     monsterExtra:[311,312,313,314,315,316,317],
 

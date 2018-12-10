@@ -3,16 +3,18 @@ var CampNormal34 = module.exports;
 CampNormal34.data = {
     maps:[
         ["tk-a","tk-a","tk-a"],
-        ["tk-b","tk-c","tk-d-ditu"],
-        ["tk-e-ditu","tk-e-ditu","tk-e-ditu"],
+        ["tk-c","tk-c","tk-c"],
     ],
     monsterWaves:[
-        {wave:{groups:[113,115,117,118,27],wait:0,delay:[2,2,4,5,6]},maps:{mapIndex:[0,1],mapSpeed:[250,400],mapScale:[1,1],mapLoop:[0,0]}},
-        {wave:{groups:[32,120,45,111,116],wait:0,delay:[0,0,0,4,5]},maps:{mapIndex:[0,2],mapSpeed:[400,800],mapScale:[1,1],mapLoop:[1,1]}},
-        {wave:{groups:[18,17,126,31,32,30,125,126],wait:0,delay:[0,0,1,2,2,2,8,8]}}, 
-        {wave:{groups:[214],wait:0,delay:[0]}}, 
+        {wave:{groups:[1108,1277,1278],wait:0,delay:[1,2,3,4]},maps:{mapIndex:[0,1],mapSpeed:[200,500],mapScale:[1,1],mapLoop:[1,1]}},
+        {wave:{groups:[1109,1077],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[1110,1066],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[1111],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[1112,1067],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[1113,882],wait:0,delay:[0,0,2]}},
+        {wave:{groups:[1114],wait:0,delay:[0,0,2]}},
     ],
-    monsterExtra:[311,312,313,314,315,316,317],
+    monsterExtra:[311,312,313,314,315,316,317,14,17,19,20,22,25,27,28,30,35,36,39,40,42,45,47,48,50,51,52,573,830,831,832,833,834,836,839,1066,1067,1069,1070,1072,1073,1074,1075,1077,1078],
 
     totalHint:[
         {
@@ -28,20 +30,20 @@ CampNormal34.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:1,step:3}},
+                {wave:{index:0,step:6}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:2.8}},
             ],
         },
         {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:1,step:4}},
+                {wave:{index:6,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-2}},
             ],
         },
     ],

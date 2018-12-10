@@ -2,7 +2,6 @@ const Defines = require('BattleDefines');
 const GlobalVar = require('globalvar');
 const ResMapping = require("resmapping");
 const MotionNode = require("MotionNode");
-const BattleManager = require('BattleManager');
 
 var BezierStatus = {
     NONE: 0,
@@ -59,7 +58,7 @@ cc.Class({
     reset: function () {
         this.isShow = false;
         this.isDead = true;
-        this.hold=false;
+        this.hold = false;
         this.owner = null;
         this.objectType = Defines.ObjectType.OBJ_INVALID;
         this.objectName = '';
@@ -71,7 +70,7 @@ cc.Class({
         this.selfTimerHandler = null;
         this.selfInnerTimerHandler = null;
 
-        this.changeAnchor=false;
+        this.changeAnchor = false;
 
         this.atrb.movementType = 0;
         this.atrb.edgeCollision = 0;
@@ -83,19 +82,19 @@ cc.Class({
         this.atrb.opacityToDelta = 0;
 
         this.opacity = 255;
-        this.scale = 1;
-        this.rotation = 0;
+        this.setScale(1);
+        this.angle = 0;
 
         this.ctrlValue = {};
 
         this.motionNode = null;
 
+        this.rayAnime = null;
+
         this.curtime = 0;
 
-        this.ray = null;
-
-        this.setAnchorPoint(cc.v2(0.5, 0.5));
-        this.setPosition(cc.v2(0, 0));
+        this.setAnchorPoint(cc.v3(0.5, 0.5));
+        this.setPosition(cc.v3(0, 0));
 
         this.resetProp();
         this.resetStuff();
@@ -146,7 +145,7 @@ cc.Class({
     newObject: function () {
         if (this.baseObject != null && !this.changeAnchor) {
             this.baseObject.setPosition(this.atrb.objectAutoRotato.pos);
-            this.baseObject.rotation = 0;
+            this.baseObject.angle = 0;
         }
 
         this.motionStreakCtrl(0);
@@ -167,17 +166,12 @@ cc.Class({
             this.poolManager.getInstance().putObject(Defines.PoolType.BUFF, this.baseObject);
         } else if (this.objectType == Defines.ObjectType.OBJ_EXECUTE) {
             this.poolManager.getInstance().putObject(Defines.PoolType.EXECUTE, this.baseObject, this.objectName);
-        }else if (this.objectType == Defines.ObjectType.OBJ_SUNDRIES) {
+        } else if (this.objectType == Defines.ObjectType.OBJ_SUNDRIES) {
             this.poolManager.getInstance().putObject(Defines.PoolType.OBJ_SUNDRIES, this.baseObject);
         }
         this.removeChild(this.baseObject);
 
         this.motionStreakCtrl(2);
-
-        // if (this.ray != null) {
-        //     this.ray.destroy();
-        //     this.ray = null;
-        // }
     },
 
     getObject: function () {
@@ -188,7 +182,7 @@ cc.Class({
                 return this.baseObject.getComponent("BulletObject");
             } else if (this.objectType == Defines.ObjectType.OBJ_MONSTER) {
                 return this.baseObject.getComponent("MonsterObject");
-            } else if (entity.objectType == Defines.ObjectType.OBJ_BUFF) {
+            } else if (this.objectType == Defines.ObjectType.OBJ_BUFF) {
                 return this.baseObject.getComponent("BuffObject");
             } else {
                 return null;
@@ -250,16 +244,21 @@ cc.Class({
         this.atrb.shiftStandby = {};
 
         this.atrb.shiftStandby.state = 0;
-        this.atrb.shiftStandby.dst = cc.v2(0, 0);
+        this.atrb.shiftStandby.dst = cc.v3(0, 0);
         this.atrb.shiftStandby.time = 0;
         this.atrb.shiftStandby.speed = 0;
         this.atrb.shiftStandby.speedAcc = 0;
         this.atrb.shiftStandby.fixDirection = false;
-        this.atrb.shiftStandby.path = cc.v2(0, 0);
+        this.atrb.shiftStandby.path = cc.v3(0, 0);
         this.atrb.shiftStandby.length = 0;
         this.atrb.shiftStandby.curLength = 0;
         this.atrb.shiftStandby.curTime = 0;
-        this.atrb.shiftStandby.origin = cc.v2(0, 0);
+        this.atrb.shiftStandby.origin = cc.v3(0, 0);
+
+        this.atrb.shiftStandby.stepone = 0.25;
+        this.atrb.shiftStandby.steptwo = 0.25;
+        this.atrb.shiftStandby.stepthree = 0.25;
+        this.atrb.shiftStandby.stepfour = 0.25;
 
         this.atrb.shiftStandby.overDes = 0;
     },
@@ -270,10 +269,10 @@ cc.Class({
         this.atrb.simpleHarmonic.amplitude = 0;
         this.atrb.simpleHarmonic.cycle = 1;
         this.atrb.simpleHarmonic.fi = 0;
-        this.atrb.simpleHarmonic.moveDirection = cc.v2(0, 0);
-        this.atrb.simpleHarmonic.speed = cc.v2(0, 0);
-        this.atrb.simpleHarmonic.speedAcc = cc.v2(0, 0);
-        this.atrb.simpleHarmonic.origin = cc.v2(0, 0);
+        this.atrb.simpleHarmonic.moveDirection = cc.v3(0, 0);
+        this.atrb.simpleHarmonic.speed = cc.v3(0, 0);
+        this.atrb.simpleHarmonic.speedAcc = cc.v3(0, 0);
+        this.atrb.simpleHarmonic.origin = cc.v3(0, 0);
         this.atrb.simpleHarmonic.curTime = 0;
         this.atrb.simpleHarmonic.fixDirection = 0;
     },
@@ -281,7 +280,7 @@ cc.Class({
     resetEntityAutoCircle: function () {
         this.atrb.entityAutoRotato = {};
 
-        this.atrb.entityAutoRotato.pos = cc.v2(0, 0);
+        this.atrb.entityAutoRotato.pos = cc.v3(0, 0);
         this.atrb.entityAutoRotato.rSpeed = 0;
         this.atrb.entityAutoRotato.rSpeedAcc = 0;
         this.atrb.entityAutoRotato.omega = 0;
@@ -311,7 +310,7 @@ cc.Class({
         this.atrb.objectAutoRotato.omegaAcc = 0;
         this.atrb.objectAutoRotato.sita = 0;
         this.atrb.objectAutoRotato.radius = 0;
-        this.atrb.objectAutoRotato.pos = cc.v2(0, 0);
+        this.atrb.objectAutoRotato.pos = cc.v3(0, 0);
 
         this.atrb.objectAutoRotato.fixDirection = false;
     },
@@ -344,8 +343,8 @@ cc.Class({
     resetLine: function () {
         this.atrb.line = {};
 
-        this.atrb.line.speed = cc.v2(0, 0);
-        this.atrb.line.speedAcc = cc.v2(0, 0);
+        this.atrb.line.speed = cc.v3(0, 0);
+        this.atrb.line.speedAcc = cc.v3(0, 0);
 
         this.atrb.line.fixDirection = false;
     },
@@ -364,8 +363,8 @@ cc.Class({
         this.atrb.chase = {};
 
         this.atrb.chase.target = null;
-        this.atrb.chase.speed = cc.v2(0, 0);
-        this.atrb.chase.speedAcc = cc.v2(0, 0);
+        this.atrb.chase.speed = cc.v3(0, 0);
+        this.atrb.chase.speedAcc = cc.v3(0, 0);
         this.atrb.chase.omega = 0;
         this.atrb.chase.omegaAcc = 0;
         this.atrb.chase.mode = 0;
@@ -381,11 +380,11 @@ cc.Class({
     resetEntity: function () {
         if (this.baseObject != null) {
             this.setPosition(this.getPosition().add(this.baseObject.getPosition()));
-            this.baseObject.setPosition(cc.v2(0, 0));
-            this.setRotation(this.baseObject.rotation - this.getRotation());
-            this.baseObject.rotation = 0;
+            this.baseObject.setPosition(cc.v3(0, 0));
+            this.setBaseAngle(this.baseObject.angle + this.getBaseAngle());
+            this.baseObject.angle = 0;
         } else {
-            this.setRotation(0);
+            this.setBaseAngle(0);
         }
     },
 
@@ -435,8 +434,7 @@ cc.Class({
         }
 
         if (line.fixDirection) {
-            let angle = Math.atan2(this.atrb.line.speed.y, this.atrb.line.speed.x) * 180 / Math.PI;
-            this.rotation = 90 - angle;
+            this.angle = Math.atan2(this.atrb.line.speed.y, this.atrb.line.speed.x) * 180 / Math.PI - 90;
         }
 
         pos.x += line.speed.x * dt;
@@ -460,11 +458,11 @@ cc.Class({
             let v = newPos.sub(pos);
             if (v.x != 0 && v.y != 0) {
                 if (bezier.fixDirection == 1) {
-                    this.rotation = 90 - angle;
+                    this.angle = angle - 90;
                 } else if (bezier.fixDirection == 2) {
-                    this.rotation = 180 - angle;
+                    this.angle = angle - 180;
                 } else if (bezier.fixDirection == 3) {
-                    this.rotation = -angle;
+                    this.angle = angle;
                 }
             }
 
@@ -494,11 +492,11 @@ cc.Class({
             if (v.x != 0 && v.y != 0 && bezier.fixDirection) {
                 let angle = Math.atan2(v.y, v.x) * 180 / Math.PI;
                 if (bezier.fixDirection == 1) {
-                    this.rotation = 90 - angle;
+                    this.angle = angle - 90;
                 } else if (bezier.fixDirection == 2) {
-                    this.rotation = 180 - angle;
+                    this.angle = angle - 180;
                 } else if (bezier.fixDirection == 3) {
-                    this.rotation = -angle;
+                    this.angle = angle;
                 }
             }
 
@@ -534,7 +532,7 @@ cc.Class({
             x = x + data[i - 1].x * (this.factorial(data.length - 1) / (this.factorial(data.length - i) * this.factorial(i - 1))) * Math.pow(1 - t, data.length - i) * Math.pow(t, i - 1)
             y = y + data[i - 1].y * (this.factorial(data.length - 1) / (this.factorial(data.length - i) * this.factorial(i - 1))) * Math.pow(1 - t, data.length - i) * Math.pow(t, i - 1)
         }
-        return cc.v2(x, y);
+        return cc.v3(x, y);
     },
 
     updateEntityAutoCircle: function (dt) {
@@ -555,10 +553,9 @@ cc.Class({
         let x = Math.cos(sita) * rLength + entityAutoRotato.pos.x;
         let y = Math.sin(sita) * rLength + entityAutoRotato.pos.y;
 
-        let v = cc.v2(x, y).sub(this.getPosition());
+        let v = cc.v3(x, y).sub(this.getPosition());
         if (entityAutoRotato.fixDirection) {
-            let angle = Math.atan2(v.y, v.x) * 180 / Math.PI;
-            this.rotation = 90 - angle;
+            this.angle = Math.atan2(v.y, v.x) * 180 / Math.PI - 90;
         }
         this.setPosition(x, y);
     },
@@ -566,11 +563,11 @@ cc.Class({
     updateEntitySelfCircle: function (dt) {
         let entitySelfRotato = this.atrb.entitySelfRotato;
         entitySelfRotato.omega += entitySelfRotato.omegaAcc * dt;
-        this.rotation += entitySelfRotato.omega;
+        this.angle -= entitySelfRotato.omega;
     },
 
     updateObjectAutoCircle: function (dt) {
-        if(this.changeAnchor){
+        if (this.changeAnchor) {
             return;
         }
         let objectAutoRotato = this.atrb.objectAutoRotato;
@@ -586,10 +583,9 @@ cc.Class({
         objectAutoRotato.sita = sita;
         objectAutoRotato.radius = rLength;
 
-        let v = cc.v2(x, y).sub(this.baseObject.getPosition());
+        let v = cc.v3(x, y).sub(this.baseObject.getPosition());
         if (objectAutoRotato.fixDirection) {
-            let angle = Math.atan2(v.y, v.x) * 180 / Math.PI;
-            this.baseObject.rotation = 90 - angle;
+            this.baseObject.angle = Math.atan2(v.y, v.x) * 180 / Math.PI - 90;
         }
 
         this.baseObject.setPosition(x, y);
@@ -598,7 +594,7 @@ cc.Class({
     updateObjectSelfCircle: function (dt) {
         let objectSelfRotato = this.atrb.objectSelfRotato;
         objectSelfRotato.omega += objectSelfRotato.omegaAcc * dt;
-        this.baseObject.rotation += objectSelfRotato.omega;
+        this.baseObject.angle -= objectSelfRotato.omega;
     },
 
     updateChase: function (dt) {
@@ -658,12 +654,23 @@ cc.Class({
         //若 P × Q < 0 , 则P在Q的逆时针方向。
 
         if (chase.target == null || chase.target.isDead) {
-            return;
+            if (typeof chase.target.objectType !== 'undefined') {
+                if (chase.target.objectType == Defines.ObjectType.OBJ_MONSTER) {
+                    chase.target = require('AIInterface').randMonster();
+                    if (chase.target == null) {
+                        return;
+                    }
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            }
         }
         let v = chase.target.getPosition().sub(this.getPosition());
 
         if (chase.mode == 0) {
-            let originAngle = Math.atan2(chase.speed.y,chase.speed.x) * 180 / Math.PI;
+            let originAngle = Math.atan2(chase.speed.y, chase.speed.x) * 180 / Math.PI;
             let side = v.x * chase.speed.y - chase.speed.x * v.y > 0 ? true : false;
 
             if (side) {
@@ -677,14 +684,13 @@ cc.Class({
             chase.omega += chase.omegaAcc * dt;
             originAngle += chase.omega * dt;
 
-            let v_a=cc.v2(Math.cos(originAngle * Math.PI / 180),Math.sin(originAngle * Math.PI / 180));
+            let v_a = cc.v3(Math.cos(originAngle * Math.PI / 180), Math.sin(originAngle * Math.PI / 180));
 
             chase.speed = v_a.mul(chase.speed.mag());
             chase.speedAcc == v_a.mul(chase.speedAcc.mag());
 
             if (v.x != 0 && v.y != 0) {
-                let angle = Math.atan2(chase.speed.y, chase.speed.x) * 180 / Math.PI;
-                this.rotation = 90 - angle;
+                this.angle = Math.atan2(chase.speed.y, chase.speed.x) * 180 / Math.PI - 90;
             }
         } else if (chase.mode == 1) {
             chase.speed = (v.normalize()).mul(chase.speed.mag());
@@ -701,8 +707,7 @@ cc.Class({
         }
 
         if (shiftStandby.fixDirection) {
-            let angle = Math.atan2(shiftStandby.path.y, shiftStandby.path.x) * 180 / Math.PI;
-            this.rotation = 90 - angle;
+            this.angle = Math.atan2(shiftStandby.path.y, shiftStandby.path.x) * 180 / Math.PI - 90;
         }
 
         shiftStandby.curTime += dt;
@@ -711,7 +716,12 @@ cc.Class({
         let a = shiftStandby.speedAcc;
         let t = shiftStandby.curTime;
         let vt = v0 + a * t;
-        let length = v0 * t + 0.5 * a * t * t;
+        let length = 0;
+        if (shiftStandby.state == 1 || shiftStandby.state==3) {
+            length = v0 * t + 0.5 * a * t * t;
+        } else {
+            length = v0 * t - 0.5 * a * t * t;
+        }
         let vec = (shiftStandby.path.normalize()).mul(length);
         shiftStandby.curLength = length;
 
@@ -721,18 +731,48 @@ cc.Class({
             if (shiftStandby.curLength >= shiftStandby.length) {
 
                 shiftStandby.origin = this.getPosition();
-                shiftStandby.path = shiftStandby.dst.sub(this.getPosition());
-                shiftStandby.length = this.atrb.shiftStandby.path.mag();
+                //shiftStandby.path = shiftStandby.path.normalize().mul((shiftStandby.path.mag() + shiftStandby.overDes)*0.5);
+                //shiftStandby.length = (shiftStandby.path.mag() + shiftStandby.overDes)*0.5;
                 shiftStandby.curLength = 0;
                 shiftStandby.curTime = 0;
 
+                let t = shiftStandby.time * shiftStandby.steptwo;
+                //shiftStandby.speedAcc = Math.ceil(shiftStandby.length * 2 / t / t);
                 shiftStandby.speed = vt;
-                let t = shiftStandby.time * 0.4;
-                shiftStandby.speedAcc = (shiftStandby.length - shiftStandby.speed * t) / (t * t);
 
                 shiftStandby.state = 2;
             }
         } else if (shiftStandby.state == 2) {
+            if (shiftStandby.curLength >= shiftStandby.length) {
+
+                shiftStandby.origin = this.getPosition();
+                shiftStandby.path = shiftStandby.dst.sub(this.getPosition()).mul(0.5);
+                shiftStandby.length = Math.floor(shiftStandby.path.mag());
+                shiftStandby.curLength = 0;
+                shiftStandby.curTime = 0;
+
+                let t = shiftStandby.time * shiftStandby.stepthree;
+                shiftStandby.speedAcc = Math.ceil(shiftStandby.length * 2 / t / t);
+                shiftStandby.speed = 0;
+
+                shiftStandby.state = 3;
+            }
+        } else if (shiftStandby.state == 3) {
+            if (shiftStandby.curLength >= shiftStandby.length) {
+
+                shiftStandby.origin = this.getPosition();
+                shiftStandby.path = shiftStandby.dst.sub(this.getPosition());
+                shiftStandby.length = Math.floor(shiftStandby.path.mag());
+                shiftStandby.curLength = 0;
+                shiftStandby.curTime = 0;
+
+                let t = shiftStandby.time * shiftStandby.stepfour;
+                //shiftStandby.speedAcc = Math.ceil(shiftStandby.length * 2 / t / t);
+                shiftStandby.speed = vt;//Math.ceil(shiftStandby.speedAcc * t);
+
+                shiftStandby.state = 4;
+            }
+        } else if (shiftStandby.state == 4) {
             if (shiftStandby.curLength >= shiftStandby.length) {
                 this.setPosition(shiftStandby.dst);
                 this.resetShiftStandby();
@@ -754,23 +794,21 @@ cc.Class({
 
         let plus = simpleHarmonic.amplitude * Math.cos(Math.PI * 2 / simpleHarmonic.cycle * simpleHarmonic.curTime + simpleHarmonic.fi * Math.PI / 180);
 
-        let v = cc.v2(0, 0);
+        let v = cc.v2(simpleHarmonic.moveDirection.x, simpleHarmonic.moveDirection.y);
         if (plus > 0) {
-            v = ((simpleHarmonic.moveDirection.rotate(-90 * Math.PI / 180)).normalize()).mul(Math.abs(plus));
+            v = ((v.rotate(-90 * Math.PI / 180)).normalize()).mul(Math.abs(plus));
         } else if (plus < 0) {
-            v = ((simpleHarmonic.moveDirection.rotate(90 * Math.PI / 180)).normalize()).mul(Math.abs(plus));
+            v = ((v.rotate(90 * Math.PI / 180)).normalize()).mul(Math.abs(plus));
         }
 
         let pos = this.getPosition();
-        let newPos = simpleHarmonic.origin.add(v);
+        let newPos = simpleHarmonic.origin.add(cc.v3(v.x, v.y, 0));
 
         if (simpleHarmonic.fixDirection == 1) {
-            let angle = Math.atan2(simpleHarmonic.speed.y, simpleHarmonic.speed.x) * 180 / Math.PI;
-            this.rotation = 90 - angle;
+            this.angle = Math.atan2(simpleHarmonic.speed.y, simpleHarmonic.speed.x) * 180 / Math.PI - 90;
         } else if (simpleHarmonic.fixDirection == 2) {
             let direction = newPos.sub(pos);
-            let angle = Math.atan2(direction.y, direction.x) * 180 / Math.PI;
-            this.rotation = 90 - angle;
+            this.angle = Math.atan2(direction.y, direction.x) * 180 / Math.PI - 90;
         }
 
         this.setPosition(newPos);
@@ -783,27 +821,27 @@ cc.Class({
             let v = aimAt.target.getPosition().sub(this.getPosition());
 
             let angle = Math.atan2(v.y, v.x) * 180 / Math.PI;
-            aimAt.angle = 90 - angle;
-            if (Math.abs(this.rotation - aimAt.angle) > 180) {
-                this.rotation = 360 - this.rotation;
+            aimAt.angle = angle - 90;
+            if (Math.abs(this.angle - aimAt.angle) > 180) {
+                this.angle = 360 - this.angle;
             }
-            if (this.rotation > aimAt.angle) {
+            if (this.angle > aimAt.angle) {
                 aimAt.omega = -Math.abs(aimAt.omega);
                 aimAt.omegaAcc = -Math.abs(aimAt.omegaAcc);
                 aimAt.omega += aimAt.omegaAcc * dt;
-                if (this.rotation + aimAt.omega < aimAt.angle) {
-                    this.rotation = aimAt.angle;
+                if (this.angle + aimAt.omega < aimAt.angle) {
+                    this.angle = aimAt.angle;
                 } else {
-                    this.rotation += aimAt.omega;
+                    this.angle += aimAt.omega;
                 }
-            } else if (this.rotation < aimAt.angle) {
+            } else if (this.angle < aimAt.angle) {
                 aimAt.omega = Math.abs(aimAt.omega);
                 aimAt.omegaAcc = Math.abs(aimAt.omegaAcc);
                 aimAt.omega += aimAt.omegaAcc * dt;
-                if (this.rotation + aimAt.omega > aimAt.angle) {
-                    this.rotation = aimAt.angle;
+                if (this.angle + aimAt.omega > aimAt.angle) {
+                    this.angle = aimAt.angle;
                 } else {
-                    this.rotation += aimAt.omega;
+                    this.angle += aimAt.omega;
                 }
             }
         }
@@ -871,7 +909,8 @@ cc.Class({
     updateStuff(dt) {
         if (this.atrb.scaleToLeftTime > 0) {
             this.atrb.scaleToLeftTime -= dt;
-            this.scale += this.atrb.scaleToDelta;
+            let sy = Math.abs(this.scaleY) + this.atrb.scaleToDelta;
+            this.setScale(this.scaleX + this.atrb.scaleToDelta, this.scaleY < 0 ? -sy : sy);
         }
         if (this.atrb.opacityToLeftTime > 0) {
             this.atrb.opacityToLeftTime -= dt;
@@ -883,10 +922,10 @@ cc.Class({
     checkOut: function (dt) {
         this.curtime += dt;
         let pos = this.getPosition();
-        
-        let size = BattleManager.getInstance().displayContainer.getContentSize()
 
-        if (BattleManager.getInstance().allScreen) {
+        let size = this.battleManager.displayContainer.getContentSize()
+
+        if (this.battleManager.allScreen) {
             size.height -= 130;
         } else {
             size.height -= 47;
@@ -894,10 +933,10 @@ cc.Class({
 
         if (this.isShow) {
             if (pos.y > size.height + Defines.OUT_SIDE || pos.x < -Defines.OUT_SIDE || pos.y < -Defines.OUT_SIDE || pos.x > size.width + Defines.OUT_SIDE) {
-                if(!this.hold){
+                if (!this.hold) {
                     this.isDead = true;
-                }else{
-                    this.isShow=false;
+                } else {
+                    this.isShow = false;
                 }
             }
         } else {
@@ -908,7 +947,7 @@ cc.Class({
                 this.isShow = true;
             }
             if (pos.y > size.height + Defines.FORCE_DESTORY || pos.y < -Defines.FORCE_DESTORY || pos.x > size.width + Defines.FORCE_DESTORY || pos.x < -Defines.FORCE_DESTORY) {
-                if(!this.hold){
+                if (!this.hold) {
                     this.isShow = true;
                     this.isDead = true;
                 }
@@ -939,9 +978,9 @@ cc.Class({
         this.atrb.simpleHarmonic.amplitude = typeof amplitude !== 'undefined' ? amplitude : 0;
         this.atrb.simpleHarmonic.cycle = typeof cycle !== 'undefined' ? (cycle > 0 ? cycle : 1) : 1;
         this.atrb.simpleHarmonic.fi = typeof fi !== 'undefined' ? fi : 0;
-        this.atrb.simpleHarmonic.moveDirection = typeof moveDirection !== 'undefined' ? moveDirection : cc.v2(0, 0);
-        this.atrb.simpleHarmonic.speed = typeof speed !== 'undefined' ? speed : cc.v2(0, 0);
-        this.atrb.simpleHarmonic.speedAcc = typeof speedAcc !== 'undefined' ? speedAcc : cc.v2(0, 0);
+        this.atrb.simpleHarmonic.moveDirection = typeof moveDirection !== 'undefined' ? moveDirection : cc.v3(0, 0);
+        this.atrb.simpleHarmonic.speed = typeof speed !== 'undefined' ? speed : cc.v3(0, 0);
+        this.atrb.simpleHarmonic.speedAcc = typeof speedAcc !== 'undefined' ? speedAcc : cc.v3(0, 0);
         this.atrb.simpleHarmonic.origin = this.getPosition();
         this.atrb.simpleHarmonic.curTime = 0;
         this.atrb.simpleHarmonic.fixDirection = typeof fixDirection !== 'undefined' ? fixDirection : 0;
@@ -955,13 +994,18 @@ cc.Class({
 
         this.atrb.shiftStandby.origin = this.getPosition();
         this.atrb.shiftStandby.path = this.atrb.shiftStandby.dst.sub(this.getPosition());
-        this.atrb.shiftStandby.length = this.atrb.shiftStandby.path.mag() + this.atrb.shiftStandby.overDes;
+        this.atrb.shiftStandby.length = (this.atrb.shiftStandby.path.mag() + this.atrb.shiftStandby.overDes) * 0.5;
         this.atrb.shiftStandby.curLength = 0;
         this.atrb.shiftStandby.curTime = 0;
 
         this.atrb.shiftStandby.speed = 0;
-        let t = this.atrb.shiftStandby.time * 0.6;
-        this.atrb.shiftStandby.speedAcc = (this.atrb.shiftStandby.length - this.atrb.shiftStandby.speed * t) / (t * t);
+
+        //this.atrb.shiftStandby.stepone = 0.5;
+        //this.atrb.shiftStandby.steptwo = 1 - this.atrb.shiftStandby.stepone;
+
+        let t = this.atrb.shiftStandby.time * this.atrb.shiftStandby.stepone;
+        //this.atrb.shiftStandby.speedAcc = (this.atrb.shiftStandby.length - this.atrb.shiftStandby.speed * t)*2 / (t * t);
+        this.atrb.shiftStandby.speedAcc = this.atrb.shiftStandby.length * 2 / t / t;
 
         this.atrb.shiftStandby.state = 1;
     },
@@ -970,8 +1014,8 @@ cc.Class({
         if (target != null) {
             this.atrb.chase.target = target;
             this.atrb.chase.status = 1;
-            this.atrb.chase.speed = typeof speed !== 'undefined' ? speed : cc.v2(0, 0);
-            this.atrb.chase.speedAcc = typeof speedAcc !== 'undefined' ? speedAcc : cc.v2(0, 0);
+            this.atrb.chase.speed = typeof speed !== 'undefined' ? speed : cc.v3(0, 0);
+            this.atrb.chase.speedAcc = typeof speedAcc !== 'undefined' ? speedAcc : cc.v3(0, 0);
             this.atrb.chase.omega = typeof omega !== 'undefined' ? omega : 0;
             this.atrb.chase.omegaAcc = typeof omegaAcc !== 'undefined' ? omegaAcc : 0;
             this.atrb.chase.duration = typeof duration !== 'undefined' ? duration : -100;
@@ -985,16 +1029,16 @@ cc.Class({
     },
 
     setEntityAutoCirclePos: function (pos) {
-        this.atrb.entityAutoRotato.pos = typeof pos !== 'undefined' ? pos : cc.v2(0, 0);
+        this.atrb.entityAutoRotato.pos = typeof pos !== 'undefined' ? pos : cc.v3(0, 0);
     },
     getEntityAutoCirclePos: function () {
         return this.atrb.entityAutoRotato.pos;
     },
     setEntityAutoCircleRadius: function (v) {
-        v = typeof v !== 'undefined' ? v : cc.v2(0, 0);
+        v = typeof v !== 'undefined' ? v : cc.v3(0, 0);
         let pos = v.add(this.atrb.entityAutoRotato.pos);
         this.atrb.entityAutoRotato.radius = v.mag();
-        this.atrb.entityAutoRotato.sita = Math.atan2(v.y,v.x);
+        this.atrb.entityAutoRotato.sita = Math.atan2(v.y, v.x);
         this.setPosition(pos);
     },
     getEntityAutoCircleRadius: function () {
@@ -1093,7 +1137,7 @@ cc.Class({
     setObjectAutoCircleRadius: function (radius, angle) {
         angle = typeof angle !== 'undefined' ? angle * Math.PI / 180 : 0;
         this.atrb.objectAutoRotato.radius = typeof radius !== 'undefined' ? radius : 0;
-        let v = cc.v2(Math.cos(angle),Math.sin(angle));
+        let v = cc.v3(Math.cos(angle), Math.sin(angle));
         this.atrb.objectAutoRotato.pos = v.mul(radius);
         this.atrb.objectAutoRotato.sita = angle;
     },
@@ -1133,19 +1177,18 @@ cc.Class({
     },
 
     setSpeed: function (v, fixDirection) {
-        this.atrb.line.speed = typeof v !== 'undefined' ? v : cc.v2(0, 0);
+        this.atrb.line.speed = typeof v !== 'undefined' ? v : cc.v3(0, 0);
         this.atrb.line.fixDirection = typeof fixDirection !== 'undefined' ? fixDirection : false;
 
         if (this.atrb.line.fixDirection) {
-            let angle = Math.atan2(this.atrb.line.speed.y, this.atrb.line.speed.x) * 180 / Math.PI;
-            this.rotation = 90 - angle;
+            this.angle = Math.atan2(this.atrb.line.speed.y, this.atrb.line.speed.x) * 180 / Math.PI - 90;
         }
     },
     getSpeed: function () {
         return this.atrb.line.speed;
     },
     setSpeedAcc: function (acc) {
-        this.atrb.line.speedAcc = typeof acc !== 'undefined' ? acc : cc.v2(0, 0);
+        this.atrb.line.speedAcc = typeof acc !== 'undefined' ? acc : cc.v3(0, 0);
     },
     getSpeedAcc: function () {
         return this.atrb.line.speedAcc;
@@ -1191,18 +1234,31 @@ cc.Class({
         if (this.baseObject != null) {
             return this.baseObject.getPosition();
         } else {
-            return cc.v2(0, 0);
+            return cc.v3(0, 0);
         }
     },
 
-    setObjectRotation: function (angle) {
+    // setObjectRotation: function (angle) {
+    //     if (this.baseObject != null) {
+    //         this.baseObject.rotation = angle;
+    //     }
+    // },
+    // getObjectRotation: function () {
+    //     if (this.baseObject != null) {
+    //         return this.baseObject.rotation;
+    //     } else {
+    //         return 0;
+    //     }
+    // },
+
+    setObjectAngle: function (angle) {
         if (this.baseObject != null) {
-            this.baseObject.rotation = angle;
+            this.baseObject.angle = angle;
         }
     },
-    getObjectRotation: function () {
+    getObjectAngle: function () {
         if (this.baseObject != null) {
-            return this.baseObject.rotation;
+            return this.baseObject.angle;
         } else {
             return 0;
         }
@@ -1215,11 +1271,18 @@ cc.Class({
         return this.zOrder;
     },
 
-    setRotation: function (angle) {
-        this.rotation = typeof angle !== 'undefined' ? angle : 0;
+    // setRotation: function (angle) {
+    //     this.rotation = typeof angle !== 'undefined' ? angle : 0;
+    // },
+    // getRotation: function () {
+    //     return this.rotation;
+    // },
+
+    setBaseAngle: function (angle) {
+        this.angle = typeof angle !== 'undefined' ? angle : 0;
     },
-    getRotation: function () {
-        return this.rotation;
+    getBaseAngle: function () {
+        return this.angle;
     },
 
     setOpacity: function (o) {
@@ -1235,17 +1298,17 @@ cc.Class({
     getActive: function () {
         return this.active;
     },
-    setHold:function(hold){
-        this.hold=typeof hold !=='undefined'?hold:false;
+    setHold: function (hold) {
+        this.hold = typeof hold !== 'undefined' ? hold : false;
     },
-    getHold:function(){
+    getHold: function () {
         return this.hold;
     },
-    setAnchor:function(x,y){
-        this.changeAnchor=true;
-        this.baseObject.setPosition(x,y);
+    setAnchor: function (x, y) {
+        this.changeAnchor = true;
+        this.baseObject.setPosition(x, y);
     },
-    getAnchor:function(){
+    getAnchor: function () {
         return this.baseObject.getPosition();
     },
 
@@ -1257,17 +1320,22 @@ cc.Class({
         this.atrb.edgeCollisionWithoutBottom = typeof open !== 'undefined' ? open : false;
     },
 
-    runScale: function (st, time) {
-        let obj=null;
-        if(this.objectType==Defines.ObjectType.OBJ_MONSTER){
-            obj = GlobalVar.tblApi.getDataBySingleKey('TblBattleMonster', this.objectID);
-        }else{
-            obj = GlobalVar.tblApi.getDataBySingleKey('TblBattleBullet', this.objectID);
-        }
-        if (!obj) {
-            return;
-        }
-        this.atrb.scaleToDelta = (st - obj.dScale) / (time / Defines.BATTLE_FRAME_SECOND);
+    runScale: function (st, time, curScale) {
+        // curScale=typeof curScale!=='undefined'?curScale:false;
+        // let obj = null;
+        // if (this.objectType == Defines.ObjectType.OBJ_MONSTER) {
+        //     obj = GlobalVar.tblApi.getDataBySingleKey('TblBattleMonster', this.objectID);
+        // } else {
+        //     obj = GlobalVar.tblApi.getDataBySingleKey('TblBattleBullet', this.objectID);
+        // }
+        // if (!obj) {
+        //     return;
+        // }
+        // let origin=obj.dScale;
+        // if(curScale){
+        //     origin=this.scaleX;
+        // }
+        this.atrb.scaleToDelta = (st - this.scaleX) / (time / Defines.BATTLE_FRAME_SECOND);
         this.atrb.scaleToLeftTime = time;
     },
     runOpacity: function (ot, time) {
@@ -1305,10 +1373,17 @@ cc.Class({
         return null;
     },
 
-    addMotionStreak: function (res, color, fadeTime, minSeg, stroke, fastMode) {
+    addMotionStreak: function (res, addTail, tailPos, color, fadeTime, minSeg, stroke, fastMode) {
         if (this.motionNode == null) {
             this.motionNode = new MotionNode();
-            this.motionNode.initMotion(res, color, fadeTime, minSeg, stroke, fastMode);
+            this.motionNode.initMotion(res, tailPos, color, fadeTime, minSeg, stroke, fastMode);
+            addTail = typeof addTail !== 'undefined' ? addTail : false;
+            if (this.getChildByName('1001') == null && addTail) {
+                let tail = new cc.Node();
+                this.addChild(tail, 0, '1001');
+                tail.setPosition(this.motionNode.tailPos);
+                this.battleManager.displayContainer.addChild(this.motionNode, Defines.Z.RAY);
+            }
         }
     },
 
@@ -1317,10 +1392,13 @@ cc.Class({
         if (this.motionNode != null && cc.isValid(this.motionNode) && this.baseObject != null) {
             if (mode == 0) {
                 //create
-                let tail = new cc.Node();
-                this.addChild(tail, 0, '1001');
-                //tail.setPosition(cc.v2(0, -0.35 * this.baseObject.getContentSize().height));
-                this.battleManager.displayContainer.addChild(this.motionNode, Defines.Z.MISSILE-1);
+                if (this.getChildByName('1001') == null) {
+                    let tail = new cc.Node();
+                    this.addChild(tail, 0, '1001');
+                    tail.setPosition(this.motionNode.tailPos);
+                    this.battleManager.displayContainer.addChild(this.motionNode, Defines.Z.RAY);
+                }
+                //tail.setPosition(cc.v3(0, -0.35 * this.baseObject.getContentSize().height));
             } else if (mode == 1) {
                 //update
                 if (this.getChildByName('1001') != null) {
@@ -1338,50 +1416,34 @@ cc.Class({
         }
     },
 
-    addEnemyIncoming: function (direction, posPlus) {
-        direction = typeof direction !== 'undefined' ? direction : cc.v2(0, -1);
-        posPlus = typeof posPlus !== 'undefined' ? posPlus : cc.v2(0, 0);
-        var self=this;
-        GlobalVar.resManager().loadRes(ResMapping.ResType.Prefab, 'cdnRes/battlemodel/prefab/effect/EnemyIncoming',function(prefab){
-            if (prefab != null) {
-                self.ray = cc.instantiate(prefab);
-                self.battleManager.displayContainer.addChild(self.ray, Defines.Z.RAY);
-                self.ray.setPosition(self.getPosition().add(posPlus));
-                // let spine = self.ray.getComponent(sp.Skeleton);
-                // spine.setAnimation(0, 'animation', false);
-                // var self=this;
-                // spine.setCompleteListener(function(){
-                //     self.ray.destroy();
-                // });
-                let angle = Math.atan2(direction.y, direction.x) * 180 / Math.PI;
-                self.ray.rotation = 90 - angle;
-                GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/missile_come');
-            }
-        });
-        
-    },
+    addEnemyIncoming: function (direction, posPlus, movetime, movespeed, dstpos, delay, callback) {
+        direction = typeof direction !== 'undefined' ? direction : cc.v3(0, -1);
+        posPlus = typeof posPlus !== 'undefined' ? posPlus : cc.v3(0, 0);
+        delay = typeof delay !== 'undefined' ? delay : 0;
+        movetime = typeof movetime !== 'undefined' ? movetime : 0;
+        movespeed = typeof movespeed !== 'undefined' ? movespeed : 0;
+        dstpos = typeof dstpos !== 'undefined' ? dstpos : this.getPosition().add(posPlus);
 
-    destroyEnemyIncoming: function () {
-        if (this.ray != null) {
-            this.ray.destroy();
-            this.ray = null;
-        }
+        var self = this;
+        this.battleManager.addEnemyIncoming(direction, this.getPosition().add(posPlus), movetime, movespeed, dstpos, delay, callback, function (ray) {
+            self.rayAnime = ray;
+        });
     },
 
     pauseAction() {
         if (this.baseObject != null) {
-            let spine = this.baseObject.getComponent(sp.Skeleton);
-            if (spine != null) {
-                spine.paused = true;
+            this.baseObject.getComponent('CoreObject').pauseAction();
+            if (this.rayAnime != null && cc.isValid(this.rayAnime)) {
+                this.rayAnime.pauseAllActions();
             }
         }
     },
 
     resumeAction() {
         if (this.baseObject != null) {
-            let spine = this.baseObject.getComponent(sp.Skeleton);
-            if (spine != null) {
-                spine.paused = false;
+            this.baseObject.getComponent('CoreObject').resumeAction();
+            if (this.rayAnime != null && cc.isValid(this.rayAnime)) {
+                this.rayAnime.resumeAllActions();
             }
         }
     },

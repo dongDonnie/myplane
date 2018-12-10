@@ -17,6 +17,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_MASKBACK_WND;
         this.animeStartParam(0);
     },

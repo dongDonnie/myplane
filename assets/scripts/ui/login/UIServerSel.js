@@ -34,6 +34,7 @@ var UIServerSel = cc.Class({
                 GlobalVar.me().loginData.setLoginReqDataAccount(user_id);
                 GlobalVar.me().loginData.setLoginReqDataSdkTicket(ticket);
                 GlobalVar.me().loginData.setLoginReqDataAvatar(avatar);
+                // console.log("get data for login, userID:" + user_id + " ticket:" + ticket + " avatar:" + avatar);
                 weChatAPI.getServerList("1.0.0", GlobalVar.me().loginData.getLoginReqDataAccount(), function (data) {
                     self.serverList = data.serverList;
                     self.userData = data.userData;
@@ -42,7 +43,16 @@ var UIServerSel = cc.Class({
             })
         }
         GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_NEED_CREATE_ROLE, this.createRoll, this);
+        GlobalVar.eventManager().addEventListener(EventMsgID.EVENT_LOGIN_DATA_NTF, this.getLoginData, this);
     },
+
+    getLoginData: function (event) {
+        if (event.data.ErrCode !== 0){
+            GlobalVar.networkManager().needReConnected = false;
+            this.canSelect = true;
+        }
+    },
+
 
     start: function () {
         GlobalVar.resManager().setPreLoadHero();
@@ -131,7 +141,7 @@ var UIServerSel = cc.Class({
             weChatAPI.createRoll(function (nickName, avatar) {
                 // console.log("发送创建角色消息, nickName:" + nickName + "  avatar:" + avatar);
                 GlobalVar.handlerManager().loginHandler.sendCreateRollReq(nickName || "", avatar || "");
-                GlobalVar.me().avatar = avatar;
+                GlobalVar.me().loginData.setLoginReqDataAvatar(avatar);
             })
         }
     },
@@ -146,41 +156,27 @@ var UIServerSel = cc.Class({
             return;
         }
         // this.nodeSelectServerWnd.scale = 0;
-        this.canSelect=false;
-        var self=this;
+        // this.canSelect=false;
+        this.canSelect=true;
+        // var self=this;
         this.nodeSelectServerWnd.active = true;
-        this.nodeSelectServerWnd.runAction(
-            cc.sequence(
-                cc.scaleTo(1 / 12, 1.1),
-                cc.scaleTo(1 / 12, 1.0),
-                cc.callFunc(function(){
-                    self.canSelect=true;
-                })
-            )
-        );
+        // this.nodeSelectServerWnd.runAction(
+        //     cc.sequence(
+        //         cc.scaleTo(1 / 12, 1.1),
+        //         cc.scaleTo(1 / 12, 1.0),
+        //         cc.callFunc(function(){
+        //         })
+        //     )
+        // );
         // if (!!this.btnAuthorize) {
         //     this.btnAuthorize.destroy();
         //     //this.btnAuthorize = null;
         // }
-        this.initSelServerWnd();
-    },
-
-    onBtnServerClick: function (event) {
-        if (!this.clickServerWnd) {
-            this.clickServerWnd = true;
-            let server = event.target;
-            this.setServer(server.data.server_id);
-            var self = this;
-            this.nodeSelectServerWnd.runAction(
-                cc.sequence(cc.scaleTo(1 / 12, 1.1),
-                    cc.scaleTo(1 / 12, 0),
-                    cc.callFunc(function () {
-                        self.clickServerWnd = false;
-                    })
-                )
-            );
-            this.createAuthorizeBtn(this.node.getChildByName("toggleAgreement"));
+        if (!!this.btnAuthorize) {
+            this.btnAuthorize.destroy();
+            //self.btnAuthorize = null;
         }
+        this.initSelServerWnd();
     },
 
     initSelServerWnd: function () {
@@ -213,20 +209,40 @@ var UIServerSel = cc.Class({
         server.getChildByName("spriteServerState").getComponent("RemoteSprite").setFrame(data.status - 1);
     },
 
-    onBtnClose: function () {
-        if (!this.clickServerWnd) {
-            this.clickServerWnd = true;
+    onBtnServerClick: function (event) {
+        // if (!this.clickServerWnd) {
+            // this.clickServerWnd = true;
+            let server = event.target;
+            this.setServer(server.data.server_id);
             var self = this;
-            this.nodeSelectServerWnd.runAction(
-                cc.sequence(cc.scaleTo(1 / 12, 1.1),
-                    cc.scaleTo(1 / 12, 0),
-                    cc.callFunc(function () {
-                        self.clickServerWnd = false;
-                    })
-                )
-            );
+            this.nodeSelectServerWnd.active = false;
+            // this.nodeSelectServerWnd.runAction(
+            //     cc.sequence(cc.scaleTo(1 / 12, 1.1),
+            //         cc.scaleTo(1 / 12, 0),
+            //         cc.callFunc(function () {
+            //             self.clickServerWnd = false;
+            //         })
+            //     )
+            // );
+            // this.createAuthorizeBtn(this.node.getChildByName("toggleAgreement"));
+        // }
+    },
+
+    onBtnClose: function () {
+        this.nodeSelectServerWnd.active = false;
+        // if (!this.clickServerWnd) {
+            // this.clickServerWnd = true;
+            // var self = this;
+            // this.nodeSelectServerWnd.runAction(
+            //     cc.sequence(cc.scaleTo(1 / 12, 1.1),
+            //         cc.scaleTo(1 / 12, 0),
+            //         cc.callFunc(function () {
+            //             self.clickServerWnd = false;
+            //         })
+            //     )
+            // );
             this.createAuthorizeBtn(this.node.getChildByName("toggleAgreement"));
-        }
+        // }
     },
 
     createAuthorizeBtn(btnNode) {
@@ -241,7 +257,7 @@ var UIServerSel = cc.Class({
             let top = (cc.winSize.height * 0.5 - btnNode.y - btnSize.height * 0.5) / cc.winSize.height * frameSize.height;
             let width = btnSize.width / cc.winSize.width * frameSize.width;
             let height = btnSize.height / cc.winSize.height * frameSize.height;
-            // console.log("button pos: ",cc.v2(left,top));
+            // console.log("button pos: ",cc.v3(left,top));
             // console.log("button size: ",cc.size(width,height));
 
 
@@ -269,13 +285,13 @@ var UIServerSel = cc.Class({
                     wx.showToast({
                         title: "授权成功"
                     });
+                    if (!!self.btnAuthorize) {
+                        self.btnAuthorize.destroy();
+                        //self.btnAuthorize = null;
+                    }
                     btnNode.getComponent(cc.Toggle).check();
                     weChatAPI.getUserInfo(function (userInfo) {
-                        GlobalVar.me().avatar = userInfo.avatarUrl;
-                        if (!!self.btnAuthorize) {
-                            self.btnAuthorize.destroy();
-                            //self.btnAuthorize = null;
-                        }
+                        GlobalVar.me().loginData.setLoginReqDataAvatar(userInfo.avatarUrl);
                     })
                 } else {
                     // console.log("wxLogin auth fail");

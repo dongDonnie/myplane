@@ -9,7 +9,7 @@ cc.Class({
 
     properties: {
         disappearAnime: false,
-        disappearPos:cc.v2(0,0),
+        disappearPos:cc.v3(0,0),
         dmgMsg: null,
     },
 
@@ -20,7 +20,7 @@ cc.Class({
     reset() {
         this._super();
         this.disappearAnime = false;
-        this.disappearPos=cc.v2(0,0);
+        this.disappearPos=cc.v3(0,0);
     },
 
     getPathName: function (path) {
@@ -129,7 +129,7 @@ cc.Class({
                     if (prefab != null) {
                         let hit = cc.instantiate(prefab);
                         BattleManager.getInstance().displayContainer.addChild(hit, Defines.Z.HEROBULLETHIT);
-                        //hit.runAction(cc.sequence(cc.delayTime(0.3), cc.removeSelf(true)));
+                        hit.runAction(cc.sequence(cc.delayTime(0.4), cc.removeSelf(true)));
                         hit.setPosition(self.disappearPos);
                     }
                 });
@@ -138,7 +138,7 @@ cc.Class({
                     if (prefab != null) {
                         let clear = cc.instantiate(prefab);
                         BattleManager.getInstance().displayContainer.addChild(clear, Defines.Z.MONSTERBULLETCLEAR);
-                        //clear.runAction(cc.sequence(cc.delayTime(0.6), cc.removeSelf(true)));
+                        clear.runAction(cc.sequence(cc.delayTime(0.6), cc.removeSelf(true)));
                         clear.setPosition(self.disappearPos);
                     }
                 });

@@ -20,7 +20,7 @@ CampNormal5.data = {
         {
             checkTime:-1,
             condition:[
-                {interval:18},
+                {interval:12},
             ],
             effect:[
                 {drop:10000},
@@ -30,40 +30,20 @@ CampNormal5.data = {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:1,step:8}},
+                {wave:{index:0,step:8}},
             ],
             effect:[
-                {extra:-1},
+                {extra:{open:-1,delay:3}},
             ],
         },
         {
             eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,step:5}},
+                {wave:{index:2,step:6}},
             ],
             effect:[
-                {extra:-2},
-            ],
-        },
-        {
-            eventKey:0,
-            checkTime:1,
-            condition:[
-                {wave:{index:2,step:8}},
-            ],
-            effect:[
-                {extra:-1},
-            ],
-        },
-        {
-            eventKey:0,
-            checkTime:1,
-            condition:[
-                {wave:{index:3,step:4}},
-            ],
-            effect:[
-                {extra:-2},
+                {extra:{open:-2}},
             ],
         },
     ],

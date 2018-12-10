@@ -1,17 +1,19 @@
+const GlobalVar = require('globalvar')
 const EntityManager = require('EntityManager')
-const BaseObject = require('BaseObject')
+const BattleManager = require('BattleManager')
+const CoreObject = require('CoreObject')
 
 cc.Class({
-    extends: BaseObject,
+    extends: CoreObject,
 
     properties: {
         anime: {
             default: null,
             type: cc.Animation
         },
-        selfEntity:{
-            default:null,
-            visible:false
+        selfEntity: {
+            default: null,
+            visible: false
         },
     },
 
@@ -43,22 +45,19 @@ cc.Class({
                 this.selfEntity.isDead = true;
             }
         } else if (name == "Start") {
-
+            GlobalVar.soundManager().playEffect('cdnRes/audio/battle/effect/explode_skill');
+            for (let monster of EntityManager.getInstance().entityMonsterList){
+                monster.setDamageFromExecuteIntervalSet(this.selfEntity.damageInterval);
+            }
         } else if (name == "Process") {
-            // let bmg=require('BattleManager').getInstance();
-            // bmg.screenShake();
-            // let collision = bmg.collision;
-            // for (let i of EntityManager.getInstance().entityMonsterList) {
-            //     let dmgMsg=collision.collisionMonsterWithHeroSkill(this.selfEntity);
-            //     i.hitWithDamage(dmgMsg.dmg,true);
-            //     if(i.isDead){
-            //         i.setClearBulletWhenDead(true);
-            //     }
-            //     dmgMsg.pos = i.getPosition();
-            //     i.flyDamageMsg(dmgMsg.dmg, dmgMsg.critical, dmgMsg.pos, true,true);
-            //     //bmg.flyDamageMsg(dmgMsg.dmg, dmgMsg.critical, dmgMsg.pos, true,true);
-            // }
-            // EntityManager.getInstance().deleteAllMonsterBullets(true);
+            BattleManager.getInstance().screenShake();
+            if(this.selfEntity.getAllScreenDamage()){
+                let collision = BattleManager.getInstance().collision;
+                for (let monster of EntityManager.getInstance().entityMonsterList) {
+                    monster.setDamageFromExecuteInterval();
+                    collision.collisionMonsterWithHeroSkill(this.selfEntity,monster);
+                }
+            }
         }
     }
 });

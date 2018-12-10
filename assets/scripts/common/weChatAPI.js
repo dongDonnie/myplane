@@ -1,9 +1,13 @@
 const ResManager = require("ResManager");
 const GlobalVar = require('globalvar')
 const md5 = require("md5");
+const StoreageData = require("storagedata");
+const i18n = require('LanguageData');
 
 const GAME_ID = 7002;
 const APP_ID = "wx9128c19dbc42c1b6";
+const OP_ID = 9000;
+const GAME_OP_ID = 5;
 const DEFAULT_METHOD = "POST";
 const GET_METHOD = "GET";
 const DEFAULT_HEADER = { 'content-type': 'application/x-www-form-urlencoded' };
@@ -24,11 +28,14 @@ const URL_REPORT_CLICK = "https://cpgc.phonecoolgame.com/material/reportClick?ap
 const URL_GET_AD_FRAME = "https://cpgc.phonecoolgame.com/adc/getAdFrame?appid=%d&sex=%d";
 const URL_GET_BANNER_AD_INFO = "https://cpgc.phonecoolgame.com/adc/getBannerAdInfo?appid=%d";
 const URL_GET_LIKE_INFO = "https://cpgc.phonecoolgame.com/adc/getLikeInfo?appid=%d&sex=%d";
-const URL_SERVER_LIST = "https://wepup.phonecoolgame.com/json.php?_c=server&_f=plist&opid=9000&gameopid=5&ver=%d&userid=%d";
+const URL_GET_MORE_INFO = "https://cpgc.phonecoolgame.com/adc/getMoreInfo?appid=%d&ptform=%d";
+const URL_SERVER_LIST = "https://wepup.phonecoolgame.com/json.php?_c=server&_f=plist&opid=" + OP_ID + "&gameopid=" + GAME_OP_ID + "&ver=%d&userid=%d";
 const URL_REPROT_SERVER_LOGIN = "https://wepup.phonecoolgame.com/json.php?_c=server&_f=in&userid=%d&server_id=%d&time=%d&sign=%sign";
 const KEY_REPROT_SERVER_LOGIN = "$time.$userid.vs8$skv_sadid5dCasACFmCfe@45@aU2!";
 const URL_ENDLESS_WORLD_RANKING = "https://wepup.phonecoolgame.com/json.php?_c=sort&_f=endlessList&server_id=%d&role_id=%d&page=%d&pagenum=%d";
 const URL_GETIOS_RECHARGE_LOCKSTATE = "https://wepup.phonecoolgame.com/json.php?_c=check&_f=p&l=%d&c=%d&ct=%d";
+const URL_SHARE_CONFIG = "https://cpgc.phonecoolgame.com/app/getCommonConfig?appid=" + APP_ID;
+const URL_SHARE_SWITCH = "https://cpgc.phonecoolgame.com/app/getInfo?appid="+ APP_ID +"&version=%d";
 
 module.exports = {
 
@@ -36,19 +43,21 @@ module.exports = {
     shareVersion: "2.3.0",
     shareSetting:{
         share: 1,          // 模拟分享是否开启
-        shareDefaulGap: 2000,
+        shareDefaultGap: 2000,
         shareFailReduceGap: 500, // 分享失败后减少的时间
         shareLowestGap: 1500, // 分享所需的最短间隔
         shareGap: 3000,    // 分享时间间隔大于sharegap(ms)，分享成功，提供回调
         shareTimes: 0,     // 分享次数
         shareFailProb: 50,
-        shareFailTimes: [3, 5, 7, 10],
+        shareFailTimes: [3, 5, 7],
         shareGapGrowInterval: 200, // 达到增加分享间隔时，增加的分享间隔
         shareGapGrowStartTimes: 5, // 增加分享时间间隔的起始分享次数
         shareNeedDiffGroup: true,
         shareNeedClickLoseEffect: 30000,
     },
     shareMessageFlag: false,
+
+    _Materials: null,
 
     _onHideTime: 0,
     _onShowTime: 0,
@@ -62,19 +71,26 @@ module.exports = {
         let setting = this.shareSetting;
         if (this.shareMessageFlag){
             this.shareMessageFlag = false;
-            console.log("shareSetting", this);
+            console.log("shareSetting:", setting);
+            console.log("shareTimeGap:", shareTimeGap);
             if (shareTimeGap < setting.shareGap){
                 if (setting.shareGap < setting.shareLowestGap){
                     shareSuccess = true;
                 }else{
                     setting.shareGap -= setting.shareFailReduceGap;
+                    if (setting.shareGap < setting.shareLowestGap){
+                        setting.shareGap = setting.shareLowestGap;
+                    }
                 }
             }else{
                 for (let i = 0; i<setting.shareFailTimes.length; i++){
-                    if (setting.shareFailTimes.indexOf(setting.shareTimes + 1) != -1){
+                    if (setting.shareFailTimes.indexOf(setting.shareTimes) != -1){
                         let ranNum = parseInt(Math.random()*100) + 1;
                         if (ranNum > setting.shareFailProb){
                             shareSuccess = true;
+                        }else{
+                            console.log("因概率的分享限制而分享失败, shareTimes:", setting.shareTimes, "  ranNum:", ranNum, "  shareFailTimes:", setting.shareFailTimes);
+                            break;
                         }
                     }else{
                         shareSuccess = true;
@@ -85,13 +101,39 @@ module.exports = {
         
         if (shareSuccess){
             setting.shareTimes++;
-            setting.shareGap = setting.shareDefaulGap;
+            StoreageData.setTotalShareTimes();
+            setting.shareLowestGap = setting.shareDefaultGap;
         }
 
         return shareSuccess;
     },
 
-    //login
+    getShareConfig: function () {
+        let self = this;
+        let setting = this.shareSetting;
+        this.request(URL_SHARE_CONFIG, null, function (data) {
+            setting.shareDefaultGap = parseInt(data.shareMinTime);
+            setting.shareFailProb = parseInt(data.sharefailprob);
+            setting.shareFailReduceGap = parseInt(data.shareReduceTime);
+            setting.shareGap = parseInt(data.shareBaseTime);
+            setting.shareLowestGap = parseInt(data.shareLowerTime);
+            setting.shareNeedDiffGroup = !!parseInt(data.shareNeedDiffGroup)
+            setting.shareFailTimes = [3,5,7];
+            setting.shareFailTimes.push(parseInt(data.shareValue));
+            setting.shareTimes = StoreageData.getTotalShareTimes();
+            console.log("get share config success, new config:", setting);
+        }, null, GET_METHOD, GET_HEADER);
+    },
+
+    requestShareOpenState: function (version, successCallback) {
+        let url = URL_SHARE_SWITCH.replace("%d", version);
+        this.request(url, null, function (data) {
+            if (!!successCallback){
+                successCallback(data.showyd);
+            }
+        }, null, GET_METHOD, GET_HEADER);
+    },
+
     showLog: function(){
         if(OPENLOG){
             for (let i = 0; i<arguments.length; i++){
@@ -99,6 +141,7 @@ module.exports = {
             }
         }
     },
+    //login
     login: function (successCallback) {
         let self = this;
         if (cc.sys.platform === cc.sys.WECHAT_GAME) {
@@ -123,8 +166,8 @@ module.exports = {
                             // 向服务器请求登陆，保存服务器传过来的openid和ticket;
                             if (data.ret !== 0) return;
                             // console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                            wx.setStorageSync('openid', data.data.user_id);
-                            wx.setStorageSync('ticket', data.data.ticket);
+                            // wx.setStorageSync('openid', data.data.user_id);
+                            // wx.setStorageSync('ticket', data.data.ticket);
                             let user_id = data.data.user_id;
                             let ticket = data.data.ticket;
                             self.getUserInfo(function (userInfo) {
@@ -221,6 +264,13 @@ module.exports = {
         }
     },
 
+    showToast: function (tips) {
+        // wx.showToast({  
+        //     title: tips
+        // })
+        tips && GlobalVar.comMsg.showMsg(tips);
+    },
+
     getUserInfo: function (successCallback, failCallback) {
         // 从微信侧获取用户的信息
         let self = this;
@@ -243,11 +293,21 @@ module.exports = {
     },
 
     //share
-    shareNormal: function (material, successCallback, failCallback) {
+    shareNormal: function (index, successCallback, failCallback, successTips, failTips) {
         // 普通分享，判断模拟点击
         if (cc.sys.platform !== cc.sys.WECHAT_GAME) {
             return;
         }
+
+        let material = this.getRandomMaterial(index);
+        if (!material){
+            console.log("material not found");
+            material = this.getRandomMaterial(0);
+            if (!material){
+                return;
+            }
+        }
+        this.reportShareMaterial(material.materialID);
         this.shareMessageFlag = true;
         let self = this;
         let str = "materialID=" + material.materialID;
@@ -257,22 +317,27 @@ module.exports = {
             CC_GMAE_ONSHOW_OPEN = 0;
         }
 
-        this.setOnHideListener(function () {
+        let onHideFunc = function () {
             self.setOnHideTime(new Date().getTime());
-        });
-        this.setOnShowListener(function () {
+        };
+        let onShowFunc = function () {
             self.setOnShowTime(new Date().getTime());
 
             let shareSuccess = self.getShareSuccess();
             if (!CC_GMAE_ONSHOW_OPEN || shareSuccess){
                 if (!!successCallback){
                     successCallback();
-                    self.reportShareMaterial(material.materialID)
+                    self.showToast(successTips || i18n.t('label.4000308'));
                 }
+            }else{
+                self.showToast(failTips || i18n.t('label.4000310'));
+                failCallback && failCallback();
             }
-            self.setOffShowListener();
-            self.setOffHideListener();
-        });
+            self.setOffShowListener(onShowFunc);
+            self.setOffHideListener(onHideFunc);
+        };
+        this.setOnHideListener(onHideFunc);
+        this.setOnShowListener(onShowFunc);
         wx.shareAppMessage({
             title: material.content,
             imageUrl: material.cdnurl,
@@ -280,33 +345,36 @@ module.exports = {
         });
     },
 
-    shareNeedClick: function (material, successCallback, failCallback) {
+    shareNeedClick: function (index, successCallback, failCallback, strTips, successTips, failTips) {
         // 需要玩家自己点进来的分享
         if (cc.sys.platform !== cc.sys.WECHAT_GAME) {
             return;
         }
-        let str = "materialID=" + material.materialID;
 
-        if (this.getShareNeedClickTime() != 0){
-            console.log("分享成功，关闭onShow监听");
-            this.setOffShowListener();
+        let material = this.getRandomMaterial(index);
+        if (!material){
+            console.log("material not found");
+            material = this.getRandomMaterial(0);
+            if (!material){
+                return;
+            }
         }
+        this.reportShareMaterial(material.materialID);
 
-        let curTime = new Date().getTime();
-        this.setShareNeedClickTime(curTime);
-        str += "&share_time=" + curTime;
-
+        let str = "materialID=" + material.materialID;
         let self = this;
-
-        this.setOnShowListener(function (res) {
-            console.log("onShowRes", res);
-            console.log("res.query['share_time']", res.query['share_time']);
+        if (this.getShareNeedClickTime() != 0 && this.curShowFunc){
+            this.setOffShowListener(this.curShowFunc);
+            this.curShowFunc = null;
+        }
+        let alreadShowTips = false;
+        let onShowFunc = function (res) {
             let time = self.getShareNeedClickTime();
-            console.log("getShareNeedClickTime():", time)
             if (res.query['share_time'] == time){
-                console.log("啊我死了")
+                if (!res.shareTicket){
+                    console.log("非点击群内小卡片进入");
+                }
                 self.getShareInfo(res.shareTicket, function(groupInfo) {
-                    console.log("得到群信息", groupInfo);
                     let shareData = {
                         game_id: GAME_ID,
                         openid: GlobalVar.me().loginData.getLoginReqDataAccount(),
@@ -314,24 +382,38 @@ module.exports = {
                         iv: groupInfo.iv,
                     }
                     self.request(URL_SHARE, shareData, function (data) {
-                        console.log("收到服务器回包", data);
                         let needDiffGroup = self.shareSetting.shareNeedDiffGroup;
-                        if (needDiffGroup && !data.data.diffGId) {
-                            console.log("是相同群，啊我死了");
+                        if (needDiffGroup && !parseInt(data.data.diffGId)) {
+                            self.setOffShowListener(onShowFunc);
+                            self.curShowFunc = null;
+                            failCallback && failCallback();
+                            self.showToast(failTips || i18n.t('label.4000310'));
                         }
-                        if (!needDiffGroup || (data.ret == 0 && data.data.diffGId)){
+                        if (!needDiffGroup || (data.ret == 0 && !!parseInt(data.data.diffGId))){
                             if (!!successCallback){
                                 successCallback();
-                                self.reportShareMaterial(material.materialID)
+                                self.showToast(successTips || i18n.t('label.4000308'));
                                 self.setShareNeedClickTime(0);
-                                console.log("分享成功，关闭onShow监听");
-                                self.setOffShowListener();
+                                self.setOffShowListener(onShowFunc);
+                                self.curShowFunc = null;
                             }
+                        }else{
+                            console.log("server ret = ", data.ret);
                         }
                     })
                 })
+            }else if (!alreadShowTips && strTips){
+                self.showToast(strTips);
+                alreadShowTips = true;
             }
-        })
+        };
+        this.curShowFunc = onShowFunc;
+
+        let curTime = new Date().getTime();
+        this.setShareNeedClickTime(curTime);
+        str += "&share_time=" + curTime;
+
+        this.setOnShowListener(onShowFunc);
 
         wx.shareAppMessage({
             title: material.content,
@@ -340,11 +422,18 @@ module.exports = {
         });
     },
 
-    shareInvite: function (material, param) {
+    shareInvite: function (index, param) {
         // 邀请分享
         if (cc.sys.platform !== cc.sys.WECHAT_GAME) {
             return;
         }
+
+        let material = this.getRandomMaterial(index);
+        if (!material){
+            console.log("material not found");
+            return;
+        }
+
         let str = "materialID=" + material.materialID;
         // 若有param传来，则拼接字符串，作为query分享出去
         // 这样别人通过分享打开游戏时就会带query作为启动参数
@@ -353,7 +442,7 @@ module.exports = {
             str += "&from_serverid=" + param.fromServerID || "";
             str += "&from_openid=" + param.fromOpenID || "";
             str += "&from_btn=" + param.fromBtn || "";
-            self.showLog("分享str=", str);
+            this.showLog("分享str=", str);
         }
 
         wx.shareAppMessage({
@@ -364,49 +453,45 @@ module.exports = {
     },
 
     setOnShowListener: function (showFunc) {
-        wx.onShow(function (res) {
-            if (!!showFunc){
-                showFunc(res);
-            }
-        })
+        if (cc.sys.platform === cc.sys.WECHAT_GAME && !!showFunc) {
+            wx.onShow(showFunc);
+        }
     },
     setOffShowListener:function (offFunc) {
-        wx.offShow(function () {
-            if (!!offFunc){
-                offFunc();
-            }
-        });
+        if (cc.sys.platform === cc.sys.WECHAT_GAME && !!offFunc){
+            wx.offShow(offFunc);
+        }
     },
 
     setOnHideListener: function (hideFunc) {
-        wx.onHide(function (res) {
-            if (!!hideFunc){
-                hideFunc(res);
-            }
-        })
+        if (cc.sys.platform === cc.sys.WECHAT_GAME && !!hideFunc){
+            wx.onHide(hideFunc);
+        }
     },
     setOffHideListener: function (offFunc) {
-        wx.offHide(function () {
-            if (!!offFunc){
-                offFunc();
-            }
-        })
+        if (cc.sys.platform === cc.sys.WECHAT_GAME && !!offFunc){
+            wx.offHide(offFunc);
+        }
     },
 
     setOnHideTime: function (time) {
         this._onHideTime = time;
+        console.log("record hideTime:", time);
     },
     getOnHideTime: function () {
         let time = this._onHideTime;
         this._onHideTime = 0;
+        console.log("get hideTime:", time);
         return time;
     },
     setOnShowTime: function (time) {
         this._onShowTime = time;
+        console.log("record showTime:", time);
     },
     getOnShowTime: function () {
         let time = this._onShowTime;
         this._onShowTime = 0;
+        console.log("get showTime:", time);
         return time;
     },
     setShareNeedClickTime: function (time) {
@@ -600,30 +685,30 @@ module.exports = {
         }
         let self = this;
         let launchInfo = wx.getLaunchOptionsSync();
-        self.showLog("launcinfo", launchInfo);
+        // self.showLog("launcinfo", launchInfo);
+        console.log("launcinfo", launchInfo);
         if (launchInfo) {
-            // 判断启动参数，如果启动场景为1044：从分享中进入，并且启动参数有form_serverid、from_openid、和from_btn
+            // 判断启动参数, 启动参数有form_serverid、from_openid、和from_btn
             // 就是点了别人的邀请进来的，上报邀请信息
-            if (launchInfo.shareTicket) {
-                GlobalVar.me().shareTicket = launchInfo.shareTicket;
-            }
-            if (launchInfo.scene == 1044) {
-                if (launchInfo.query['from_serverid'] && launchInfo.query['from_openid'] && launchInfo.query['from_btn'] == "invite") {
-                    let inviteData = {
-                        game_id: GAME_ID,
-                        openid: GlobalVar.me().loginData.getLoginReqDataAccount(),
-                        avatar: GlobalVar.me().avatar,
-                        from_serverid: launchInfo.query['from_serverid'],
-                        from_openid: launchInfo.query['from_openid'],
-                        from_btn: launchInfo.query['from_btn'],
-                    };
-                    self.request(URL_INVITE, inviteData, function (data) {
-                        if (data.ret !== 0) return;
-                        if (!!successCallback) {
-                            successCallback(data.data);
-                        }
-                    });
-                }
+            // if (launchInfo.shareTicket) {
+            //     GlobalVar.me().shareTicket = launchInfo.shareTicket;
+            // }
+            if (launchInfo.query['from_serverid'] && launchInfo.query['from_openid'] && launchInfo.query['from_btn']) {
+                let inviteData = {
+                    game_id: GAME_ID,
+                    openid: GlobalVar.me().loginData.getLoginReqDataAccount(),
+                    avatar: GlobalVar.me().loginData.getLoginReqDataAvatar(),
+                    from_serverid: launchInfo.query['from_serverid'],
+                    from_openid: launchInfo.query['from_openid'],
+                    from_btn: launchInfo.query['from_btn'],
+                };
+                // console.log("发送消息:", inviteData);
+                self.request(URL_INVITE, inviteData, function (data) {
+                    if (data.ret !== 0) return;
+                    if (!!successCallback) {
+                        successCallback(data.data);
+                    }
+                });
             }
         }
     },
@@ -637,9 +722,10 @@ module.exports = {
         let inviteListData = {
             game_id: GAME_ID,
             openid: GlobalVar.me().loginData.getLoginReqDataAccount(),
-            server_id: GlobalVar.me().selServerID,
+            server_id: GlobalVar.me().loginData.getLoginReqDataServerID(),
             btn: btn,
         };
+        // console.log("邀请列表的请求数据", inviteListData);
         self.request(URL_INVITE_LIST, inviteListData, function (data) {
             if (data.ret !== 0) return;
             if (!!successCallback) {
@@ -678,10 +764,16 @@ module.exports = {
                 self.showLog("getMaterials error, ecode = ", data.ecode);
                 return;
             }
+            self._Materials = data.data;
             if (!!successCallback) {
                 successCallback(data.data);
             }
         }, null, GET_METHOD, GET_HEADER);
+    },
+    getRandomMaterial: function (index) {
+        let materials = this._Materials[index];
+        let ranNum = Math.floor(Math.random()*materials.length);
+        return materials[ranNum];
     },
 
     reportShareMaterial: function (materialID, successCallback) {
@@ -702,41 +794,50 @@ module.exports = {
             }
         }, null, GET_METHOD, GET_HEADER)
     },
-    reportClickMaterial: function (successCallback) {
+    reportClickMaterial: function (materialID, successCallback, needReportUid = true) {
         // 上报被点击的文案
         if (cc.sys.platform !== cc.sys.WECHAT_GAME) {
             return;
         }
         let self = this;
-        let launchInfo = wx.getLaunchOptionsSync();
-        if (launchInfo.scene == 1044) {
-            if (launchInfo.query.materialID) {
-                let url = URL_REPORT_CLICK.replace("%d", APP_ID).replace("%d", launchInfo.query.materialID);
-                self.request(url, null, function (data) {
-                    if (data.ecode !== 0) {
-                        self.showLog("reportClick error, ecode = ", data.ecode);
-                        return;
-                    }
-                    self.showLog("reportClick success, materialID = ", launchInfo.query.materialID);
-                    if (!!successCallback) {
-                        successCallback(data.data);
-                    }
-                }, null, GET_METHOD, GET_HEADER)
-            }
+        let url = URL_REPORT_CLICK.replace("%d", APP_ID).replace("%d", materialID);
+        if (needReportUid){
+            url = url + "&uid=" + GlobalVar.me().loginData.getLoginReqDataAccount();
         }
+        self.request(url, null, function (data) {
+            if (data.ecode !== 0) {
+                self.showLog("reportClick error, ecode = ", data.ecode);
+                return;
+            }
+            self.showLog("reportClick success, materialID = ", materialID);
+            if (!!successCallback) {
+                successCallback(data.data);
+            }
+        }, null, GET_METHOD, GET_HEADER)
     },
 
-    getServerList: function (version, userID, successCallback) {
+    getServerList: function (version, userID, successCallback, notFirst) {
+        notFirst = notFirst || false;
         let url = URL_SERVER_LIST.replace("%d", version).replace("%d", userID);
         let self = this;
         this.request(url, null, function (data) {
             self.showLog("getServerList success:", data);
+            StoreageData.setLocalServerListData(data);
             if (!!successCallback) {
                 successCallback(data);
             }
         }, function (data) {
             self.showLog("getServerList fail:", data);
-            // self.getServerList(version, userID, successCallback);
+            if (notFirst){
+                let localData = StoreageData.getLocalServerListData();
+                if (localData) {
+                    !!successCallback && successCallback(localData);
+                }else{
+                    self.getServerList(version, userID, successCallback, true);
+                }
+            }else{
+                self.getServerList(version, userID, successCallback, true);
+            }
         }, GET_METHOD, GET_HEADER);
     },
 
@@ -781,6 +882,20 @@ module.exports = {
             id: GET_FRIENDS_RANKLIST,
         });
     },
+    requestEndlessFriendRankingNext: function () {
+        let openDataContext = wx.getOpenDataContext();
+        let GET_FRIEND_RANK_NEXT = 2;
+        openDataContext.postMessage({
+            id: GET_FRIEND_RANK_NEXT,
+        });
+    },
+    requestEndlessFriendRankingBefore: function () {
+        let openDataContext = wx.getOpenDataContext();
+        let GET_FRIEND_RANK_BEFORE = 3;
+        openDataContext.postMessage({
+            id: GET_FRIEND_RANK_BEFORE,
+        });
+    },
 
     requestIosRechageLockState:function (level, combatPoint, createTime, successCallback) {
         let self = this;
@@ -797,6 +912,15 @@ module.exports = {
         }, null, GET_METHOD, GET_HEADER);
 
         return lockState;
+    },
+
+    requestGetMoreFunInfo: function (successCallback) {
+        let url = URL_GET_MORE_INFO.replace("%d", APP_ID).replace("%d", GlobalVar.isIOS?1:0);
+        this.request(url, null, function (data) {
+            if (!!successCallback){
+                successCallback(data);
+            }
+        });
     },
 
     wxBversionLess: function (version) {

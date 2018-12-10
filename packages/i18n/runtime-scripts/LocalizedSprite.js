@@ -1,5 +1,4 @@
 const SpriteFrameSet = require('SpriteFrameSet');
-const RemoteSprite = require("RemoteSprite");
 
 cc.Class({
     extends: cc.Component,
@@ -22,7 +21,7 @@ cc.Class({
     },
 
     fetchRender () {
-        let sprite = this.getComponent(RemoteSprite);
+        let sprite = this.getComponent(cc.Sprite);
         if (sprite) {
             this.sprite = sprite;
             this.updateSprite(window.i18n.curLang);
@@ -40,7 +39,7 @@ cc.Class({
 
     updateSprite (language) {
         if (!this.sprite) {
-            // cc.error('Failed to update localized sprite, sprite component is invalid!');
+            cc.error('Failed to update localized sprite, sprite component is invalid!');
             return;
         }
 

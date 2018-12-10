@@ -1,49 +1,23 @@
 var CampNormal63 = module.exports;
 
 CampNormal63.data = {
-    mapLoop: [
-        {
-            imageData:["tk-a"],
-            groups:[
-                {imageIndex:[0,0],loopCount:4,speed:5,zorder:-999},
-            ],
-        },
-        {
-            imageData:["tk-b1","tk-b","tk-c","tk-d-ditu","tk-e-ditu","tk-f-bossditu"],
-            groups:[
-                {imageIndex:[0,1],loopCount:0,speed:10,zorder:-998},
-                {imageIndex:[2,1,3],loopCount:0,speed:10,zorder:-998},
-                {imageIndex:[4,4],loopCount:-1,speed:10,zorder:-998},
-                {imageIndex:[4,5],loopCount:0,speed:10,zorder:-998},
-            ],
-        },
+    maps:[
+        ["cx-c","cx-d","cx-c"],
+        ["cx-d","cx-c","cx-e-bossditu"],
     ],
-
-    //refreshMode:{choose(挑选规则):0.顺序1.随机, wait(是否等待上一波死亡):0.否1.是, interval(刷新间隔):秒}
     monsterWaves:[
-        {groups:[26,33,14,42],refreshMap:{loopIndex:1,groupIndex:0,delay:1.5},refreshMode:{choose:0,wait:0,interval:0}},
-        {groups:[70,82],refreshMap:{loopIndex:1,groupIndex:1,delay:1.5},refreshMode:{choose:0,wait:0,interval:1}},
-        {groups:[56,68,75],refreshMap:{loopIndex:1,groupIndex:2,delay:3},refreshMode:{choose:0,wait:0,interval:1}},
-        {groups:[115],refreshMap:{loopIndex:1,groupIndex:3,delay:1},refreshMode:{choose:0,wait:0,interval:0},refreshCount:-2},
-        {groups:[16,23,36,16,23],refreshMap:{loopIndex:1,groupIndex:3,delay:4},refreshMode:{choose:0,wait:0,interval:0.5}},
+        {wave:{groups:[618,44,45],wait:0,delay:[0.3,1,2.5]},maps:{mapIndex:[0],mapSpeed:[500],mapScale:[1],mapLoop:[1]}},
+        {wave:{groups:[619,40,41],wait:0,delay:[0.2,1,2.6]}},
+        {wave:{groups:[620,29,32],wait:0,delay:[0,1,2.4]}},
+        {wave:{groups:[621,546],wait:0,delay:[0,2.4]}},
+        {wave:{groups:[622,543],wait:0,delay:[0,2.4]},maps:{mapIndex:[1],mapSpeed:[500],mapScale:[1],mapLoop:[0]}},
+        {wave:{groups:[614],wait:0,delay:[0,0],anime:1,isBOSS:1}},
     ],
-
-    monsterExtra:[],
+    monsterExtra:[23,24,25,559,560,552,1308,1309,1310,1311,1312],
 
     totalHint:[
         {
-            eventKey:2,
-            checkTime:1,
-            condition:[
-                {killMonster:86},
-            ],
-            effect:[
-                {result:1},
-            ]
-        },
-        {
             checkTime:-1,
-            relation:'&&',
             condition:[
                 {interval:18},
             ],
@@ -52,25 +26,45 @@ CampNormal63.data = {
             ]
         },
         {
+            eventKey:0,
             checkTime:1,
-            relation:'&&',
             condition:[
-                {wave:{index:2,complete:3}},
-                {anime:1},
+                {wave:{index:3,step:8}},
             ],
             effect:[
-                {wave:{index:3}},
-                {map:{loopIndex:1,groupIndex:2,loopCount:0,speed:10}},
-            ]
+                {extra:{open:-1,delay:1.4}},
+            ],
         },
         {
+            eventKey:0,
             checkTime:1,
             condition:[
-                {wave:{index:2,complete:3}},
+                {wave:{index:4,step:6}},
             ],
             effect:[
-                {anime:1},
-            ]
+                {extra:{open:-2}},
+            ],
+        },
+        {
+            eventKey:0,
+            checkTime:1,
+            condition:[
+                {wave:{index:4,step:8}},
+            ],
+            effect:[
+                {extra:{open:-1,delay:1.4}},
+            ],
+        },
+        {
+            eventKey:0,
+            checkTime:1,
+            condition:[
+                {wave:{index:5,step:5}},
+            ],
+            effect:[
+                {extra:{open:-2}},
+            ],
         },
     ],
+    
 }

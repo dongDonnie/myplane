@@ -36,6 +36,7 @@ cc.Class({
         //GlobalVar.messageDispatcher.bindMsg(GameServerProto.GMID_ENDLESS_QHUP_ACK, self._recvEndlessQHUpAck, self);
         GlobalVar.messageDispatcher.bindMsg(GameServerProto.GMID_ENDLESS_RANKUP_ACK, self._recvEndlessRankUpAck, self);
         GlobalVar.messageDispatcher.bindMsg(GameServerProto.GMID_ENDLESS_GETGOLD_ACK, self._recvEndlessGetGoldAck, self);
+        GlobalVar.messageDispatcher.bindMsg(GameServerProto.GMID_ENDLESS_POWERPOINT_NTF, self._recvEndlessPowerPointNtf, self);
     },
 
     checkMsg(msg) {
@@ -61,6 +62,11 @@ cc.Class({
         if (!self.checkMsg(msg)) return;
 
         GlobalVar.me().endlessData.saveGetGoldData(msg.data);
+    },
+    _recvEndlessPowerPointNtf: function (msgId, msg) {
+        if (!self.checkMsg(msg)) return;
+
+        GlobalVar.me().endlessData.saveEndlessPowerNtf(msg.data);
     },
 
     _recvEndlessStartBattleAck: function (msgId, msg) {
@@ -167,20 +173,19 @@ cc.Class({
         self.sendMsg(GameServerProto.GMID_ENDLESS_QUITBATTLE_REQ, msg);
     },
 
-    sendEndlessBuyBlessReq: function () {
-
-        let reserved = 0;
+    sendEndlessBuyBlessReq: function (free) {
         let msg = {
-            Reserved: reserved,
+            Free: free||0,
         };
 
         self.sendMsg(GameServerProto.GMID_ENDLESS_BUYBLESS_REQ, msg);
     },
 
-    sendEndlessBuyStatusReq: function (statusID) {
+    sendEndlessBuyStatusReq: function (statusID, free) {
 
         let msg = {
             StatusID: statusID,
+            Free: free||0,
         };
 
         self.sendMsg(GameServerProto.GMID_ENDLESS_BUYSTATUS_REQ, msg);

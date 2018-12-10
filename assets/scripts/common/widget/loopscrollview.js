@@ -245,10 +245,10 @@ cc.Class({
         let item = this.itemList[0];
         if (this.scrollView.vertical){
             let y = (item.height + this.gapDisY) * (Math.ceil(index / this.itemColCount));
-            this.scrollView.scrollToOffset(cc.v2(time, y));
+            this.scrollView.scrollToOffset(cc.v3(time, y));
         }else{
             let x = (item.width + this.gapDisX) * (Math.ceil(index/ this.itemRowCount));
-            this.scrollView.scrollToOffset(cc.v2(x, time));
+            this.scrollView.scrollToOffset(cc.v3(x, time));
         }
 
     },

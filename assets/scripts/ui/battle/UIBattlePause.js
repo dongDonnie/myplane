@@ -13,6 +13,12 @@ var UIBattlePause = cc.Class({
     onLoad: function () {
         this.battleManager = require('BattleManager').getInstance();
         require('Guide').getInstance().showQuit(this);
+        if (!require('config').GM_SWITCH) {
+            this.node.getChildByName('btnGM').active = false;
+        }
+        if (this.battleManager.isEndlessFlag) {
+            this.node.getChildByName('btnoGiveUp').getComponent('ButtonObject').textLabel = '直接结算';
+        }
     },
 
     clickGiveUp: function () {

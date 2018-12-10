@@ -15,6 +15,7 @@ var MainScene = cc.Class({
     onLoad: function () {
         this.sceneName="MainScene";
         this.uiNode = cc.find("Canvas/UINode");
+        this.openScene();
         GlobalVar.soundManager().playBGM("cdnRes/audio/main/music/main_city");
         // this.loadPrefab("UIMain",function(){
         //     //GlobalVar.windowManager().resumeView();
@@ -29,6 +30,9 @@ var MainScene = cc.Class({
         // });
     },
 
+    onDestroy() {
+        this.releaseScene();
+    },
 
     update:function (dt) {
         // this.timeTick += 1;

@@ -13,42 +13,39 @@ var buttonArray = [
     '',
     '',
     '',
-    '',
-    '',
-    'button',//10
+    'button',
     'btnoGuazai',
-    'nodeTouzhi',
+    'nodeTouzhi',//10
     'ItemObject',
     'button',
-    'btnoCharpter',//15
+    'btnoCharpter',
     'spritePlanetModel1',
-    'btnStartBattle',
-    'btnoSkill',//18
-    '',
-    '',
-    'button',//21
+    'btnStartBattle',//15
+    'btnoSkill',
+    'button',
     'btnoEquipment',
     'btnLevelUpOne',
-    'btnoAdvance',
+    'btnoAdvance',//20
     'btnQualityUp',
-    'button',//26
+    'button',
     'btnoCharpter',
     'spritePlanetModel2',
-    'btnStartBattle',
+    'btnStartBattle',//25
     '',
-    'button',//31
+    'button',
     'btnoPlane',
     'btnoAdvance',
-    'btnoLevelUp',
+    'btnoLevelUp',//30
     'button',
     'button',
     'btnoCharpter',
     'spritePlanetModel3',
-    'btnStartBattle',//39
+    'btnStartBattle',//35
     '',
     '',
+    'btnoEndless',
     '',
-    '',
+    ''
 ];
 var labelArray = [
     '亲爱的指挥官,我是娜娜,欢迎来到我们的世界,请激活您的第一架战机',
@@ -56,53 +53,47 @@ var labelArray = [
     '点击闯关,让我们开始第一次旅程',
     '点击第一关,让敌人看看我们的实力!',
     '',
-    '滑动战机,可进行移动',
+    '滑动战机,可进行移动',//5
     '战斗中会掉落这些道具',
     '子弹只有击中中心点时战机的生命值才会减少',
-    '',
-    '',
-    '点击返回,我们去装备投掷炸弹',//10
+    '点击返回,我们去装备投掷炸弹',
     '获得了新的投掷炸弹，点击挂载',
-    '',
+    '',//10
     '点击装备投掷炸弹',
     '',
-    '已经装备了投掷炸弹,让我们继续冒险',//15
+    '已经装备了投掷炸弹,让我们继续冒险',
     '',
     '',
-    '释放【投掷】炸弹,可以清除全屏子弹,产生巨大威力',//18
+    '释放【投掷】炸弹,可以清除全屏子弹,产生巨大威力',//16
+    '现在去强化装备',
     '',
     '',
-    '获得了新装备,现在去配置装备',//21
+    '现在去升阶吧',
     '',
-    '',
-    '',
-    '',
-    '强化成功，让我们开始下一场战斗',//26
+    '强化成功，让我们开始下一场战斗',//22
     '',
     '',
     '',
     '',
-    '现在，我们去升级战机',//31
+    '现在，我们去升级战机',//27
     '',
     '',
     '',
-    '战机升级成功，战力提升，现在去完成最后的考验。',
+    '战机升级成功，战力提升，现在去完成最后的考验。',//31
     '',
     '',
     '',
     '',
     '',
-    '你已经成功通过了考验,是一名合格的指挥官了,加油,暴风要塞的未来就靠你了!',//41
-    '',
+    '你已经成功通过了考验,是一名合格的指挥官了,加油,暴风要塞的未来就靠你了!',//37
+    '无尽征战已开启，亲爱的指挥官，请迎接你的挑战吧！',
     '',
     '',
     '',
     '',
     ''
 ];
-var dialoguePosArray = [-200, 0, 0, 150, 150, 50, -200, -200, -200, -200, 30,
-    150, 150, -200, -200, 0, 0, 0, 150, 150, 150,
-    0, 150, 150, 150, 150, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+var dialoguePosArray = [-200, 0, 0, 150, 0, 50, -200, -200, 0, 0, 0, -200];
 
 const guide = cc.Class({
     extends: cc.Component,
@@ -142,6 +133,11 @@ const guide = cc.Class({
 
     enterMain: function () {
         self.getSprite(0);
+        this.unscheduleAllCallbacks();
+        if (self.id == 1 && self.step != 38) {
+            self.watchBlt = false;
+            self.step = 8;
+        }
         self.id++;
         self.doNextStep();
     },
@@ -160,20 +156,22 @@ const guide = cc.Class({
     },
 
     enterBattle: function () {
+        this.unscheduleAllCallbacks();
         self.getSprite(1);
         if (self.step == 5) {
             BattleManager.getInstance().gameState = Defines.GameResult.PAUSE;
             self.mapLoop = true;
             self.doNextStep();
-        } else if (self.step == 18) {
+        } else if (self.step == 16) {
             self.btnoSkill = self.seekNodeByName("btnoSkill");
             self.btnoSkill.active = false;
             self.scheduleOnce(() => {
                 BattleManager.getInstance().gameState = Defines.GameResult.PAUSE;
                 self.doNextStep();
             }, 4);
-        } else if (self.step == 30 || self.step == 41) {
+        } else if (self.step == 26 || self.step == 36) {
             self.guideNode.active = false;
+            self.step++;
         }
     },
 
@@ -199,24 +197,23 @@ const guide = cc.Class({
         if (clickBtnName == 'btnoPause') {
             cc.director.getScheduler().pauseTarget(self);
             return;
-        } else if (clickBtnName == 'btnRecv') {
-            self.step++;
+        } else if (clickBtnName == 'btnRecv' || clickBtnName == 'btnEnd') {
             return;
         } else if (clickBtnName == 'btnoContinue') {
             setTimeout(() => {
                 cc.director.getScheduler().resumeTarget(self);
             }, 3000);
             return;
-        } else if ((clickBtnName == 'ItemObject' && self.step != 13) || clickBtnName == 'btnoSkill' || clickBtnName =='btnoAssist') return;
+        } else if ((clickBtnName == 'ItemObject' && self.step != 11) || clickBtnName == 'btnoSkill' || clickBtnName =='btnoAssist') return;
 
         var cbtn = cc.find('Canvas/GuideNode/btnClone');
+        self.fingerSprite.active = false;
         if (!!cbtn) {
             setTimeout(() => {
                 cbtn.removeFromParent();
             }, 10);
-            self.fingerSprite.actie = false;
         }
-        if (self.step == 5 || self.step == 18 || self.step == 30 || self.step == 40) {
+        if (self.step == 5 || self.step == 16 || self.step == 26 || self.step == 36) {
             return;
         } else if (self.step == 6) {
             BattleManager.getInstance().gameState = Defines.GameResult.RUNNING;
@@ -230,29 +227,38 @@ const guide = cc.Class({
             BattleManager.getInstance().gameState = Defines.GameResult.RUNNING;
             self.scheduleOnce(() => {
                 self.watchBlt = true;
-            }, 4);
+            }, 2);
             return;
         } else if (self.step == 8) {
             BattleManager.getInstance().gameState = Defines.GameResult.RUNNING;
-            self.step++;
             return;
-        } else if (self.step == 19) {
+        } else if (self.step == 17 && scenetype == 5) {
             self.guideNode.active = false;
             BattleManager.getInstance().gameState = Defines.GameResult.RUNNING;
             self.btnoSkill.active = true;
             self.btnoSkill.x = -257.5;
             cc.find('Canvas/UINode/UIBattle').getComponent('UIBattle').onSkillClick();
-            self.step++;
             return;
-        } else if (self.step == 24 || self.step == 26) {
+        } else if (self.step == 20) {
             self.maskSprite.opacity = 0;
             setTimeout(() => {
-                self.maskSprite.opacity = 150;
+                self.maskSprite.opacity = 80;
                 self.doNextStep();
             }, 3000);
             return;
+        } else if (self.step == 22) {
+            self.maskSprite.opacity = 0;
+            return;
+        } else if (self.step == 31) {
+            self.seekNodeByName('NormalEquipment').getComponent('NormalEquipment').levelUp();
         }
 
+        if (self.step == 39) {
+            self.guideNode.active = false;
+            config.NEED_GUIDE = false;
+            require("CommonWnd").showEndlessView();
+            return;
+        }
         self.doNextStep();
     },
 
@@ -262,7 +268,7 @@ const guide = cc.Class({
         if (!text) return;
         var step = self.step;
         text.getComponent(cc.Label).string = labelArray[step];
-        self.dialogueSprite.y = dialoguePosArray[step];
+        self.dialogueSprite.y = step < 12 ? dialoguePosArray[step] : 0;
 
         self.dialogueSprite.active = labelArray[step] != '';
         self.dialogueSprite.runAction(cc.sequence(cc.delayTime(0.5), cc.fadeIn(0.5)));
@@ -277,7 +283,7 @@ const guide = cc.Class({
             self.guideNode.active = false;
             self.clickBtn();
         }
-        // self.guideNode.active = true;
+        
         //maskSprite
         if (step == 1) {
             self.maskSprite.active = false;
@@ -286,7 +292,7 @@ const guide = cc.Class({
             self.maskSprite.opacity = 0;
         } else {
             self.maskSprite.active = true;
-            self.maskSprite.opacity = 150;
+            self.maskSprite.opacity = 80;
         }
         if (step == 5 || step == 6 || step == 7) {
             self.maskSprite.once('touchend', touchStart, self);
@@ -299,6 +305,8 @@ const guide = cc.Class({
         } else if (step == 5) {
             setTimeout(() => {
                 self.fighterSprite.active = true;
+                self.fingerSprite.active = true;
+                self.fingerSprite.opacity = 255;
             }, 1000);
         } else if (step == 7) {
             self.fighterSprite.active = true;
@@ -311,21 +319,14 @@ const guide = cc.Class({
         }
 
         //fingerSprite
-        if (step == 1 || step == 6 || step == 7 || step == 41) {
-            // self.fingerSprite.active = false;
+        if (step == 5) {
+            self.fingerSprite.getComponent(cc.Animation).play('animeFinger2');
         } else {
-            self.fingerSprite.opacity = 0;
-            self.fingerSprite.active = true;
-            self.fingerSprite.runAction(cc.sequence(cc.delayTime(1), cc.fadeIn(0.5)));
-            if (step == 5) {
-                self.fingerSprite.getComponent(cc.Animation).play('animeFinger2');
-            } else {
-                self.fingerSprite.getComponent(cc.Animation).play();
-            }
+            self.fingerSprite.getComponent(cc.Animation).play();
         }
 
         //continueSprite
-        if (step == 6 || step == 7 || step == 41) {
+        if (step == 6 || step == 7 || step == 37) {
             self.continueSprite.active = true;
         } else {
             self.continueSprite.active = false;
@@ -339,28 +340,17 @@ const guide = cc.Class({
         }
 
         //else
-        if (step == 18) {
+        if (step == 16) {
             self.btnClone.once('touchend', touchStart, self);
         }
-        else if (step == 34) {
-            setTimeout(() => {
-                self.btnClone.once('touchstart', function () {
-                    self.seekNodeByName('NormalEquipment').getComponent('NormalEquipment').levelUp();
-                    self.clickBtn();
-                }, self);
-            }, 500);
-        }
 
-        if (step == 41) {
+        if (step == 37) {
             var over = function () {
                 self.guideNode.active = false;
                 config.NEED_GUIDE = false;
             }
             self.maskSprite.once('touchend', over, self);
         }
-
-        if (!!this.seekNodeByName('MaskBack'))
-            this.seekNodeByName("MaskBack").active = false;
     },
 
     showBtn: function () {
@@ -369,12 +359,10 @@ const guide = cc.Class({
 
         if (step == 0) {
             var RecvCallback = function () {
-                let WindowManager = require("windowmgr");
-                WindowManager.getInstance().popView(false, null, false);
+                require("windowmgr").getInstance().popView(false, null, false);
             }
             var callback = function () {
-                let CommonWnd = require("CommonWnd");
-                CommonWnd.showGetNewRareItemWnd(null, 0, 2, RecvCallback);
+                require("CommonWnd").showGetNewRareItemWnd(null, 0, 2, RecvCallback);
                 self.cloneBtn('btnRecv');
             }
             cc.find('Canvas/GuideNode/fighter/btn_active').once('touchend', callback, this);
@@ -382,12 +370,10 @@ const guide = cc.Class({
     },
 
     cloneBtn: function (nodename) {
-        if (self.step == 0 || self.step == 5 || self.step == 6 || self.step == 7 || self.step == 42) {
+        if (self.step == 0 || self.step == 5 || self.step == 6 || self.step == 7 || self.step == 37) {
             self.showLabel();
             self.showSprite();
             self.step++;
-        } else if (self.step==9||self.step == 20||self.step==30||self.step==40) {
-            // self.step++;
         }
         if (nodename == '') return;
         var btn = self.seekNodeByName(nodename);
@@ -413,9 +399,13 @@ const guide = cc.Class({
             self.btnClone.setPosition(pos1);
             self.fingerSprite.setPosition(pos1);
             if (nodename == 'btnoSkill') {
-                self.fingerSprite.setPosition(cc.v2(-257.5, pos1.y));
-                self.btnClone.runAction(cc.sequence(cc.moveTo(0, cc.v2(-382.5, pos1.y)), cc.moveTo(0.2, cc.v2(-257.5, pos1.y))));
+                self.fingerSprite.setPosition(cc.v3(-257.5, pos1.y));
+                self.btnClone.runAction(cc.sequence(cc.moveTo(0, cc.v3(-382.5, pos1.y)), cc.moveTo(0.2, cc.v3(-257.5, pos1.y))));
             }
+            self.fingerSprite.opacity = 0;
+            if (self.step != 2)
+                self.fingerSprite.active = true;
+            self.fingerSprite.runAction(cc.sequence(cc.delayTime(0.2), cc.fadeIn(0.3)));
         }, 300);
 
         for (const key in btn) {
@@ -423,13 +413,6 @@ const guide = cc.Class({
                 self.btnClone[key] = btn[key];
             }
         }
-        // var objDeepCopy = function (source) {
-        //     var sourceCopy = {};
-        //     for (var item in source)
-        //         sourceCopy[item] = typeof source[item] === 'object' ? objDeepCopy(source[item]) : source[item];
-        //     return sourceCopy;
-        // }
-        // self.btnClone = objDeepCopy(btn);
 
         if (nodename.indexOf('spritePlanetModel') != -1) {
             var anime = self.seekNodeByName(self.btnClone, 'nodeSeletedAnimeModel');
@@ -440,8 +423,8 @@ const guide = cc.Class({
             }
         }
 
-        if (self.step == 13) {
-            let path = 'cdnRes/itemicon/53/5/32460';
+        if (self.step == 11) {
+            let path = 'cdnRes/itemicon/53/2/32100';
             self.btnClone.getChildByName('spriteItemIcon').getComponent("RemoteSprite").loadFrameFromLocalRes(path);
         }
 
@@ -453,6 +436,22 @@ const guide = cc.Class({
             target.node.getChildByName('btnoGiveUp').active = false;
             cc.director.getScheduler().pauseTarget(self);
         }
+    },
+
+    showRecv: function (target) {
+        if (config.NEED_GUIDE) {
+            this.seekNodeByName(target.node, 'btnRecv').active = true;
+            this.seekNodeByName(target.node, 'btnRecvNew').active = false;
+            this.seekNodeByName(target.node, 'btnRecvAll').active = false;
+            this.seekNodeByName(target.node, 'label').active = false;
+        }
+    },
+
+    guideToEndless: function () {
+        require("windowmgr").getInstance().popToRoot();
+        config.NEED_GUIDE = true;
+        self.step = 38;
+        this.enterMain();
     },
 
     initNode: function () {
@@ -498,11 +497,13 @@ const guide = cc.Class({
             BattleManager.getInstance().managers[Defines.MgrType.SCENARIO].battleCampaignMode.mapUpdate(Defines.BATTLE_FRAME_SECOND);
         }
         if (self.watchBlt) {
-            if (BattleManager.getInstance().managers[Defines.MgrType.ENTITY].entityMonBltList.length > 2) {
+            if (BattleManager.getInstance().managers[Defines.MgrType.ENTITY].entityMonBltList.length > 0) {
                 self.watchBlt = false;
                 self.scheduleOnce(() => {
-                    BattleManager.getInstance().gameState = Defines.GameResult.PAUSE;
-                    self.doNextStep();
+                    if (BattleManager.getInstance().gameState == Defines.GameResult.RUNNING) {
+                        BattleManager.getInstance().gameState = Defines.GameResult.PAUSE;
+                        self.doNextStep();
+                    }
                 }, 0.5)
             }
         }

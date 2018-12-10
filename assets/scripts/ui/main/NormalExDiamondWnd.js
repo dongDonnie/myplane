@@ -15,6 +15,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.animeStartParam(0, 0);
         this.closeShowGet = null;
     },
@@ -160,7 +161,7 @@ cc.Class({
         let getDiamonCout = parseInt(this.lblCostNum.string);
         this.closeShowGet = function () {
             var item = [{ ItemID: 3, Count:getDiamonCout}]
-            CommonWnd.showTreasuerExploit(item);
+            CommonWnd.showTreasureExploit(item);
         }
     },
 });

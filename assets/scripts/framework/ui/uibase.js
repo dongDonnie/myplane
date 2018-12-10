@@ -19,17 +19,6 @@ var UIBase = cc.Class({
         },
     },
 
-    // checkIsLock: function(){
-    //     if (this.btnLock){
-    //         return true;
-    //     }
-    //     this.btnLock = true;
-    //     return false;
-    // },
-    // unLockBtn: function(){
-    //     this.btnLock = false;
-    // },
-
     // 创建一个node
     instantiateNode:function(perfab) {
         var newNode = cc.instantiate(perfab);

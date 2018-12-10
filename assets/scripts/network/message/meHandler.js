@@ -57,12 +57,12 @@ cc.Class({
         if (typeof msg != "object") {
             return;
         }
-        GlobalVar.me().setExpChange(msg.data.ExpUpdate);
-
+        
         if (msg.data.LevelUpFlag == true){
             GlobalVar.me().setLevelUpData(msg.data.LevelUp)
         }
-
+        
+        GlobalVar.me().setExpChange(msg.data.ExpUpdate);
     },
 
     _recvPing: function (msgId, msg) {

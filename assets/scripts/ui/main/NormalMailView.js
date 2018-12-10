@@ -26,6 +26,7 @@ cc.Class({
     },
 
     onLoad: function () {
+        this._super();
         this.typeName = WndTypeDefine.WindowType.E_DT_NORMALMAIL_VIEW;
 
         this.content = this.mailScroll.content;

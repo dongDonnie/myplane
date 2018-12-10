@@ -48,10 +48,12 @@ var memberData = cc.Class({
         this.totalHotFlag = {};
         this.unLockHotFlag = {};
         this.qualityUpHotFlag = {};
+        this.levelUpHotFlag = {};
         this.memberLevel = 0;
         this.memberQuality = 0;
         this.isLevelUp = false;
         this.isQualityUp = false;
+        this.showCombatLate = false;
     },
 
     setMemberData: function (data) {
@@ -66,6 +68,7 @@ var memberData = cc.Class({
         for(let i in memberTblData){
             this.unLockHotFlag[i] = false;
             this.qualityUpHotFlag[i] = false;
+            this.levelUpHotFlag[i] = false;
             let memberData = this.getMemberByID(i);
             if (!memberData){
                 let unLockPieceID = memberTblData[i].wGetPieceID;
@@ -82,10 +85,21 @@ var memberData = cc.Class({
                 if (count >= qualityUpPieceCount){
                     this.qualityUpHotFlag[i] = true;
                 } 
-                if (qualityUpData.wQualityUpLevel > GlobalVar.me().level || memberData.Quality == 520)
+                if (qualityUpData.wQualityUpLevel > GlobalVar.me().level || memberData.Quality == 520){
                     this.qualityUpHotFlag[i] = false;
+                }
+
+                let levelUpNeedExp = this.getMemberLevelUpNeedExpByMemberID(i) - memberData.Exp;
+                let levelLimit = GlobalVar.me().level*2;
+                let canProvideExp = 0
+                for (let j = 501; j <= 504; j++) {
+                    let expItemCount = GlobalVar.me().bagData.getItemCountById(j);
+                    let expItemValue = GlobalVar.tblApi.getDataBySingleKey('TblItem', j).nResult;
+                    canProvideExp += expItemCount * expItemValue;
+                }
+                this.levelUpHotFlag[i] = canProvideExp >= levelUpNeedExp && memberData.Level < levelLimit;
             }
-            this.totalHotFlag[i] = this.unLockHotFlag[i] || this.qualityUpHotFlag[i];
+            this.totalHotFlag[i] = this.unLockHotFlag[i] || this.qualityUpHotFlag[i] || this.levelUpHotFlag[i];
         }
         GlobalVar.eventManager().dispatchEvent(EventMsgID.EVENT_MEMBER_FLAG_CHANGE);
     },
@@ -184,8 +198,10 @@ var memberData = cc.Class({
             var data = msg.data.OK.Member;
             // let index = this.getMemberByID(data.MemberID);
             this.memberQuality = this.getMemberByID(data.MemberID).Quality;
-            if (this.memberQuality < data.Quality)
+            if (this.memberQuality < data.Quality) {
                 this.isQualityUp = true;
+                this.showCombatLate = true;
+            }
             this.changeMemberData(data);
             GlobalVar.me().bagData.updateItemDataByGMDT_ITEM_CHANGE(msg.data.OK.ItemChange);
         }
@@ -223,6 +239,28 @@ var memberData = cc.Class({
 
         return allProps;
     },
+    getMemberLevelUpNeedExpByMemberID: function (memberID) {
+        let memberData = this.getMemberByID(memberID);
+
+        let levelData = GlobalVar.tblApi.getDataBySingleKey('TblMemberLevel', memberData.MemberID);
+        let index = 0;
+        if (memberData.Level > levelData[index].wLevelMax) {
+            index = 1;
+        }
+        let levelUpNeedExp = parseInt(Math.pow(memberData.Level, levelData[index].dUpNeedExpVar1)) + memberData.Level * levelData[index].wUpNeedExpVar2 + levelData[index].wUpNeedExpVar3;
+
+        let str = levelUpNeedExp + "";
+        let cut = str.length - 2;
+        if (cut < 1) {
+            cut = 1;
+        }
+        if (cut > 4) {
+            cut = 4;
+        }
+        levelUpNeedExp = (parseInt(levelUpNeedExp / Math.pow(10, cut)) + 1) * Math.pow(10, cut);
+
+        return levelUpNeedExp;
+    },
 
     getMemberPropByMemberID: function (memberID) {
         let memberIndex = this.getMemberIndexByID(memberID)
@@ -240,6 +278,14 @@ var memberData = cc.Class({
     getIsQualityUp: function () {
         if (this.isQualityUp) {
             this.isQualityUp = false;
+            return true;
+        }
+        return false
+    },
+
+    getShowCombatLate: function () {
+        if (this.showCombatLate) {
+            this.showCombatLate = false
             return true;
         }
         return false

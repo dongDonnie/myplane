@@ -123,10 +123,10 @@ var DoTweenManager = cc.Class({
 
     /// 通用动作
     popUpModelWnd: function (node, tag, callback) {
-        let scaleFrom = cc.v2(0, 0);
-        let scaleBig = cc.v2(1.1, 1.1);
-        let scaleSmall = cc.v2(0.9, 0.9);
-        let scaleTo = cc.v2(1, 1);
+        let scaleFrom = cc.v3(0, 0);
+        let scaleBig = cc.v3(1.1, 1.1);
+        let scaleSmall = cc.v3(0.9, 0.9);
+        let scaleTo = cc.v3(1, 1);
 
         node.scaleX = scaleFrom.x;
         node.scaleY = scaleFrom.y;
@@ -160,8 +160,8 @@ var DoTweenManager = cc.Class({
 
 
     twist: function (node, tag, callback) {
-        let scaleFrom = cc.v2(0.9, 1.1);
-        let scaleTo = cc.v2(1.1, 0.9);
+        let scaleFrom = cc.v3(0.9, 1.1);
+        let scaleTo = cc.v3(1.1, 0.9);
         let duration = 0.5;
         let action = cc.sequence(
             cc.scaleTo(duration, scaleFrom.x, scaleFrom.y),
@@ -173,8 +173,8 @@ var DoTweenManager = cc.Class({
 
     // 果冻效果
     jellyEffect: function (node) {
-        let scale1 = cc.v2(0.9, 1.1);
-        let scale2 = cc.v2(1.1, 0.9);
+        let scale1 = cc.v3(0.9, 1.1);
+        let scale2 = cc.v3(1.1, 0.9);
 
         let action = cc.repeatForever(
             cc.sequence(
@@ -199,7 +199,7 @@ var DoTweenManager = cc.Class({
     },
 
     scaleToPoint: function (nodes, duration, tag, callback) {
-        let scaleTo = cc.v2(0, 0);
+        let scaleTo = cc.v3(0, 0);
         for (let i = 0; i < nodes.length; i++) {
             let node = nodes[i];
             let action = cc.scaleTo(duration, scaleTo.x, scaleTo.y);
